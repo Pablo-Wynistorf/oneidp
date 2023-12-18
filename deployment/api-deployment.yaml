@@ -1,0 +1,130 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: loginapp
+  name: loginapp-api
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: loginapp-api
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: loginapp-api
+    spec:
+      containers:
+      - image: pablo06/loginapp:api
+        imagePullPolicy: Always
+        name: loginapp-api
+        ports:
+          - containerPort: 8080
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "80Mi"
+          limits:
+            cpu: "80m"
+            memory: "120Mi"
+        env:
+        - name: URL
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: URL
+              optional: false
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: DB_HOST
+              optional: false
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: DB_USER
+              optional: false
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: DB_PASSWORD
+              optional: false
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: DB_PORT
+              optional: false
+        - name: DB_DATABSE
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: DB_DATABSE
+              optional: false
+        - name: API_PORT
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: API_PORT
+              optional: false
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: JWT_SECRET
+              optional: false
+        - name: MJ_APIKEY_PUBLIC
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: MJ_APIKEY_PUBLIC
+              optional: false
+        - name: MJ_APIKEY_PRIVATE
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: MJ_APIKEY_PRIVATE
+              optional: false
+        - name: MJ_SENDER_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: MJ_SENDER_EMAIL
+              optional: false
+        - name: DC_MONITORING_WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: DC_MONITORING_WEBHOOK_URL
+              optional: false
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: loginapp-api-hpa
+  namespace: loginapp
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: loginapp-api
+  minReplicas: 5
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: loginapp
+  name: loginapp-api-svc
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: loginapp-api

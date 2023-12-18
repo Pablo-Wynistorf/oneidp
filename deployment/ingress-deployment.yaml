@@ -1,0 +1,34 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: loginapp
+  name: loginapp-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: cloudflare-issuer-prod
+    cert-manager.io/acme-challenge-type: dns01
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: login.onedns.ch
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: loginapp-frontend-svc
+              port:
+                number: 80
+        - path: /api/sso
+          pathType: Prefix
+          backend:
+            service:
+              name: loginapp-api-svc
+              port:
+                number: 8080
+  tls:
+  - hosts:
+    - login.onedns.ch
+    secretName: login-onedns-ch-tls

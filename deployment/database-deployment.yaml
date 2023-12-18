@@ -1,0 +1,95 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loginapp-mysql
+  namespace: loginapp
+spec:
+  selector:
+    matchLabels:
+      app: loginapp-mysql
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: loginapp-mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:latest
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: DB_PASSWORD
+              optional: false
+        ports:
+        - containerPort: 3306
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "500Mi"
+          limits:
+            cpu: "80m"
+            memory: "600Mi"
+        volumeMounts:
+        - name: loginapp-mysql
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: loginapp-mysql
+        persistentVolumeClaim:
+          claimName: loginapp-mysql-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loginapp-mysql-pvc
+  namespace: loginapp
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ebs-sc
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loginapp-mysql-svc
+  namespace: loginapp
+spec:
+  selector:
+    app: loginapp-mysql
+  ports:
+  - port: 3306
+    targetPort: 3306
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loginapp-mysql-pvc
+  namespace: loginapp
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ebs-sc
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loginapp-mysql-svc
+  namespace: loginapp
+spec:
+  selector:
+    app: loginapp-mysql
+  ports:
+  - port: 3306
+    targetPort: 3306
+  type: ClusterIP

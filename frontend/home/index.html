@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Home</title>
+    <link rel="stylesheet" href="home.css">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  </head>
+  <body>
+    <div class="login-box">
+      <h1>Welcome</h1>
+      <p id="get-username"></p>
+      <form>
+        <div class="textbox">
+          <i class="fas fa-user"></i>
+          <input type="password" placeholder="New Password" name="newPassword" id="newPassword" required>
+        </div>
+        <div class="textbox">
+          <i class="fas fa-user"></i>
+          <input type="password" placeholder="Retype new password" name="newPassword-retype" id="newPassword-retype" required>
+        </div>
+        <div class="passwordRequirements">
+          <i class="fas fa-lock"></i>
+          <p>Passwort requirements:<p>
+          <p id="passwordRequirementComponents">AaBbCc, 123&#$, Mind. 8 Zeichen</p>
+        </div>
+      </form>
+      <input type="button" class="btn" value="Change Password" onclick="setNewPassword()">
+      <input type="button" class="btn" value="Sign Out" onclick="logout()">
+      <input type="button" class="btn" value="Sign out on all devices" onclick="logoutAll()">
+      <input type="button" class="btn" value="Fetch Data" onclick="get_username()">
+    </div>
+    <script src="home.js"></script>
+    <script>
+      window.addEventListener('load', sendAccessToken);
+  </script>
+  </body>
+</html>
