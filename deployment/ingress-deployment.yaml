@@ -20,7 +20,7 @@ spec:
             service:
               name: loginapp-app-svc
               port:
-                number: 80
+                number: 8080
   tls:
   - hosts:
     - login.onedns.ch
