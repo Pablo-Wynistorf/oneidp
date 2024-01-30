@@ -93,7 +93,6 @@ app.post('/api/sso/auth/login', authLoginLimiter, (req, res) => {
         connection.release();
         return res.status(500).json({ error: 'Something went wrong, try again later' });
       }
-
       if (results.length > 0) {
         const storedPasswordHash = results[0].password;
         const existingToken = results[0].access_token;
@@ -293,7 +292,7 @@ app.post('/api/sso/auth/login', authLoginLimiter, (req, res) => {
                 jwt.verify(existingToken, JWT_SECRET, (err) => {
                   if (err) {
                     const existingToken_new = jwt.sign({}, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
-                    connection.query('UPDATE users SET access_token = ? WHERE username = ? OR email = ?', [existingToken_new, username, email], (updateErr) => {
+                    connection.query('UPDATE users SET access_token = ? WHERE access_token = ?', [existingToken_new, existingToken], (updateErr) => {
                       if (updateErr) {
                         connection.release();
                         return res.status(500).json({ error: 'Something went wrong, try again later' });
