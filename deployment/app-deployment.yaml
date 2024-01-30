@@ -58,11 +58,11 @@ spec:
               name: loginapp-secrets
               key: DB_PORT
               optional: false
-        - name: DB_DATABSE
+        - name: DB_DATABASE
           valueFrom:
             secretKeyRef:
               name: loginapp-secrets
-              key: DB_DATABSE
+              key: DB_DATABASE
               optional: false
         - name: API_PORT
           valueFrom:
