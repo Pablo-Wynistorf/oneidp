@@ -154,7 +154,7 @@ function handle464Error() {
   const alertDiv = document.createElement('div');
   alertDiv.className = 'alert';
   alertDiv.textContent = 'Password cannot have more than 23 characters';
-  document.getElementById('passwordRequirementComponents').style.color = "red";
+  document.getElementById('passwordRequirementComponents').style.color = "#f23f42";
   passwordInput.parentElement.appendChild(alertDiv);
   passwordInput.addEventListener('click', () => {
     alertDiv.remove();
@@ -214,7 +214,7 @@ function passwordRequirements(event) {
   if (isStrong) {
     document.getElementById('passwordRequirementComponents').style.color = "green";
   } else {
-    document.getElementById('passwordRequirementComponents').style.color = "red";
+    document.getElementById('passwordRequirementComponents').style.color = "#f23f42";
   }
 }
 
@@ -223,7 +223,7 @@ function checkPasswordOnBlur(event) {
   const isStrong = isStrongPassword(password);
 
   if (!isStrong && (password.trim() !== '')) {
-    document.getElementById('passwordRequirementComponents').style.color = "red";
+    document.getElementById('passwordRequirementComponents').style.color = "#f23f42";
 
     if (!document.getElementById('passwordError')) {
       const alertDiv = document.createElement('div');

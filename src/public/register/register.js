@@ -129,7 +129,7 @@ function register() {
 function handleResponse(response) {
   if (response.status === 200) {
     return response.json().then((data) => {
-      window.location.href = '/emailverification';
+      window.location.href = '/verify';
     });
   } else if (response.status === 460) {
     handle460Error();

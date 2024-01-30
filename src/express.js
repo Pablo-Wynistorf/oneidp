@@ -108,10 +108,12 @@ const existingToken = (req, res, next) => {
   next();
 };
 
+app.get('/', (req, res) => {
+  res.redirect('/login');
+});
 
 
 app.use('/login', existingToken, express.static(path.join(__dirname, 'public/login')));
-
 
 app.use('/home', verifyToken, express.static(path.join(__dirname, 'public/home')));
 
@@ -119,17 +121,9 @@ app.use('/register', existingToken, express.static(path.join(__dirname, 'public/
 
 app.use('/setpassword', express.static(path.join(__dirname, 'public/setpassword')));
 
-app.use('/emailverification', express.static(path.join(__dirname, 'public/emailverification')));
+app.use('/verify', express.static(path.join(__dirname, 'public/verify')));
 
 app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
-
-
-
-
-
-
-
-
 
 
 app.post('/api/sso/auth/login', authLoginLimiter, (req, res) => {
