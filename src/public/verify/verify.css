@@ -33,6 +33,7 @@ body {
   border-bottom: 6px solid #4caf50;
   margin-bottom: 50px;
   padding: 13px 0;
+  animation: color-wave 8s infinite linear;
 }
 
 .textbox {
@@ -42,6 +43,7 @@ body {
   padding: 8px 0;
   margin: 8px 0;
   border-bottom: 1px solid #4caf50;
+  animation: color-wave 8s infinite linear;
 }
 
 .textbox i {
