@@ -20,16 +20,9 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
-      - name: Build and push API
+      - name: Build and push loginapp
         uses: docker/build-push-action@v4
         with:
-          context: ./api
+          context: ./src
           push: true
-          tags: pablo06/loginapp:api , pablo06/loginapp:api
-
-      - name: Build and push Frontend
-        uses: docker/build-push-action@v4
-        with:
-          context: ./frontend
-          push: true
-          tags: pablo06/loginapp:frontend , pablo06/loginapp:frontend
+          tags: pablo06/loginapp:latest , pablo06/loginapp:latest

@@ -34,7 +34,7 @@ function redirect_register() {
 }
 
 function redirect_resetpassword() {
-  window.location.href = '/recoverpassword'
+  window.location.href = '/recover'
 }
 
 

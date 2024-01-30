@@ -6,7 +6,7 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const mailjet = require('node-mailjet');
-const { auth } = require('express-oauth2-jwt-bearer');
+const path = require('path')
 require('dotenv').config();
 
 const URL = process.env.URL;
@@ -55,7 +55,82 @@ app.use(cors({ origin: '*' }));
 
 app.use(bodyParser.json());
 
-app.use('/', express.static(path.join(__dirname, 'public')));
+
+const verifyToken = (req, res, next) => {
+  const access_token_cookie = req.headers.cookie;
+  const requestedPath = req.baseUrl;
+
+  if (access_token_cookie) {
+    const cookies = access_token_cookie.split(';').reduce((cookiesObj, cookie) => {
+      const [name, value] = cookie.trim().split('=');
+      cookiesObj[name] = value;
+      return cookiesObj;
+    }, {});
+
+    const access_token = cookies['access_token'];
+
+    jwt.verify(access_token, JWT_SECRET, (err, decoded) => {
+      if (err) {
+        res.clearCookie('access_token');
+        if (requestedPath !== '/login') {
+          return res.redirect('/login');
+        }
+        return next();
+      }
+
+      if (requestedPath !== '/home') {
+        return res.redirect('/home');
+      }
+      next();
+    });
+  } else {
+    return res.redirect('/login');
+  }
+};
+
+
+const existingToken = (req, res, next) => {
+  const access_token_cookie = req.headers.cookie;
+
+  if (access_token_cookie) {
+    const cookies = access_token_cookie.split(';').reduce((cookiesObj, cookie) => {
+      const [name, value] = cookie.trim().split('=');
+      cookiesObj[name] = value;
+      return cookiesObj;
+    }, {});
+
+    const access_token = cookies['access_token'];
+
+    if (access_token) {
+      return verifyToken(req, res, next);
+    }
+  }
+  next();
+};
+
+
+
+app.use('/login', existingToken, express.static(path.join(__dirname, 'public/login')));
+
+
+app.use('/home', verifyToken, express.static(path.join(__dirname, 'public/home')));
+
+app.use('/register', existingToken, express.static(path.join(__dirname, 'public/register')));
+
+app.use('/setpassword', express.static(path.join(__dirname, 'public/setpassword')));
+
+app.use('/emailverification', express.static(path.join(__dirname, 'public/emailverification')));
+
+app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
+
+
+
+
+
+
+
+
+
 
 app.post('/api/sso/auth/login', authLoginLimiter, (req, res) => {
   const { username_or_email, password } = req.body;
