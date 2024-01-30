@@ -1399,8 +1399,6 @@ app.get('/api/sso/health', (req, res) => {
 
 
 
-
-
 app.listen(API_PORT, () => {
   console.log('Login API started on port', API_PORT);
 });
