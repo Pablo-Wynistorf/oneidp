@@ -55,6 +55,7 @@ app.use(cors({ origin: '*' }));
 
 app.use(bodyParser.json());
 
+app.use('/', express.static(path.join(__dirname, 'public')));
 
 app.post('/api/sso/auth/login', authLoginLimiter, (req, res) => {
   const { username_or_email, password } = req.body;
