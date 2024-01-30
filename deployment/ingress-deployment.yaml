@@ -18,16 +18,9 @@ spec:
           pathType: Prefix
           backend:
             service:
-              name: loginapp-frontend-svc
+              name: loginapp-app-svc
               port:
                 number: 80
-        - path: /api/sso
-          pathType: Prefix
-          backend:
-            service:
-              name: loginapp-api-svc
-              port:
-                number: 8080
   tls:
   - hosts:
     - login.onedns.ch
