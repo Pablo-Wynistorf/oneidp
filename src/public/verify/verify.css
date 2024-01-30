@@ -216,6 +216,6 @@ body {
     border-color: #7c00ff; /* */
   }
   100% {
-    border-color: #ff00ff; /* Magenta on the right */
+    border-color: #ff00ff;
   }
 }
