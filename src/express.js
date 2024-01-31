@@ -601,10 +601,11 @@ app.post('/api/sso/data/changepassword', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const newLoginHash = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
 
-    await userDB.updateOne({ userId }, { $set: { password: hashedPassword } });
+    await userDB.updateOne({ userId }, { $set: { password: hashedPassword, loginHash: newLoginHash } });
 
-    const newAccessToken = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+    const newAccessToken = jwt.sign({ userId: userId, loginHash: newLoginHash }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
 
     res.cookie('access_token', newAccessToken, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
     res.status(200).json({ success: true });
