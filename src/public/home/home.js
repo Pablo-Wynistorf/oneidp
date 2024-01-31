@@ -1,22 +1,3 @@
-function sendAccessToken() {
-  const accessToken = getCookie('access_token');
-  if (accessToken) {
-    fetch(`/api/sso/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      }
-    })
-      .then(response => {
-        if (!response.ok) {
-          window.location.href = '/login'
-        }
-      });
-  }
-}
-
-
 function getCookie(name) {
   const cookieArray = document.cookie.split(';');
   for (const cookie of cookieArray) {
