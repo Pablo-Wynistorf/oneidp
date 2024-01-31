@@ -54,6 +54,7 @@ const userSchema = new Schema({
   resetCode: String,
   twoFaCode: String,
   twoFaEnbled: Boolean,
+  accountRole: String,
 }, {
   timestamps: true
 });
@@ -153,69 +154,49 @@ app.use('/setpassword', express.static(path.join(__dirname, 'public/setpassword'
 app.use('/verify', express.static(path.join(__dirname, 'public/verify')));
 app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
 
+
+
+
 app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
   const { username_or_email, password } = req.body;
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 
-  // Function to check if a string contains numbers
-  function containsNumbers(value) {
-    return /\d/.test(value);
-  }
-
   try {
-    // Check if the username_or_email is an email address
-    let email = null;
+    let user;
+
     if (emailRegex.test(username_or_email)) {
-      email = username_or_email;
+      user = await userDB.findOne({ email: username_or_email });
+    } else {
+      user = await userDB.findOne({ username: username_or_email });
     }
 
-    // Query the database to fetch password and email verification code
-    const [results] = await pool.query('SELECT password, email_verification_code, email_verification_token FROM users WHERE username = ? OR email = ?', [username_or_email, email]); // Await the database query
+    if (!user) {
+      return res.status(460).json({ success: false, error: 'Username or Password wrong' });
+    }
 
-    if (results.length > 0) {
-      const storedPasswordHash = results[0].password;
+    const storedPasswordHash = user.password;
 
-      // Compare the provided password with the stored hash
-      const passwordMatch = await bcrypt.compare(password, storedPasswordHash);
+    // Compare the provided password with the stored hash
+    const passwordMatch = await bcrypt.compare(password, storedPasswordHash);
 
-      if (passwordMatch) {
-        const emailVerificationCode = results[0].email_verification_code;
-
-        // Check if the email verification code contains numbers
-        if (containsNumbers(emailVerificationCode)) {
-          const emailVerificationToken = results[0].email_verification_token;
-
-          // Verify the email verification token
-          jwt.verify(emailVerificationToken, JWT_SECRET, async (err) => {
-            if (err) {
-              // If verification fails, generate a new token and code
-              const newEmailVerificationToken = jwt.sign({}, JWT_SECRET, { algorithm: 'HS256', expiresIn: '7d' });
-              const newEmailVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-              // Update the database with the new token and code
-              await pool.query('UPDATE users SET email_verification_code = ?, email_verification_token = ? WHERE username = ? OR email = ?', [newEmailVerificationCode, newEmailVerificationToken, username_or_email, email]); // Await the database query
-
-              // Send the verification email
-              sendVerificationEmail(email, newEmailVerificationToken, newEmailVerificationCode);
-
-              res.cookie('email_verification_token', newEmailVerificationToken, { maxAge: 7 * 24 * 60 * 60 * 1000, path: '/' });
-              return res.status(461).json({ success: false });
-            }
-
-            // If verification succeeds, proceed with login
-            loginSuccess(username_or_email, email, res);
-          });
-        } else {
-          // If the email verification code doesn't contain numbers, proceed with login
-          loginSuccess(username_or_email, email, res);
-        }
-      } else {
-        // If the password doesn't match, return an error
-        return res.status(460).json({ success: false, error: 'Username or password wrong' });
-      }
-    } else {
-      // If no user found, return an error
+    if (!passwordMatch) {
       return res.status(460).json({ success: false, error: 'Username or password wrong' });
+    }
+
+
+    const emailVerificationCode = user.verifyCode;
+
+    // Check if the email verification code contains numbers
+    if (emailVerificationCode) {
+      const newEmailVerificationToken = jwt.sign({ userId: user._id }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '7d' });
+      const newEmailVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      sendVerificationEmail(user.email, newEmailVerificationToken, newEmailVerificationCode);
+
+      res.cookie('email_verification_token', newEmailVerificationToken, { maxAge: 7 * 24 * 60 * 60 * 1000, path: '/' });
+      res.redirect('/verify')
+    } else {
+      // If the email verification code doesn't contain numbers, proceed with login
+      loginSuccess(user.username, user.email, res);
     }
   } catch (error) {
     // Handle database errors
@@ -225,6 +206,7 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
     return res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
+
 
 
 // Function to send a verification email
@@ -435,23 +417,17 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
   }
 
   try {
-    // Check if username or email already exists
-    const existingUser = await userDB.findOne({ $or: [{ username }, { email }] });
+    let userId;
+    let existingUser;
 
-    if (existingUser) {
-      if (existingUser.username === username) {
-        return res.status(461).json({ success: false, error: 'Username already in use' });
-      } else {
-        return res.status(460).json({ success: false, error: 'Email address already in use' });
-      }
-    }
-    const userId = Math.floor(Math.random() * 900000) + 100000;
+    do {
+      userId = Math.floor(Math.random() * 900000) + 100000;
+      existingUser = await userDB.findOne({ userId });
+    } while (existingUser);
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Generate email verification token and code
-    const email_verification_token = jwt.sign({userId}, JWT_SECRET, { algorithm: 'HS256', expiresIn: '7d' });
+    const email_verification_token = jwt.sign({ userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '7d' });
     const email_verification_code = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Create new user document
@@ -502,6 +478,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
 
 
 
+
 app.post('/api/sso/verify', async (req, res) => {
   const { email_verification_token, email_verification_code } = req.body;
 
@@ -522,7 +499,7 @@ app.post('/api/sso/verify', async (req, res) => {
           await userDB.updateOne({ userId }, { $unset: { verifyCode: 1 } });
 
           res.cookie('access_token', access_token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
-          return res.status(200).json({ success: true });
+          return res.redirect('/home')
         } else {
           return res.status(460).json({ success: false, error: 'Wrong verification code entered' });
         }
