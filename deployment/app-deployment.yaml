@@ -34,35 +34,11 @@ spec:
               name: loginapp-secrets
               key: URL
               optional: false
-        - name: DB_HOST
+        - name: DATABASE_URI
           valueFrom:
             secretKeyRef:
               name: loginapp-secrets
-              key: DB_HOST
-              optional: false
-        - name: DB_USER
-          valueFrom:
-            secretKeyRef:
-              name: loginapp-secrets
-              key: DB_USER
-              optional: false
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: loginapp-secrets
-              key: DB_PASSWORD
-              optional: false
-        - name: DB_PORT
-          valueFrom:
-            secretKeyRef:
-              name: loginapp-secrets
-              key: DB_PORT
-              optional: false
-        - name: DB_DATABASE
-          valueFrom:
-            secretKeyRef:
-              name: loginapp-secrets
-              key: DB_DATABASE
+              key: DATABASE_URI
               optional: false
         - name: API_PORT
           valueFrom:
