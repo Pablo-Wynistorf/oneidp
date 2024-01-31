@@ -436,9 +436,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const loginHash = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
-
-    const email_verification_token = jwt.sign({ userId: userId, loginHash: loginHash }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '1d' });
+    const email_verification_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '1d' });
     const email_verification_code = Math.floor(100000 + Math.random() * 900000).toString();
 
     const newUser = new userDB({
@@ -447,7 +445,6 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
       password: hashedPassword,
       email: email,
       verifyCode: email_verification_code,
-      loginHash: loginHash,
     });
 
     await newUser.save();
@@ -503,10 +500,10 @@ app.post('/api/sso/verify', async (req, res) => {
         const existingUserId = await userDB.findOne({ userId, verifyCode });
 
         if (existingUserId) {
-          const access_token = jwt.sign({ userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+          const loginHash = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+          await userDB.updateOne({ userId }, { $set: { loginHash: loginHash } });
           await userDB.updateOne({ userId }, { $unset: { verifyCode: 1 } });
-          res.clearCookie('email_verification_token');
-          res.clearCookie('email_verification_code');
+          const access_token = jwt.sign({ userId: userId, loginHash: loginHash }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
           res.cookie('access_token', access_token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
           res.status(200).json({ success: true})
         } else {
@@ -545,7 +542,7 @@ app.all('/api/sso/confirmationlink/:email_verification_token/:email_verification
           await userDB.updateOne({ userId }, { $unset: { verifyCode: 1 } });
 
           res.cookie('access_token', access_token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
-          return res.status(200).json({ success: true})
+          return res.redirect('/home')
         } else {
           return res.status(460).json({ success: false, error: 'Wrong verification code entered' });
         }

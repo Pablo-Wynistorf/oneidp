@@ -32,14 +32,18 @@ function removeEmailVerificationToken() {
   return null;
 }
 
+function removeEmailVerificationCode() {
+  var pastDate = new Date(0);
+  document.cookie = "email_verification_code=; expires=" + pastDate.toUTCString() + "; path=/";
+  return null;
+}
 
 function handleResponse(response) {
   if (response.status === 200) {
-    return response.json().then(data => {
-      removeEmailVerificationToken();
-      window.location.href = '/home'
-    })
-  } else if (response.status === 460) {
+    removeEmailVerificationToken();
+    removeEmailVerificationCode();
+    window.location.href = '/home'
+    } else if (response.status === 460) {
     handle460Error();
   } else {
     handleError();
