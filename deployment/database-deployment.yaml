@@ -2,30 +2,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loginapp-mysql
+  name: loginapp-mongodb
   namespace: loginapp
 spec:
   selector:
     matchLabels:
-      app: loginapp-mysql
+      app: loginapp-mongodb
   replicas: 1
   template:
     metadata:
       labels:
-        app: loginapp-mysql
+        app: loginapp-mongodb
     spec:
       containers:
-      - name: mysql
-        image: mysql:latest
+      - name: mongo
+        image: mongo
         env:
-        - name: MYSQL_ROOT_PASSWORD
+        - name: MONGO_INITDB_ROOT_USERNAME
           valueFrom:
             secretKeyRef:
               name: loginapp-secrets
-              key: DB_PASSWORD
+              key: MONGO_INITDB_ROOT_USERNAME
+              optional: false
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: MONGO_INITDB_ROOT_PASSWORD
               optional: false
         ports:
-        - containerPort: 3306
+        - containerPort: 27017
         resources:
           requests:
             cpu: "50m"
@@ -34,17 +40,17 @@ spec:
             cpu: "80m"
             memory: "600Mi"
         volumeMounts:
-        - name: loginapp-mysql
-          mountPath: /var/lib/mysql
+        - name: loginapp-mongodb
+          mountPath: /etc/mongo
       volumes:
-      - name: loginapp-mysql
+      - name: loginapp-mongodb
         persistentVolumeClaim:
-          claimName: loginapp-mysql-pvc
+          claimName: loginapp-mongodb-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: loginapp-mysql-pvc
+  name: loginapp-mongodb-pvc
   namespace: loginapp
 spec:
   accessModes:
@@ -57,21 +63,21 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: loginapp-mysql-svc
+  name: loginapp-mongodb-svc
   namespace: loginapp
 spec:
   selector:
-    app: loginapp-mysql
+    app: loginapp-mongodb
   ports:
-  - port: 3306
-    targetPort: 3306
+  - port: 27017
+    targetPort: 27017
   type: ClusterIP
 
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: loginapp-mysql-pvc
+  name: loginapp-mongodb-pvc
   namespace: loginapp
 spec:
   accessModes:
@@ -80,16 +86,3 @@ spec:
   resources:
     requests:
       storage: 20Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: loginapp-mysql-svc
-  namespace: loginapp
-spec:
-  selector:
-    app: loginapp-mysql
-  ports:
-  - port: 3306
-    targetPort: 3306
-  type: ClusterIP
