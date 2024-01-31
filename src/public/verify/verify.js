@@ -1,23 +1,3 @@
-function sendAccessToken() {
-  const access_token = getCookie('access_token');
-  if (access_token) {
-    fetch(`/api/sso/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${access_token}`
-      }
-    })
-      .then(response => {
-        if (response.ok) {
-          removeEmailVerificationToken();
-          window.location.href = '/home/';
-        }
-      });
-  }
-}
-
-
 function getCookie(name) {
   const cookieArray = document.cookie.split(';');
   for (const cookie of cookieArray) {
@@ -34,7 +14,7 @@ function verifyEmail() {
   const email_verification_code = email_verification_codeImput.value;
   const email_verification_token = getCookie('email_verification_token');
   if (email_verification_token) {
-    fetch(`/api/sso/confirm`, {
+    fetch(`/api/sso/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

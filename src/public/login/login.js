@@ -1,22 +1,3 @@
-function sendAccessToken() {
-  const accessToken = getCookie('access_token');
-  if (accessToken) {
-    fetch(`/api/sso/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      }
-    })
-      .then(response => {
-        if (response.ok) {
-          window.location.href = '/home/';
-        }
-      });
-  }
-}
-
-
 function getCookie(name) {
   const cookieArray = document.cookie.split(';');
   for (const cookie of cookieArray) {
@@ -60,19 +41,19 @@ function handleResponse(response) {
     return response.json().then(data => {
       window.location.href = '/home';
     })
-  } else if (response.status === 460) {
-    handle460Error();
+  } else if (response.status === 401) {
+    handle401Error();
   } else if (response.status === 461) {
     return response.json().then(data => {
     handle461Error();
-    window.location.href = '/emailverification';
+    window.location.href = '/verify';
     })
   } else {
     handleError();
   }
 }
 
-function handle460Error() {
+function handle401Error() {
   const usernameInput = document.getElementById('username');
   const passwordInput = document.getElementById('password');
   usernameInput.value = '';

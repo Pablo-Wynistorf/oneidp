@@ -1,23 +1,3 @@
-function sendAccessToken() {
-  const access_token = getCookie('access_token');
-  if (access_token) {
-    fetch(`/api/sso/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${access_token}`
-      }
-    })
-      .then(response => {
-        if (response.ok) {
-          removeResetToken()
-          window.location.href = '/home/';
-        }
-      });
-  }
-}
-
-
 function ingestCode() {
   const password_reset_code = getCookie('password_reset_code');
   if (password_reset_code) {
