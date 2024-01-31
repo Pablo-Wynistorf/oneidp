@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
-const mysql = require('mysql2/promise');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
@@ -10,11 +10,7 @@ const path = require('path');
 require('dotenv').config();
 
 const URL = process.env.URL;
-const DB_HOST = process.env.DB_HOST;
-const DB_USER = process.env.DB_USER;
-const DB_PASSWORD = process.env.DB_PASSWORD;
-const DB_PORT = process.env.DB_PORT;
-const DB_DATABASE = process.env.DB_DATABASE;
+const DATABASE_URI = process.env.DATABASE_URI;
 const API_PORT = process.env.API_PORT;
 const JWT_SECRET = process.env.JWT_SECRET;
 const MJ_APIKEY_PUBLIC = process.env.MJ_APIKEY_PUBLIC;
@@ -22,12 +18,53 @@ const MJ_APIKEY_PRIVATE = process.env.MJ_APIKEY_PRIVATE;
 const MJ_SENDER_EMAIL = process.env.MJ_SENDER_EMAIL;
 const DC_MONITORING_WEBHOOK_URL = process.env.DC_MONITORING_WEBHOOK_URL;
 
-const pool = mysql.createPool({
-  host: DB_HOST,
-  user: DB_USER,
-  password: DB_PASSWORD,
-  database: DB_DATABASE,
-  port: DB_PORT,
+const app = express();
+
+
+function connectToDatabase() {
+  mongoose.connect(DATABASE_URI);
+}
+const db = mongoose.connection;
+
+connectToDatabase();
+
+db.on('error', () => {
+  console.log('MongoDB connection error. Reconnecting...');
+  setTimeout(connectToDatabase, 5000);
+});
+
+db.on('disconnected', () => {
+  console.log('MongoDB disconnected. Reconnecting...');
+  setTimeout(connectToDatabase, 5000);
+  return;
+});
+
+db.on('connected', () => {
+  console.log('Connected to MongoDB');
+});
+
+const { Schema } = mongoose;
+
+const userSchema = new Schema({
+  userId: String,
+  username: String,
+  password: String,
+  email: String,
+  verifyCode: String,
+  resetCode: String,
+  twoFaCode: String,
+  twoFaEnbled: Boolean,
+}, {
+  timestamps: true
+});
+
+const userDB = mongoose.model('users', userSchema);
+
+app.use((req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    connectToDatabase();
+  }
+  next();
 });
 
 const authLoginLimiter = rateLimit({
@@ -48,25 +85,11 @@ const authTokenLimiter = rateLimit({
   message: 'Too many requests. Please try again later.',
 });
 
-const app = express();
 
 app.use(cors({ origin: '*' }));
 
 app.use(bodyParser.json());
 
-async function connectDatabase() {
-  try {
-    const connection = await pool.getConnection();
-    console.log('Database connected!');
-    connection.release();
-  } catch (err) {
-    console.error('Database connection error:', err);
-    console.log('Retrying database connection in 5 seconds...');
-    setTimeout(connectDatabase, 5000);
-  }
-}
-
-connectDatabase();
 
 const verifyToken = (req, res, next) => {
   const access_token_cookie = req.headers.cookie;
@@ -205,7 +228,7 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
 
 
 // Function to send a verification email
-function sendVerificationEmail(email, verificationToken, verificationCode) {
+function sendVerificationEmail(username, email, email_verification_token, email_verification_code) {
   const mailjetConnect = mailjet.apiConnect(MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE);
   const request = mailjetConnect
     .post('send', { version: 'v3.1' })
@@ -274,7 +297,7 @@ function sendVerificationEmail(email, verificationToken, verificationCode) {
                                   <td style="word-break: break-word; font-size: 0px; padding: 0px;" align="left">
                                     <div style="cursor: auto; color: #737F8D; font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif; font-size: 16px; line-height: 24px; text-align: left;">
                                       <h2 style="font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif; font-weight: 500; font-size: 20px; color: #4F545C; letter-spacing: 0.27px;">Hey ${username},</h2>
-                                      <p>Your account email needs to get verified before you can use your account. Don't share this code with anyone! Please enter the following code or click on this <a href=${URL}/api/sso/confirmationlink/${email_verification_token_new}/${email_verification_code_new}>Link</a> to verify your email:</p>
+                                      <p>Your account email needs to get verified before you can use your account. Don't share this code with anyone! Please enter the following code or click on this <a href=${URL}/api/sso/confirmationlink/${email_verification_token}/${email_verification_code}>Link</a> to verify your email:</p>
                                     </div>
                                   </td>
                                 </tr>
@@ -284,7 +307,7 @@ function sendVerificationEmail(email, verificationToken, verificationCode) {
                                       <tbody>
                                         <tr>
                                           <td style="border: none; border-radius: 8px; cursor: auto; padding: 15px 105px;" align="center" valign="middle" bgcolor="#5865f2">
-                                            <p style="font-size: 30px; font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif;">${email_verification_code_new}</p>
+                                            <p style="font-size: 30px; font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif;">${email_verification_code}</p>
                                           </td>
                                         </tr>
                                       </tbody>
@@ -384,7 +407,9 @@ function notifyLogin(username, email) {
 }
 
 
-app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => { // Use async function to await asynchronous operations
+
+
+app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
   const { username, password, email } = req.body;
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
   const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
@@ -410,160 +435,45 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => { //
   }
 
   try {
-    const connection = await pool.getConnection(); // Get a connection from the pool
-    const [results] = await connection.query('SELECT * FROM users WHERE username = ?', [username]); // Await the query execution
-    connection.release(); // Release the connection back to the pool
+    // Check if username or email already exists
+    const existingUser = await userDB.findOne({ $or: [{ username }, { email }] });
 
-    if (results && results.length > 0) {
-      return res.status(461).json({ success: false, error: 'Username already in use' });
+    if (existingUser) {
+      if (existingUser.username === username) {
+        return res.status(461).json({ success: false, error: 'Username already in use' });
+      } else {
+        return res.status(460).json({ success: false, error: 'Email address already in use' });
+      }
     }
+    const userId = Math.floor(Math.random() * 900000) + 100000;
 
-    const emailConnection = await pool.getConnection(); // Get another connection for email check
-    const [emailResult] = await emailConnection.query('SELECT * FROM users WHERE email = ?', [email]); // Await the query execution
-    emailConnection.release(); // Release the connection back to the pool
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    if (emailResult && emailResult.length > 0) {
-      return res.status(460).json({ success: false, error: 'Email address already in use' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10); // Await the password hashing
-
-    const email_verification_token = jwt.sign({}, JWT_SECRET, { algorithm: 'HS256', expiresIn: '7d' });
+    // Generate email verification token and code
+    const email_verification_token = jwt.sign({userId}, JWT_SECRET, { algorithm: 'HS256', expiresIn: '7d' });
     const email_verification_code = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const insertQuery = 'INSERT INTO users (username, password, email, access_token, password_reset_code, password_reset_token, email_verification_code, email_verification_token) VALUES (?, ?, ?, "", "", "", ?, ?)';
-    await pool.query(insertQuery, [username, hashedPassword, email, email_verification_code, email_verification_token]); // Await the query execution
+    // Create new user document
+    const newUser = new userDB({
+      userId: userId,
+      username: username,
+      password: hashedPassword,
+      email: email,
+      verifyCode: email_verification_code,
+    });
 
-    const mailjet_connect = mailjet.apiConnect(MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE);
+    // Save the new user
+    await newUser.save();
 
-    const request = mailjet_connect
-      .post('send', { version: 'v3.1' })
-      .request({
-        Messages: [
-          {
-            From: {
-              Email: MJ_SENDER_EMAIL
-            },
-            To: [
-              {
-                Email: email
-              }
-            ],
-            Subject: "Your Email Verification Code",
-            HtmlPart: `
-            <!doctype html>
-            <html>
-            <head>
-              <title></title>
-              <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-              <style type="text/css">
-                body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-                p { display: block; margin: 13px 0; }
-              </style>
-            </head>
-            <body style="background: #F9F9F9;">
-              <div style="background-color: #F9F9F9;">
-                <div style="margin: 0px auto; max-width: 640px; background: transparent;">
-                  <table role="presentation" cellpadding="0" cellspacing="0" style="font-size: 0px; width: 100%; background: transparent;" align="center" border="0">
-                    <tbody>
-                      <tr>
-                        <td style="text-align: center; vertical-align: top; direction: ltr; font-size: 0px; padding: 40px 0px;">
-                          <div aria-labelledby="mj-column-per-100" class="mj-column-per-100" style="vertical-align: top; display: inline-block; direction: ltr; font-size: 13px; text-align: left; width: 100%;">
-                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                              <tbody>
-                                <tr>
-                                  <td style="word-break: break-word; font-size: 0px; padding: 0px;" align="center">
-                                    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border-spacing: 0px;" align="center" border="0">
-                                      <tbody>
-                                        <tr>
-                                          <td style="width: 138px;"></td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <div style="max-width: 640px; margin: 0 auto; box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
-                  <div style="margin: 0px auto; max-width: 640px; background: #ffffff;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" style="font-size: 0px; width: 100%; background: #ffffff;" align="center" border="0">
-                      <tbody>
-                        <tr>
-                          <td style="text-align: center; vertical-align: top; direction: ltr; font-size: 0px; padding: 40px 50px;">
-                            <div aria-labelledby="mj-column-per-100" class="mj-column-per-100" style="vertical-align: top; display: inline-block; direction: ltr; font-size: 13px; text-align: left; width: 100%;">
-                              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                                <tbody>
-                                  <tr>
-                                    <td style="word-break: break-word; font-size: 0px; padding: 0px;" align="left">
-                                      <div style="cursor: auto; color: #737F8D; font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif; font-size: 16px; line-height: 24px; text-align: left;">
-                                        <h2 style="font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif; font-weight: 500; font-size: 20px; color: #4F545C; letter-spacing: 0.27px;">Hey ${username},</h2>
-                                        <p>Your account email needs to get verified before you can use your account. Don't share this code with anyone! Please enter the following code or click on this <a href=${URL}/api/sso/confirmationlink/${email_verification_token}/${email_verification_code}>Link</a> to verify your email:</p>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="word-break: break-word; font-size: 0px; padding: 10px 25px; padding-top: 20px;" align="center">
-                                      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse: separate;" align="center" border="0">
-                                        <tbody>
-                                          <tr>
-                                            <td style="border: none; border-radius: 8px; cursor: auto; padding: 15px 105px;" align="center" valign="middle" bgcolor="#5865f2">
-                                              <p style="font-size: 30px; font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif;">${email_verification_code}</p>
-                                            </td>
-                                          </tr>
-                                        </tbody>
-                                      </table>
-                                    </td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <div style="margin: 0px auto; max-width: 640px; background: transparent;">
-                  <table role="presentation" cellpadding="0" cellspacing="0" style="font-size: 0px; width: 100%; background: transparent;" align="center" border="0">
-                    <tbody>
-                      <tr>
-                        <td style="text-align: center; vertical-align: top; direction: ltr; font-size: 0px; padding: 20px 0px;">
-                          <div aria-labelledby="mj-column-per-100" class="mj-column-per-100" style="vertical-align: top; display: inline-block; direction: ltr; font-size: 13px; text-align: left; width: 100%;">
-                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                              <tbody>
-                                <tr>
-                                  <td style="word-break: break-word; font-size: 0px; padding: 0px;" align="center">
-                                    <div style="cursor: auto; color: #99AAB5; font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif; font-size: 12px; line-height: 24px; text-align: center;">
-                                      Sent by Onedns
-                                    </div>
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </body>
-            </html>
-            `
-          }
-        ]
-      });
+    // Send verification email
+    sendVerificationEmail(username, email, email_verification_token, email_verification_code);
 
+    // Notify about successful registration
     const params = {
-      content: "User with Username: " + username + " and Email: " + email + " has just registered!"
+      content: `User with Username: ${username} and Email: ${email} has just registered!`
     };
-    await fetch(DC_MONITORING_WEBHOOK_URL, { // Await the webhook request
+    await fetch(DC_MONITORING_WEBHOOK_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -578,7 +488,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => { //
     const params = {
       content: "ALERT: DATABASE ERROR!!"
     };
-    await fetch(DC_MONITORING_WEBHOOK_URL, { // Await the webhook request
+    await fetch(DC_MONITORING_WEBHOOK_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -591,43 +501,41 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => { //
 
 
 
-app.post('/api/sso/confirm', async (req, res) => {
+
+app.post('/api/sso/verify', async (req, res) => {
   const { email_verification_token, email_verification_code } = req.body;
 
   try {
-    const connection = await pool.getConnection(); // Get a connection from the pool
-    const [results] = await connection.query('SELECT * FROM users WHERE email_verification_token = ? AND email_verification_code = ?', [email_verification_token, email_verification_code]); // Await the query execution
+    jwt.verify(email_verification_token, JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        return res.status(400).json({ success: false, error: 'Verification token invalid, try a login to get a new verification token.'});
+      }
 
-    if (results && results.length === 0) {
-      connection.release(); // Release the connection back to the pool
-      return res.status(406).json({ success: false, error: 'Wrong verification code' });
-    }
+      const userId = decoded.userId;
+      const verifyCode = email_verification_code;
 
-    const newToken = jwt.sign({}, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+      try {
+        const existingUserId = await userDB.findOne({ userId, verifyCode });
 
-    await connection.query('UPDATE users SET access_token = ? WHERE email_verification_token = ? AND email_verification_code = ?', [newToken, email_verification_token, email_verification_code]); // Await the query execution
-    await connection.query('UPDATE users SET email_verification_token = ? WHERE email_verification_token = ?', ["", email_verification_token]); // Await the query execution
-    await connection.query('UPDATE users SET email_verification_code = ? WHERE email_verification_code = ?', ["", email_verification_code]); // Await the query execution
+        if (existingUserId) {
+          const access_token = jwt.sign({ userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+          await userDB.updateOne({ userId }, { $unset: { verifyCode: 1 } });
 
-    connection.release(); // Release the connection back to the pool
-
-    res.cookie('access_token', newToken, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
-    res.status(200).json({ success: true });
-  } catch (error) {
-    console.error('Database error:', error);
-    const params = {
-      content: "ALERT: DATABASE ERROR!!"
-    };
-    await fetch(DC_MONITORING_WEBHOOK_URL, { // Await the webhook request
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
+          res.cookie('access_token', access_token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
+          return res.status(200).json({ success: true });
+        } else {
+          return res.status(460).json({ success: false, error: 'Wrong verification code entered' });
+        }
+      } catch (error) {
+        return res.status(500).json({ success: false, error: 'Database error' });
+      }
     });
-    res.status(500).json({ error: 'Something went wrong, try again later' });
+  } catch (error) {
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
+
+
 
 
 
@@ -635,41 +543,34 @@ app.all('/api/sso/confirmationlink/:email_verification_token/:email_verification
   const { email_verification_token, email_verification_code } = req.params;
 
   try {
-    const connection = await pool.getConnection(); // Get a connection from the pool
-    const [results] = await connection.query('SELECT * FROM users WHERE email_verification_token = ? AND email_verification_code = ?', [email_verification_token, email_verification_code]); // Await the query execution
+    jwt.verify(email_verification_token, JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        return res.status(400).json({ success: false, error: 'Verification token invalid, try a login to get a new verification token.'});
+      }
 
-    if (results && results.length === 0) {
-      connection.release(); // Release the connection back to the pool
-      return res.status(406).json({ success: false, error: 'Wrong verification code' });
-    }
+      const userId = decoded.userId;
+      const verifyCode = email_verification_code;
 
-    const newToken = jwt.sign({}, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+      try {
+        const existingUserId = await userDB.findOne({ userId, verifyCode });
 
-    await connection.query('UPDATE users SET access_token = ? WHERE email_verification_token = ? AND email_verification_code = ?', [newToken, email_verification_token, email_verification_code]); // Await the query execution
-    await connection.query('UPDATE users SET email_verification_token = ? WHERE email_verification_token = ?', ["", email_verification_token]); // Await the query execution
-    await connection.query('UPDATE users SET email_verification_code = ? WHERE email_verification_code = ?', ["", email_verification_code]); // Await the query execution
+        if (existingUserId) {
+          const access_token = jwt.sign({ userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+          await userDB.updateOne({ userId }, { $unset: { verifyCode: 1 } });
 
-    connection.release(); // Release the connection back to the pool
-
-    res.cookie('access_token', newToken, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
-    return res.redirect('/home');
-  } catch (error) {
-    console.error('Database error:', error);
-    const params = {
-      content: "ALERT: DATABASE ERROR!!"
-    };
-    await fetch(DC_MONITORING_WEBHOOK_URL, { // Await the webhook request
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
+          res.cookie('access_token', access_token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
+          return res.redirect('/home')
+        } else {
+          return res.status(460).json({ success: false, error: 'Wrong verification code entered' });
+        }
+      } catch (error) {
+        return res.status(500).json({ success: false, error: 'Database error' });
+      }
     });
-    res.status(500).json({ error: 'Something went wrong, try again later' });
+  } catch (error) {
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
-
-
 
 app.all('/api/sso/setresettokens/:password_reset_token/:password_reset_code', (req, res) => {
   const { password_reset_token, password_reset_code } = req.params;
