@@ -39,7 +39,7 @@ kubectl apply -f database-deployment.yaml
 ```
 
 4.) Apply all deployment files. 
-I used a nginx ingress controller. 
+I used a nginx ingress controller. Also dont forget to change the values to your demand in ingress-deployment.yaml
 
 ```yaml
 kubectl create ns loginapp
