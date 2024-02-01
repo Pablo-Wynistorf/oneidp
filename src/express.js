@@ -924,6 +924,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const collection = db.collection('users'); 
     const result = await collection.findOne({});
+    const error = "Database connection error, or not initialized."
 
     if (!result) {
       notifyError(error);
@@ -938,7 +939,7 @@ app.get('/api/health', async (req, res) => {
     res.status(200).json({ status: 'ok' });
   } catch (error) {
     notifyError(error);
-    res.status(500).json({ error: 'Application has encountered an error' });
+    res.status(500).json({ error: 'Application has encountered an error:', error });
   } finally {
   }
 });
