@@ -30,7 +30,7 @@ MJ_SENDER_EMAIL= # Enter the email address the verification codes should be sent
 DC_MONITORING_WEBHOOK_URL= # Enter the discord webhook url.
 ```
 
-3.) Its not recommended to use the mongodb in kubernetes. But if you want to, you just need to install these manifests. Make sure to add the values to MONGO_INITDB_ROOT_USERNAME and MONGO_INITDB_ROOT_PASSWORD. 
+3.) Its not recommended to use the mongodb in kubernetes. But if you want to, you just need to install these manifests. Make sure to add the values in the secrets.yaml to MONGO_INITDB_ROOT_USERNAME and MONGO_INITDB_ROOT_PASSWORD. 
 ```yaml
 kubectl create ns loginapp
 kubectl apply -f secrets.yaml
