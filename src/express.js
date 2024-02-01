@@ -87,6 +87,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 
+// Verify access token
 const verifyToken = (req, res, next) => {
   const access_token_cookie = req.headers.cookie;
   const requestedPath = req.baseUrl;
@@ -138,6 +139,7 @@ const verifyToken = (req, res, next) => {
 };
 
 
+// Handle existing access token
 const existingToken = (req, res, next) => {
   const access_token_cookie = req.headers.cookie;
 
@@ -159,10 +161,14 @@ const existingToken = (req, res, next) => {
 
 
 
+// Redirect to /login
 app.get('/', (req, res) => {
   res.redirect('/login');
 });
 
+
+
+// All express routes
 app.use('/login', existingToken, express.static(path.join(__dirname, 'public/login')));
 app.use('/home', verifyToken, express.static(path.join(__dirname, 'public/home')));
 app.use('/register', existingToken, express.static(path.join(__dirname, 'public/register')));
@@ -171,6 +177,8 @@ app.use('/verify', existingToken, express.static(path.join(__dirname, 'public/ve
 app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
 
 
+
+// Login to the account, if account not verified, resend verification email.
 app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
   const { username_or_email, password } = req.body;
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
@@ -220,6 +228,8 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
 });
 
 
+
+// Handle successful login and generate access tokens
 async function loginSuccess(userId, username, email, sid, res) {
   if (!sid) {
     const newsid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
@@ -238,6 +248,9 @@ async function loginSuccess(userId, username, email, sid, res) {
   return res.status(200).json({ success: true });
 }
 
+
+
+// Register as new user, store userdata in the database and send verification email
 app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
   const { username, password, email } = req.body;
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
@@ -301,8 +314,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
 
 
 
-
-
+// Verify user with verification code and token, and later generate access tokens
 app.post('/api/sso/verify', async (req, res) => {
   const { email_verification_token, email_verification_code } = req.body;
 
@@ -341,8 +353,7 @@ app.post('/api/sso/verify', async (req, res) => {
 
 
 
-
-
+// Verify user with verification code and token with the verificationlink, and later generate access tokens
 app.all('/api/sso/confirmationlink/:email_verification_token/:email_verification_code', async (req, res) => {
   const { email_verification_token, email_verification_code } = req.params;
 
@@ -379,6 +390,9 @@ app.all('/api/sso/confirmationlink/:email_verification_token/:email_verification
   }
 });
 
+
+
+// Convert link into usable password_reset_code and password_reset_token cookies
 app.all('/api/sso/setresettokens/:password_reset_token/:password_reset_code', (req, res) => {
   const { password_reset_token, password_reset_code } = req.params;
     res.cookie('password_reset_token', password_reset_token, { maxAge: 1 * 60 * 60 * 1000, path: '/'});
@@ -387,6 +401,8 @@ app.all('/api/sso/setresettokens/:password_reset_token/:password_reset_code', (r
 });
 
 
+
+// Handle password change, define new session id, store passwordhash in database and issue new access token. 
 app.post('/api/sso/data/changepassword', async (req, res) => {
   try {
     const authorizationHeader = req.headers['authorization'];
@@ -441,7 +457,7 @@ app.post('/api/sso/data/changepassword', async (req, res) => {
 
 
 
-
+// Handle username fetch
 app.post('/api/sso/data/username', async (req, res) => {
   const authorizationHeader = req.headers['authorization'];
 
@@ -476,6 +492,8 @@ app.post('/api/sso/data/username', async (req, res) => {
 });
 
 
+
+// Handle logout and change session id. (Invalidate access token)
 app.post('/api/sso/auth/logout', async (req, res) => {
   const authorizationHeader = req.headers['authorization'];
 
@@ -511,6 +529,7 @@ app.post('/api/sso/auth/logout', async (req, res) => {
 
 
 
+// Make a password reset request and send recovery code. 
 app.post('/api/sso/data/resetpassword', async (req, res) => {
   const { email } = req.body;
 
@@ -543,6 +562,7 @@ app.post('/api/sso/data/resetpassword', async (req, res) => {
 
 
 
+// Set new password with recoverycode and recoverytoken. 
 app.post('/api/sso/data/setpassword', async (req, res) => {
   const { password, password_reset_token, password_reset_code } = req.body;
   const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
@@ -595,13 +615,7 @@ app.post('/api/sso/data/setpassword', async (req, res) => {
 
 
 
-
-
-
-
-
-
-
+// Send the email verification email
 function sendVerificationEmail(username, email, email_verification_token, new_email_verification_code, res) {
   const mailjetConnect = mailjet.apiConnect(MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE);
   const request = mailjetConnect
@@ -735,8 +749,7 @@ function sendVerificationEmail(username, email, email_verification_token, new_em
 
 
 
-
-
+// Send the password recovery email
 function sendRecoveryEmail(username, email, password_reset_token, password_reset_code, res) {
   const mailjetConnect = mailjet.apiConnect(MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE);
   const request = mailjetConnect
@@ -870,6 +883,7 @@ function sendRecoveryEmail(username, email, password_reset_token, password_reset
 
 
 
+// Notify when database error occurs.
 function notifyError(error) {
   const params = {
     content: `ALERT: DATABASE ERROR: ${error}`
@@ -885,6 +899,9 @@ function notifyError(error) {
   });
 }
 
+
+
+// Notify when user logs in
 function notifyLogin(username) {
   const params = {
     content: `User with Username: ${username} has just logged in!`
@@ -900,6 +917,9 @@ function notifyLogin(username) {
   });
 }
 
+
+
+// Notify when user has registered
 function notifyRegister(username) {
   const params = {
     content: `User with Username: ${username} has just registered!`
@@ -917,9 +937,7 @@ function notifyRegister(username) {
 
 
 
-
-
-
+// Check the health of the application
 app.get('/api/health', async (req, res) => {
   try {
     const collection = db.collection('users'); 
@@ -943,6 +961,8 @@ app.get('/api/health', async (req, res) => {
 });
 
 
+
+// Start the api
 app.listen(API_PORT, () => {
   console.log('Login API started on port', API_PORT);
 });
