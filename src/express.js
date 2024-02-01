@@ -925,12 +925,10 @@ app.get('/api/health', async (req, res) => {
     const collection = db.collection('users'); 
     const result = await collection.findOne({});
     const error = "Database connection error, or not initialized."
-
     if (!result) {
       notifyError(error);
       return res.status(500).json({ error: 'Database error' });
     }
-
     const response = await fetch('https://google.com', { method: 'GET' });
     if (!response.ok) {
       notifyError();
