@@ -100,8 +100,8 @@ const verifyToken = (req, res, next) => {
 
     const access_token = cookies['access_token'];
 
-    jwt.verify(access_token, JWT_SECRET, async (err, decoded) => {
-      if (err) {
+    jwt.verify(access_token, JWT_SECRET, async (error, decoded) => {
+      if (error) {
         res.clearCookie('access_token');
         if (requestedPath !== '/login') {
           return res.redirect('/login');
@@ -307,8 +307,8 @@ app.post('/api/sso/verify', async (req, res) => {
   const { email_verification_token, email_verification_code } = req.body;
 
   try {
-    jwt.verify(email_verification_token, JWT_SECRET, async (err, decoded) => {
-      if (err) {
+    jwt.verify(email_verification_token, JWT_SECRET, async (error, decoded) => {
+      if (error) {
         return res.status(400).json({ success: false, error: 'Verification token invalid, try a login to get a new verification token.'});
       }
 
@@ -347,8 +347,8 @@ app.all('/api/sso/confirmationlink/:email_verification_token/:email_verification
   const { email_verification_token, email_verification_code } = req.params;
 
   try {
-    jwt.verify(email_verification_token, JWT_SECRET, async (err, decoded) => {
-      if (err) {
+    jwt.verify(email_verification_token, JWT_SECRET, async (error, decoded) => {
+      if (error) {
         return res.status(400).json({ success: false, error: 'Verification token invalid, try a login to get a new verification token.'});
       }
 
@@ -469,8 +469,8 @@ app.post('/api/sso/data/username', async (req, res) => {
     const username = userData.username;
 
     res.status(200).json({ success: true, username: username });
-  } catch (err) {
-    notifyError(err)
+  } catch (error) {
+    notifyError(error)
     return res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
@@ -503,8 +503,8 @@ app.post('/api/sso/auth/logout', async (req, res) => {
     await userDB.updateOne({ userId }, { $unset: { sid: 1 } });
 
     res.status(200).json({ success: true});
-  } catch (err) {
-    notifyError(err)
+  } catch (error) {
+    notifyError(error)
     return res.status(401).json({ error: 'Invalid access token' });
   }
 });
@@ -584,7 +584,7 @@ app.post('/api/sso/data/setpassword', async (req, res) => {
       res.status(200).json({ success: true });
 
   
-    } catch (err) {
+    } catch (error) {
       return res.status(401).json({ error: 'Invalid password reset token' });
     }
   } catch (error) {
@@ -728,8 +728,8 @@ function sendVerificationEmail(username, email, email_verification_token, new_em
       ]
     });
   request.then(() => {
-  }).catch((err) => {
-    notifyError(err);
+  }).catch((error) => {
+    notifyError(error);
   });
 }
 
@@ -863,8 +863,8 @@ function sendRecoveryEmail(username, email, password_reset_token, password_reset
       ]
     });
   request.then(() => {
-  }).catch((err) => {
-    notifyError(err);
+  }).catch((error) => {
+    notifyError(error);
   });
 }
 
@@ -880,8 +880,8 @@ function notifyError(error) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
-  }).catch((err) => {
-    console.error('Interet, or Webhook URL error:', err);
+  }).catch((error) => {
+    console.error('Interet, or Webhook URL error:', error);
   });
 }
 
@@ -895,8 +895,8 @@ function notifyLogin(username) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
-  }).catch((err) => {
-    console.error('Interet, or Webhook URL error:', err);
+  }).catch((error) => {
+    console.error('Interet, or Webhook URL error:', error);
   });
 }
 
@@ -910,8 +910,8 @@ function notifyRegister(username) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(params),
-  }).catch((err) => {
-    console.error('Interet, or Webhook URL error:', err);
+  }).catch((error) => {
+    console.error('Interet, or Webhook URL error:', error);
   });
 }
 
@@ -926,7 +926,7 @@ app.get('/api/health', async (req, res) => {
     const result = await collection.findOne({});
 
     if (!result) {
-      notifyError(err);
+      notifyError(error);
       return res.status(500).json({ error: 'Database error' });
     }
 
