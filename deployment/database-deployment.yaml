@@ -41,7 +41,7 @@ spec:
             memory: "600Mi"
         volumeMounts:
         - name: loginapp-mongodb
-          mountPath: /etc/mongo
+          mountPath: /data/db
       volumes:
       - name: loginapp-mongodb
         persistentVolumeClaim:
