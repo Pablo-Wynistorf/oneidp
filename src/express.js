@@ -646,6 +646,64 @@ app.get('/2fa/setup', async (req, res) => {
     const email = userData.email;
 
     if (twoFaEnabled === true) {
+      return res.status(460).json({ error: 'User has 2fa already enabled'})
+    }
+    
+    const twoFaSecret = speakeasy.generateSecret({ length: 20 });
+
+
+    await userDB.updateOne({ userId }, { $set: { twoFaSecret: twoFaSecret.ascii } });
+
+    const qrCodeUrl = speakeasy.otpauthURL({
+      secret: twoFaSecret.ascii,
+      label: email,
+      issuer: URL,
+      encoding: 'base64'
+    });
+
+    qrcode.toDataURL(qrCodeUrl, (err, imageUrl) => {
+      if (err) {
+        res.status(500).json({ message: 'Error generating QR code' });
+      } else {
+        res.json({ imageUrl, secret: twoFaSecret.ascii });
+      }
+    });
+  } catch (error) {
+    notifyError(error);
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
+});
+
+
+
+// Verify verify
+app.get('/2fa/verify', async (req, res) => {
+  const authorizationHeader = req.headers['authorization'];
+
+  if (!authorizationHeader) {
+    return res.status(400).json({ error: 'Authorization header is missing' });
+  }
+
+  const tokenParts = authorizationHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(400).json({ error: 'Invalid authorization header format' });
+  }
+
+  const access_token = tokenParts[1];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    
+    const userData = await userDB.findOne({ userId: userId, sid: sid });
+    if (!userData) {
+      return res.status(404).json({ error: 'User data not found' });
+    }
+    const twoFaEnabled = userData.twoFaEnabled;
+    const email = userData.email;
+
+    if (twoFaEnabled === true) {
       return res.status(460).json({ error: 'User has 2fa already enabled' });
     }
     
