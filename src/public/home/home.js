@@ -82,6 +82,9 @@ function logoutAll() {
   }
 }
 
+function setup_mfa() {
+  window.location.href = '/home/2fa/setup';
+}
 
 function setNewPassword() {
   var password1 = document.getElementById("newPassword").value;
