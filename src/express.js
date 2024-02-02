@@ -7,6 +7,8 @@ const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const mailjet = require('node-mailjet');
 const path = require('path');
+const qrcode = require('qrcode');
+const speakeasy = require('speakeasy');
 require('dotenv').config();
 
 const URL = process.env.URL;
@@ -53,8 +55,8 @@ const userSchema = new Schema({
   sid: String,
   verifyCode: String,
   resetCode: String,
-  twoFaCode: String,
-  twoFaEnbled: Boolean,
+  twoFaSecret: String,
+  twoFaEnabled: Boolean,
   accountRole: String,
 }, {
   timestamps: true
@@ -119,8 +121,7 @@ const verifyToken = (req, res, next) => {
           res.clearCookie('access_token');
           return res.redirect('/login');
         }
-
-        if (requestedPath !== '/home') {
+        if (requestedPath !== '/home' && requestedPath !== '/home/2fa/setup') {
           return res.redirect('/home');
         }
         res.clearCookie('email_verification_token');
@@ -137,6 +138,7 @@ const verifyToken = (req, res, next) => {
     return res.redirect('/login');
   }
 };
+
 
 
 // Handle existing access token
@@ -175,6 +177,7 @@ app.use('/register', existingToken, express.static(path.join(__dirname, 'public/
 app.use('/setpassword', express.static(path.join(__dirname, 'public/setpassword')));
 app.use('/verify', existingToken, express.static(path.join(__dirname, 'public/verify')));
 app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
+app.use('/home/2fa/setup', existingToken, express.static(path.join(__dirname, 'public/2fasetup')));
 
 
 
@@ -296,7 +299,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
       password: hashedPassword,
       email: email,
       verifyCode: email_verification_code,
-      twoFaEnbled: false,
+      twoFaEnabled: false,
     });
 
     await newUser.save();
@@ -613,6 +616,66 @@ app.post('/api/sso/data/setpassword', async (req, res) => {
   }
 });
 
+
+
+// Get the 2fa qr code
+app.get('/2fa/setup', async (req, res) => {
+  const authorizationHeader = req.headers['authorization'];
+
+  if (!authorizationHeader) {
+    return res.status(400).json({ error: 'Authorization header is missing' });
+  }
+
+  const tokenParts = authorizationHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(400).json({ error: 'Invalid authorization header format' });
+  }
+
+  const access_token = tokenParts[1];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    
+    const userData = await userDB.findOne({ userId: userId, sid: sid });
+    if (!userData) {
+      return res.status(404).json({ error: 'User data not found' });
+    }
+    const twoFaEnabled = userData.twoFaEnabled;
+    const email = userData.email;
+
+    if (twoFaEnabled === true) {
+      return res.status(460).json({ error: 'User has 2fa already enabled' });
+    }
+    
+    const twoFaSecret = speakeasy.generateSecret({ length: 20 });
+
+
+    await userDB.updateOne({ userId }, { $set: { twoFaSecret: twoFaSecret.ascii } });
+
+    const qrCodeUrl = speakeasy.otpauthURL({
+      secret: twoFaSecret.ascii,
+      label: email,
+      issuer: URL,
+      encoding: 'base64'
+    });
+
+    qrcode.toDataURL(qrCodeUrl, (err, imageUrl) => {
+      if (err) {
+        res.status(500).json({ message: 'Error generating QR code' });
+      } else {
+        res.json({ imageUrl, secret: twoFaSecret.ascii });
+      }
+    });
+  } catch (error) {
+    notifyError(error);
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
+});
+
+
+  
 
 
 // Send the email verification email

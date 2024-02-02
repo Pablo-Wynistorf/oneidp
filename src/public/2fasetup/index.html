@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Set Password</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="login-box">
+      <h1>Setup 2Fa</h1>
+      <form>
+        <div class="textbox">
+          <img id="qrCode" src="" alt="QR Code">
+            <i class="fas fa-user"></i>
+            <input type="password" placeholder="Enter the 2FA Code" name="newPassword" id="newPassword" required>
+          </div>
+          <button class="btn">Activate 2Fa</button>
+        </div>
+      </form>
+    </div>
+    <script src="index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
+  </body>
+</html>
