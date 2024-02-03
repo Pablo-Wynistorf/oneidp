@@ -80,28 +80,6 @@ body {
   background-color: #23a559; /* Updated color here */
 }
 
-.alert {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background-color: #ff0000;
-  color: #fff;
-  text-align: center;
-  padding: 10px;
-}
-
-.alert200 {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background-color: #16ff01;
-  color: #000000;
-  text-align: center;
-  padding: 10px;
-}
-
 .passwordRequirements {
   width: 100%;
   overflow: hidden;
@@ -210,4 +188,28 @@ body {
   100% {
     border-color: #ff00ff; /* Magenta on the right */
   }
+}
+
+.error-box {
+  font-size: 20px;
+  position: fixed;
+  top: 60px;
+  right: 60px;
+  background-color: #ff4136;
+  color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.success-box {
+  font-size: 20px;
+  position: fixed;
+  top: 60px;
+  right: 60px;
+  background-color: #248046;
+  color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }

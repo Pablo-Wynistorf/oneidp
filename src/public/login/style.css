@@ -202,12 +202,24 @@ body {
   animation: wiggle 0.1s ease-in-out 4;
 }
 
-.alert {
+.error-box {
   font-size: 20px;
   position: fixed;
   top: 60px;
   right: 60px;
   background-color: #ff4136;
+  color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.success-box {
+  font-size: 20px;
+  position: fixed;
+  top: 60px;
+  right: 60px;
+  background-color: #248046;
   color: #fff;
   padding: 20px;
   border-radius: 5px;

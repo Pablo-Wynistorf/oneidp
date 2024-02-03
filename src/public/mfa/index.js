@@ -54,10 +54,9 @@ inputs.forEach(function(input) {
                     'mfaVerifyCode': `${collectedInputs}`
                 })
             })
-            .then(response => handleResponse(response))
+            .then(response)
             handleResponse(response)
             .catch(error => {
-                console.error('Error:', error);
                 handleError();
             });
         }
@@ -73,8 +72,6 @@ function handleResponse(response) {
     return handle460Error();
   } else if (response.status === 461) {
     handle461Error();
-  } else if (response.status === 462) {
-    handle462Error();
   } else {
     handleError();
 
@@ -82,24 +79,19 @@ function handleResponse(response) {
 }
 
 function handle460Error() {
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'MFA Already enabled';
-  const passwordInput = document.getElementById('mfaInputContainer');
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
+  displayError('Error: MFA already enabled');
   setTimeout(() => {
-    alertDiv.remove();
     window.location.replace('/home');
   }, 5000);
 }
 
-function handle462Error() {
-  displayError('MFA verification code invalid');
+function handle461Error() {
+  displayError('Error: MFA verification code invalid');
 }
 
+function handleError() {
+  displayError('Something went wrong, try again later')
+}
 
 function displayError(errorMessage) {
   errorBox.textContent = errorMessage;
@@ -115,16 +107,6 @@ function displaySuccess(successMessage) {
   setTimeout(() => {
       successBox.remove();
   }, 2500);
-}
-
-
-function handleError() {
-  console.error('An error occurred');
-}
-
-function handle461Error() {
-  // Handle 404 error, could be logging, displaying a message, etc.
-  console.error('Resource not found');
 }
 
 
@@ -147,7 +129,6 @@ function moveToNextOrPreviousInput(input, isBackspace) {
 
 function onlyNumbers(event) {
   const key = event.key;
-  // Allow only numbers and the backspace key
   if (isNaN(key) && key !== "Backspace") {
     event.preventDefault();
   }

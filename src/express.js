@@ -440,7 +440,8 @@ app.post('/api/sso/data/changepassword', async (req, res) => {
 
     const userData = await userDB.findOne({ userId: userId, sid: sid });
     if (!userData) {
-      return res.status(404).json({ error: 'User data not found' });
+      res.clearCookie('access_token');
+      return res.redirect('/login');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -482,7 +483,8 @@ app.post('/api/sso/data/username', async (req, res) => {
     
     const userData = await userDB.findOne({ userId: userId, sid: sid });
     if (!userData) {
-      return res.status(404).json({ error: 'User data not found' });
+      res.clearCookie('access_token');
+      return res.redirect('/login');
     }
 
     const username = userData.username;
@@ -518,7 +520,8 @@ app.post('/api/sso/auth/logout', async (req, res) => {
     
     const userData = await userDB.findOne({ userId: userId, sid: sid });
     if (!userData) {
-      return res.status(404).json({ error: 'User data not found' });
+      res.clearCookie('access_token');
+      return res.redirect('/login');
     }
 
     await userDB.updateOne({ userId }, { $unset: { sid: 1 } });
@@ -640,7 +643,8 @@ app.get('/api/mfa/setup', async (req, res) => {
     
     const userData = await userDB.findOne({ userId: userId, sid: sid });
     if (!userData) {
-      return res.status(404).json({ error: 'User data not found' });
+      res.clearCookie('access_token');
+      return res.redirect('/login');
     }
     const mfaEnabled = userData.mfaEnabled;
     const email = userData.email;
@@ -663,7 +667,7 @@ app.get('/api/mfa/setup', async (req, res) => {
 
     qrcode.toDataURL(qrCodeUrl, (err, imageUrl) => {
       if (err) {
-        res.status(500).json({ message: 'Error generating QR code' });
+        res.status(500).json({ error: 'Something went wrong, try again later' });
       } else {
         res.json({ imageUrl, secret: mfaSecret.ascii });
       }
@@ -699,7 +703,8 @@ app.post('/api/mfa/setup/verify', async (req, res) => {
     
     const userData = await userDB.findOne({ userId: userId, sid: sid });
     if (!userData) {
-      return res.status(404).json({ error: 'User data not found' });
+      res.clearCookie('access_token');
+      return res.redirect('/login');
     }
     const mfaEnabled = userData.mfaEnabled;
     const mfaSecret = userData.mfaSecret;

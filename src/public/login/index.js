@@ -44,16 +44,11 @@ function login() {
 
 function handleResponse(response) {
   if (response.status === 200) {
-    return response.json().then(data => {
-      window.location.href = '/home';
-    })
+    window.location.href = '/home';
   } else if (response.status === 401) {
     handle401Error();
   } else if (response.status === 461) {
-    return response.json().then(data => {
     handle461Error();
-    window.location.href = '/verify';
-    })
   } else {
     handleError();
   }
@@ -66,47 +61,34 @@ function handle401Error() {
   passwordInput.value = '';
   usernameInput.classList.add('wiggle');
   passwordInput.classList.add('wiggle');
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Username or password wrong';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Username or password wrong')
 }
 
 function handle461Error() {
-  const usernameInput = document.getElementById('username');
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Email not verified';
-  usernameInput.parentElement.appendChild(alertDiv);
-  usernameInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Email not verified')
+  window.location.href = '/verify';
 }
 
 function handleError() {
-  const usernameInput = document.getElementById('username');
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Something went wrong';
-  usernameInput.parentElement.appendChild(alertDiv);
-  usernameInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Something went wrong')
 }
 
 
 
+
+
+function displaySuccess(successMessage) {
+  successBox.textContent = successMessage;
+  document.body.appendChild(successBox);
+  setTimeout(() => {
+      successBox.remove();
+  }, 2500);
+}
+
+function displayError(errorMessage) {
+  errorBox.textContent = errorMessage;
+  document.body.appendChild(errorBox);
+  setTimeout(() => {
+      errorBox.remove();
+  }, 2500);
+}

@@ -57,36 +57,35 @@ function handleResponse(response) {
 }
 
 function handle460Error() {
-  const verification_codeInput = document.getElementById('verification-code');
   document.getElementById('verification-code').value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Wrong verification code entered';
-  verification_codeInput.parentElement.appendChild(alertDiv);
-  verification_codeInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Error: Wrong verification code entered')
 }
 
 
 function handleError() {
-  const passwordInput = document.getElementById('password');
   document.getElementById('password').value = '';
   document.getElementById('password-retype').value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Something went wrong';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
+  displayError('Something went wrong')
 }
 
 
 function redirect_login() {
   window.location.href = '/login'
+}
+
+
+function displaySuccess(successMessage) {
+  successBox.textContent = successMessage;
+  document.body.appendChild(successBox);
+  setTimeout(() => {
+      successBox.remove();
+  }, 2500);
+}
+
+function displayError(errorMessage) {
+  errorBox.textContent = errorMessage;
+  document.body.appendChild(errorBox);
+  setTimeout(() => {
+      errorBox.remove();
+  }, 2500);
 }
