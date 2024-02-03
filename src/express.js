@@ -55,8 +55,8 @@ const userSchema = new Schema({
   sid: String,
   verifyCode: String,
   resetCode: String,
-  twoFaSecret: String,
-  twoFaEnabled: Boolean,
+  mfaSecret: String,
+  mfaEnabled: Boolean,
   accountRole: String,
 }, {
   timestamps: true
@@ -121,7 +121,7 @@ const verifyToken = (req, res, next) => {
           res.clearCookie('access_token');
           return res.redirect('/login');
         }
-        if (requestedPath !== '/home' && requestedPath !== '/home/2fa/setup') {
+        if (requestedPath !== '/home' && requestedPath !== '/home/mfa/setup') {
           return res.redirect('/home');
         }
         res.clearCookie('email_verification_token');
@@ -177,7 +177,7 @@ app.use('/register', existingToken, express.static(path.join(__dirname, 'public/
 app.use('/setpassword', express.static(path.join(__dirname, 'public/setpassword')));
 app.use('/verify', existingToken, express.static(path.join(__dirname, 'public/verify')));
 app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
-app.use('/home/2fa/setup', existingToken, express.static(path.join(__dirname, 'public/2fasetup')));
+app.use('/home/mfa/setup', existingToken, express.static(path.join(__dirname, 'public/mfa')));
 
 
 
@@ -299,7 +299,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
       password: hashedPassword,
       email: email,
       verifyCode: email_verification_code,
-      twoFaEnabled: false,
+      mfaEnabled: false,
     });
 
     await newUser.save();
@@ -618,8 +618,8 @@ app.post('/api/sso/data/setpassword', async (req, res) => {
 
 
 
-// Get the 2fa qr code
-app.get('/2fa/setup', async (req, res) => {
+// Get the mfa qr code
+app.get('/mfa/setup', async (req, res) => {
   const authorizationHeader = req.headers['authorization'];
 
   if (!authorizationHeader) {
@@ -642,20 +642,20 @@ app.get('/2fa/setup', async (req, res) => {
     if (!userData) {
       return res.status(404).json({ error: 'User data not found' });
     }
-    const twoFaEnabled = userData.twoFaEnabled;
+    const mfaEnabled = userData.mfaEnabled;
     const email = userData.email;
 
-    if (twoFaEnabled === true) {
-      return res.status(460).json({ error: 'User has 2fa already enabled'})
+    if (mfaEnabled === true) {
+      return res.status(460).json({ error: 'User has mfa already enabled'})
     }
     
-    const twoFaSecret = speakeasy.generateSecret({ length: 20 });
+    const mfaSecret = speakeasy.generateSecret({ length: 20 });
 
 
-    await userDB.updateOne({ userId }, { $set: { twoFaSecret: twoFaSecret.ascii } });
+    await userDB.updateOne({ userId }, { $set: { mfaSecret: mfaSecret.ascii } });
 
     const qrCodeUrl = speakeasy.otpauthURL({
-      secret: twoFaSecret.ascii,
+      secret: mfaSecret.ascii,
       label: email,
       issuer: URL,
       encoding: 'base64'
@@ -665,7 +665,7 @@ app.get('/2fa/setup', async (req, res) => {
       if (err) {
         res.status(500).json({ message: 'Error generating QR code' });
       } else {
-        res.json({ imageUrl, secret: twoFaSecret.ascii });
+        res.json({ imageUrl, secret: mfaSecret.ascii });
       }
     });
   } catch (error) {
@@ -676,9 +676,10 @@ app.get('/2fa/setup', async (req, res) => {
 
 
 
-// Verify verify
-app.get('/2fa/verify', async (req, res) => {
+// Mfa setup verify
+app.post('/mfa/setup/verify', async (req, res) => {
   const authorizationHeader = req.headers['authorization'];
+  const mfaVerifyCode = req.body.mfaVerifyCode;
 
   if (!authorizationHeader) {
     return res.status(400).json({ error: 'Authorization header is missing' });
@@ -700,32 +701,23 @@ app.get('/2fa/verify', async (req, res) => {
     if (!userData) {
       return res.status(404).json({ error: 'User data not found' });
     }
-    const twoFaEnabled = userData.twoFaEnabled;
-    const email = userData.email;
+    const mfaEnabled = userData.mfaEnabled;
+    const mfaSecret = userData.mfaSecret;
 
-    if (twoFaEnabled === true) {
-      return res.status(460).json({ error: 'User has 2fa already enabled' });
+    if (mfaEnabled === true) {
+      return res.status(460).json({ error: 'User has mfa already enabled' });
     }
-    
-    const twoFaSecret = speakeasy.generateSecret({ length: 20 });
 
-
-    await userDB.updateOne({ userId }, { $set: { twoFaSecret: twoFaSecret.ascii } });
-
-    const qrCodeUrl = speakeasy.otpauthURL({
-      secret: twoFaSecret.ascii,
-      label: email,
-      issuer: URL,
-      encoding: 'base64'
-    });
-
-    qrcode.toDataURL(qrCodeUrl, (err, imageUrl) => {
-      if (err) {
-        res.status(500).json({ message: 'Error generating QR code' });
-      } else {
-        res.json({ imageUrl, secret: twoFaSecret.ascii });
-      }
-    });
+    const verified = speakeasy.totp.verify({
+      secret: mfaSecret,
+      encoding: 'base64',
+      token: mfaVerifyCode,
+      window: 2
+  });
+  if (verified) {
+    await userDB.updateOne({ userId }, { $set: { mfaEnabled: true }});
+    return res.status(200).json({ success: true, message: 'MFA enabled'})
+  }
   } catch (error) {
     notifyError(error);
     return res.status(500).json({ error: 'Something went wrong, try again later' });

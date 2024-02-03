@@ -83,7 +83,7 @@ function logoutAll() {
 }
 
 function setup_mfa() {
-  window.location.href = '/home/2fa/setup';
+  window.location.href = '/home/mfa/setup';
 }
 
 function setNewPassword() {

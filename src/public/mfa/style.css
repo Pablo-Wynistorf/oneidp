@@ -13,7 +13,7 @@ body {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-.twoFa-box {
+.mfa-box {
   width: 300px;
   height: 500px;
   background: #202225;
@@ -28,7 +28,7 @@ body {
   text-align: center;
 }
 
-.twoFa-box h1 {
+.mfa-box h1 {
   font-size: 40px;
   border-bottom: 6px solid #4caf50;
   margin-bottom: 30px; 
