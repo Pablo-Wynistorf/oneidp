@@ -1,3 +1,9 @@
+const errorBox = document.createElement('div');
+const successBox = document.createElement('div');
+
+errorBox.className = 'error-box';
+successBox.className = 'success-box';
+
 function ingestCode() {
   const password_reset_code = getCookie('password_reset_code');
   if (password_reset_code) {

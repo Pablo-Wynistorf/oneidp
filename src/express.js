@@ -619,7 +619,7 @@ app.post('/api/sso/data/setpassword', async (req, res) => {
 
 
 // Get the mfa qr code
-app.get('/mfa/setup', async (req, res) => {
+app.get('/api/mfa/setup', async (req, res) => {
   const authorizationHeader = req.headers['authorization'];
 
   if (!authorizationHeader) {
@@ -677,7 +677,7 @@ app.get('/mfa/setup', async (req, res) => {
 
 
 // Mfa setup verify
-app.post('/mfa/setup/verify', async (req, res) => {
+app.post('/api/mfa/setup/verify', async (req, res) => {
   const authorizationHeader = req.headers['authorization'];
   const mfaVerifyCode = req.body.mfaVerifyCode;
 
@@ -717,6 +717,8 @@ app.post('/mfa/setup/verify', async (req, res) => {
   if (verified) {
     await userDB.updateOne({ userId }, { $set: { mfaEnabled: true }});
     return res.status(200).json({ success: true, message: 'MFA enabled'})
+  } else {
+    return res.status(462).json({ success: false, error: 'Invalid verification code'})
   }
   } catch (error) {
     notifyError(error);

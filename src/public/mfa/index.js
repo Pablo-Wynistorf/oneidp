@@ -1,3 +1,9 @@
+const errorBox = document.createElement('div');
+const successBox = document.createElement('div');
+
+errorBox.className = 'error-box';
+successBox.className = 'success-box';
+
 function getCookie(name) {
   const cookieArray = document.cookie.split(';');
   for (const cookie of cookieArray) {
@@ -11,7 +17,7 @@ function getCookie(name) {
 
 const accessToken = getCookie('access_token');
 if (accessToken) {
-  fetch(`/mfa/setup`, {
+  fetch(`/api/mfa/setup`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -25,7 +31,6 @@ if (accessToken) {
     qrCodeLoaded = true;
   })
   .catch(error => {
-    console.error('Error:', error);
     handleError();
   });
 }
@@ -39,7 +44,7 @@ inputs.forEach(function(input) {
             collectedInputs += input.value;
         });
         if (collectedInputs.length === inputs.length) {
-            fetch(`/mfa/setup/verify`, {
+            fetch(`/api/mfa/setup/verify`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -66,12 +71,13 @@ function handleResponse(response) {
     return response.json();
   } else if (response.status === 460) {
     return handle460Error();
-  } else if (response.status === 404) {
-    handle404Error();
-    throw new Error('Resource not found');
+  } else if (response.status === 461) {
+    handle461Error();
+  } else if (response.status === 462) {
+    handle462Error();
   } else {
     handleError();
-    throw new Error('Unknown error');
+
   }
 }
 
@@ -79,7 +85,7 @@ function handle460Error() {
   const alertDiv = document.createElement('div');
   alertDiv.className = 'alert';
   alertDiv.textContent = 'MFA Already enabled';
-  const passwordInput = document.getElementById('twoFaInputContainer');
+  const passwordInput = document.getElementById('mfaInputContainer');
   passwordInput.parentElement.appendChild(alertDiv);
   passwordInput.addEventListener('click', () => {
     alertDiv.remove();
@@ -90,12 +96,33 @@ function handle460Error() {
   }, 5000);
 }
 
+function handle462Error() {
+  displayError('MFA verification code invalid');
+}
+
+
+function displayError(errorMessage) {
+  errorBox.textContent = errorMessage;
+  document.body.appendChild(errorBox);
+  setTimeout(() => {
+      errorBox.remove();
+  }, 2500);
+}
+
+function displaySuccess(successMessage) {
+  successBox.textContent = successMessage;
+  document.body.appendChild(successBox);
+  setTimeout(() => {
+      successBox.remove();
+  }, 2500);
+}
+
+
 function handleError() {
-  // Handle generic error, could be logging, displaying a message, etc.
   console.error('An error occurred');
 }
 
-function handle404Error() {
+function handle461Error() {
   // Handle 404 error, could be logging, displaying a message, etc.
   console.error('Resource not found');
 }
