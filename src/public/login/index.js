@@ -45,16 +45,24 @@ function login() {
 function handleResponse(response) {
   if (response.status === 200) {
     window.location.href = '/home';
-  } else if (response.status === 401) {
-    handle401Error();
   } else if (response.status === 461) {
     handle461Error();
+  } else if (response.status === 462) {
+    handle462Error();
+  } else if (response.status === 463) {
+    handle463Error();
   } else {
     handleError();
   }
 }
 
-function handle401Error() {
+
+function handle461Error() {
+  displayError('Email not verified')
+  window.location.href = '/verify';
+}
+
+function handle462Error() {
   const usernameInput = document.getElementById('username');
   const passwordInput = document.getElementById('password');
   usernameInput.value = '';
@@ -64,9 +72,8 @@ function handle401Error() {
   displayError('Username or password wrong')
 }
 
-function handle461Error() {
-  displayError('Email not verified')
-  window.location.href = '/verify';
+function handle463Error() {
+  window.location.replace('/mfa')
 }
 
 function handleError() {

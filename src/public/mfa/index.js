@@ -15,27 +15,11 @@ function getCookie(name) {
   return null;
 }
 
-const accessToken = getCookie('access_token');
-
-if (accessToken) {
-  fetch(`/api/mfa/setup`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    document.getElementById('qrCode').src = data.imageUrl;
-    document.getElementById('secret').value = data.secret;
-    qrCodeLoaded = true;
-  })
-  .then(response => handleResponse(response)) 
-}
 
 var inputs = document.querySelectorAll('#mfaInputContainer input');
 var collectedInputs = '';
+
+const mfa_token = getCookie('mfa_token');
 
 inputs.forEach(function(input) {
     input.addEventListener('input', function() {
@@ -44,11 +28,11 @@ inputs.forEach(function(input) {
             collectedInputs += input.value;
         });
         if (collectedInputs.length === inputs.length) {
-            fetch(`/api/mfa/setup/verify`, {
+            fetch(`/api/mfa/verify`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`
+                    'Authorization': `Bearer ${mfa_token}`
                 },
                 body: JSON.stringify({
                     'mfaVerifyCode': collectedInputs
@@ -64,6 +48,7 @@ inputs.forEach(function(input) {
 
 function handleResponse(response) {
   if (response.status === 200) {
+    document.cookie = "mfa_token=; expires=" + pastDate.toUTCString() + "; path=/";
   } else if (response.status === 460) {
     return handle460Error();
   } else {
@@ -74,7 +59,7 @@ function handleResponse(response) {
 
 function handleResponseVerify(response) {
   if (response.status === 200) {
-    displaySuccess('Success: MFA Enabled. You\'re getting redirected')
+    displaySuccess('Success: Verified! . You\'re getting redirected')
     setTimeout(() => {
       window.location.replace('/home')
   }, 2500);
@@ -89,7 +74,7 @@ function handleResponseVerify(response) {
 
 
 function handle460Error() {
-  displayError('Error: MFA already enabled');
+  displayError('MFA not enabld');
   setTimeout(() => {
     window.location.replace('/home');
   }, 5000);
@@ -100,6 +85,15 @@ function handle461Error() {
   clearInputValues();
   jumpToFirstInput();
 }
+
+
+function handleError() {
+  displayError('Something went wrong, try again later')
+  clearInputValues();
+  jumpToFirstInput();
+  window.location.replace('/home')
+}
+
 
 function clearInputValues() {
   var inputs = document.querySelectorAll('#mfaInputContainer input');
@@ -115,9 +109,6 @@ function jumpToFirstInput() {
   }
 }
 
-function handleError() {
-  displayError('Something went wrong, try again later')
-}
 
 function displayError(errorMessage) {
   errorBox.textContent = errorMessage;
