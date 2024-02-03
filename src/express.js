@@ -178,7 +178,7 @@ app.use('/register', existingToken, express.static(path.join(__dirname, 'public/
 app.use('/setpassword', express.static(path.join(__dirname, 'public/setpassword')));
 app.use('/verify', existingToken, express.static(path.join(__dirname, 'public/verify')));
 app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
-app.use('/home/mfa/setup', existingToken, express.static(path.join(__dirname, 'public/mfasetup')));
+app.use('/home/mfa/settings', existingToken, express.static(path.join(__dirname, 'public/mfasettings')));
 app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
 
 

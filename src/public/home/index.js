@@ -75,8 +75,8 @@ function logoutAll() {
   }
 }
 
-function setup_mfa() {
-  window.location.href = '/home/mfa/setup';
+function mfa_settings() {
+  window.location.href = '/home/mfa/settings';
 }
 
 function setNewPassword() {
