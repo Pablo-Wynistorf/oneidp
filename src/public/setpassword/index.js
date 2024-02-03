@@ -119,7 +119,6 @@ function handle464Error() {
 }
 
 
-
 function handle461Error() {
   document.getElementById('password').value = '';
   document.getElementById('password-retype').value = '';
@@ -165,13 +164,6 @@ function checkPasswordOnBlur(event) {
       displayError('Password doesn\'t match our requirements')
   }
  }
-}
-
-function removePasswordAlert() {
-  const alertElement = document.getElementById('passwordError');
-  if (alertElement) {
-    alertElement.parentElement.removeChild(alertElement);
-  }
 }
 
 

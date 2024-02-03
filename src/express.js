@@ -177,7 +177,8 @@ app.use('/register', existingToken, express.static(path.join(__dirname, 'public/
 app.use('/setpassword', express.static(path.join(__dirname, 'public/setpassword')));
 app.use('/verify', existingToken, express.static(path.join(__dirname, 'public/verify')));
 app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
-app.use('/home/mfa/setup', existingToken, express.static(path.join(__dirname, 'public/mfa')));
+app.use('/home/mfa/setup', existingToken, express.static(path.join(__dirname, 'public/mfasetup')));
+app.use('/mfa', existingToken, express.static(path.join(__dirname, 'public/mfa')));
 
 
 
@@ -434,7 +435,7 @@ app.post('/api/sso/data/changepassword', async (req, res) => {
     }
 
     const access_token = tokenParts[1];
-    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const decoded = jwt.verify(access_token, JWT_SECRET)
     const userId = decoded.userId;
     const sid = decoded.sid;
 
@@ -593,7 +594,7 @@ app.post('/api/sso/data/setpassword', async (req, res) => {
 
       const userReset = await userDB.findOne({ userId: userId, resetCode: password_reset_code });
       if (!userReset) {
-        return res.status(404).json({ error: 'User data not found' });
+        return res.status(460).json({ error: 'Wrong recovery code entered'})
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -654,7 +655,6 @@ app.get('/api/mfa/setup', async (req, res) => {
     }
     
     const mfaSecret = speakeasy.generateSecret({ length: 20 });
-
 
     await userDB.updateOne({ userId }, { $set: { mfaSecret: mfaSecret.ascii } });
 
@@ -723,7 +723,60 @@ app.post('/api/mfa/setup/verify', async (req, res) => {
     await userDB.updateOne({ userId }, { $set: { mfaEnabled: true }});
     return res.status(200).json({ success: true, message: 'MFA enabled'})
   } else {
-    return res.status(462).json({ success: false, error: 'Invalid verification code'})
+    return res.status(461).json({ success: false, error: 'Invalid verification code'})
+  }
+  } catch (error) {
+    notifyError(error);
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
+});
+
+
+
+// Verify the mfa code
+app.post('/api/mfa/verify', async (req, res) => {
+  const authorizationHeader = req.headers['authorization'];
+  const mfaVerifyCode = req.body.mfaVerifyCode;
+
+  if (!authorizationHeader) {
+    return res.status(400).json({ error: 'Authorization header is missing' });
+  }
+
+  const tokenParts = authorizationHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(400).json({ error: 'Invalid authorization header format' });
+  }
+
+  const access_token = tokenParts[1];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    
+    const userData = await userDB.findOne({ userId: userId, sid: sid });
+    if (!userData) {
+      res.clearCookie('access_token');
+      return res.redirect('/login');
+    }
+    const mfaEnabled = userData.mfaEnabled;
+    const mfaSecret = userData.mfaSecret;
+
+    if (mfaEnabled === true) {
+      return res.status(460).json({ error: 'User has mfa already enabled' });
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: mfaSecret,
+      encoding: 'base64',
+      token: mfaVerifyCode,
+      window: 2
+  });
+  if (verified) {
+    await userDB.updateOne({ userId }, { $set: { mfaEnabled: true }});
+    return res.status(200).json({ success: true, message: 'MFA enabled'})
+  } else {
+    return res.status(461).json({ success: false, error: 'Invalid verification code'})
   }
   } catch (error) {
     notifyError(error);
