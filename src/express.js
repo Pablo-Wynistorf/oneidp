@@ -7,6 +7,8 @@ const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const mailjet = require('node-mailjet');
 const path = require('path');
+const qrcode = require('qrcode');
+const speakeasy = require('speakeasy');
 require('dotenv').config();
 
 const URL = process.env.URL;
@@ -53,8 +55,9 @@ const userSchema = new Schema({
   sid: String,
   verifyCode: String,
   resetCode: String,
-  twoFaCode: String,
-  twoFaEnbled: Boolean,
+  mfaSecret: String,
+  mfaLoginSecret: String,
+  mfaEnabled: Boolean,
   accountRole: String,
 }, {
   timestamps: true
@@ -119,8 +122,7 @@ const verifyToken = (req, res, next) => {
           res.clearCookie('access_token');
           return res.redirect('/login');
         }
-
-        if (requestedPath !== '/home') {
+        if (requestedPath !== '/home' && requestedPath !== '/home/mfa/setup') {
           return res.redirect('/home');
         }
         res.clearCookie('email_verification_token');
@@ -137,6 +139,7 @@ const verifyToken = (req, res, next) => {
     return res.redirect('/login');
   }
 };
+
 
 
 // Handle existing access token
@@ -175,6 +178,8 @@ app.use('/register', existingToken, express.static(path.join(__dirname, 'public/
 app.use('/setpassword', express.static(path.join(__dirname, 'public/setpassword')));
 app.use('/verify', existingToken, express.static(path.join(__dirname, 'public/verify')));
 app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
+app.use('/home/mfa/setup', existingToken, express.static(path.join(__dirname, 'public/mfasetup')));
+app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
 
 
 
@@ -193,7 +198,7 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
     }
 
     if (!user) {
-      return res.status(401).json({ success: false, error: 'Invalid username or password' });
+      return res.status(462).json({ success: false, error: 'Invalid username or password' });
     }
 
     const storedPasswordHash = user.password;
@@ -201,12 +206,13 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
     const email_verification_code = user.verifyCode;
     const username = user.username;
     const email = user.email;
+    const mfaEnabled = user.mfaEnabled;
     const sid = user.sid;
 
     const passwordMatch = await bcrypt.compare(password, storedPasswordHash);
 
     if (!passwordMatch) {
-      return res.status(401).json({ success: false, error: 'Invalid username or password' });
+      return res.status(462).json({ success: false, error: 'Invalid username or password' });
     }
 
     if (email_verification_code) {
@@ -219,7 +225,7 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
       res.status(461).json({ success: true, Message: 'Email not verified' });
       sendVerificationEmail(username, email, email_verification_token, new_email_verification_code, res);
     } else {
-      loginSuccess(userId, username, email, sid, res);
+      loginSuccess(userId, username, sid, res, mfaEnabled);
     }
   } catch (error) {
     notifyError(error);
@@ -230,23 +236,39 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
 
 
 // Handle successful login and generate access tokens
-async function loginSuccess(userId, username, email, sid, res) {
+async function loginSuccess(userId, username, sid, res, mfaEnabled) {
   if (!sid) {
     const newsid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
-
-    const token = jwt.sign({userId: userId, sid: newsid}, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
     await userDB.updateOne({ userId }, { $set: { sid: newsid } });
 
+    if (mfaEnabled === true) {
+      const newMfaLoginSecret = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
+      await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
+      const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+      res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, path: '/' });
+      return res.status(463).json({ success: true, message: 'Redirecting to mfa site'});
+    }
+
     notifyLogin(username);
+    const token = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
     res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
     return res.status(200).json({ success: true });
   }
 
-  const token = jwt.sign({userId: userId, sid: sid}, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+  if (mfaEnabled === true) {
+    const newMfaLoginSecret = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
+    await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
+    const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+    res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, path: '/' });
+    return res.status(463).json({ success: true, message: 'Redirecting to mfa site'})
+  }
+
+  const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
   notifyLogin(username);
   res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
   return res.status(200).json({ success: true });
 }
+
 
 
 
@@ -296,7 +318,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
       password: hashedPassword,
       email: email,
       verifyCode: email_verification_code,
-      twoFaEnbled: false,
+      mfaEnabled: false,
     });
 
     await newUser.save();
@@ -431,13 +453,14 @@ app.post('/api/sso/data/changepassword', async (req, res) => {
     }
 
     const access_token = tokenParts[1];
-    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const decoded = jwt.verify(access_token, JWT_SECRET)
     const userId = decoded.userId;
     const sid = decoded.sid;
 
     const userData = await userDB.findOne({ userId: userId, sid: sid });
     if (!userData) {
-      return res.status(404).json({ error: 'User data not found' });
+      res.clearCookie('access_token');
+      return res.redirect('/login');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -479,7 +502,8 @@ app.post('/api/sso/data/username', async (req, res) => {
     
     const userData = await userDB.findOne({ userId: userId, sid: sid });
     if (!userData) {
-      return res.status(404).json({ error: 'User data not found' });
+      res.clearCookie('access_token');
+      return res.redirect('/login');
     }
 
     const username = userData.username;
@@ -515,7 +539,8 @@ app.post('/api/sso/auth/logout', async (req, res) => {
     
     const userData = await userDB.findOne({ userId: userId, sid: sid });
     if (!userData) {
-      return res.status(404).json({ error: 'User data not found' });
+      res.clearCookie('access_token');
+      return res.redirect('/login');
     }
 
     await userDB.updateOne({ userId }, { $unset: { sid: 1 } });
@@ -587,7 +612,7 @@ app.post('/api/sso/data/setpassword', async (req, res) => {
 
       const userReset = await userDB.findOne({ userId: userId, resetCode: password_reset_code });
       if (!userReset) {
-        return res.status(404).json({ error: 'User data not found' });
+        return res.status(460).json({ error: 'Wrong recovery code entered'})
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -613,6 +638,177 @@ app.post('/api/sso/data/setpassword', async (req, res) => {
   }
 });
 
+
+
+// Get the mfa qr code
+app.get('/api/mfa/setup', async (req, res) => {
+  const authorizationHeader = req.headers['authorization'];
+
+  if (!authorizationHeader) {
+    return res.status(400).json({ error: 'Authorization header is missing' });
+  }
+
+  const tokenParts = authorizationHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(400).json({ error: 'Invalid authorization header format' });
+  }
+
+  const access_token = tokenParts[1];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    
+    const userData = await userDB.findOne({ userId: userId, sid: sid });
+    if (!userData) {
+      res.clearCookie('access_token');
+      return res.redirect('/login');
+    }
+    const mfaEnabled = userData.mfaEnabled;
+    const email = userData.email;
+
+    if (mfaEnabled === true) {
+      return res.status(460).json({ error: 'User has mfa already enabled'})
+    }
+    
+    const mfaSecret = speakeasy.generateSecret({ length: 20 });
+
+    await userDB.updateOne({ userId }, { $set: { mfaSecret: mfaSecret.ascii } });
+
+    const qrCodeUrl = speakeasy.otpauthURL({
+      secret: mfaSecret.ascii,
+      label: email,
+      issuer: URL,
+      encoding: 'base64'
+    });
+
+    qrcode.toDataURL(qrCodeUrl, (err, imageUrl) => {
+      if (err) {
+        res.status(500).json({ error: 'Something went wrong, try again later' });
+      } else {
+        res.json({ imageUrl, secret: mfaSecret.ascii });
+      }
+    });
+  } catch (error) {
+    notifyError(error);
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
+});
+
+
+
+// Mfa setup verify
+app.post('/api/mfa/setup/verify', async (req, res) => {
+  const authorizationHeader = req.headers['authorization'];
+  const mfaVerifyCode = req.body.mfaVerifyCode;
+
+  if (!authorizationHeader) {
+    return res.status(400).json({ error: 'Authorization header is missing' });
+  }
+
+  const tokenParts = authorizationHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(400).json({ error: 'Invalid authorization header format' });
+  }
+
+  const access_token = tokenParts[1];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    
+    const userData = await userDB.findOne({ userId: userId, sid: sid });
+    if (!userData) {
+      res.clearCookie('access_token');
+      return res.redirect('/login');
+    }
+    const mfaEnabled = userData.mfaEnabled;
+    const mfaSecret = userData.mfaSecret;
+
+    if (mfaEnabled === true) {
+      return res.status(460).json({ error: 'User has mfa already enabled' });
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: mfaSecret,
+      encoding: 'base64',
+      token: mfaVerifyCode,
+      window: 2
+  });
+  if (verified) {
+    await userDB.updateOne({ userId }, { $set: { mfaEnabled: true }});
+    return res.status(200).json({ success: true, message: 'MFA enabled'})
+  } else {
+    return res.status(461).json({ success: false, error: 'Invalid verification code'})
+  }
+  } catch (error) {
+    notifyError(error);
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
+});
+
+
+
+// Verify the mfa code
+app.post('/api/mfa/verify', async (req, res) => {
+  const authorizationHeader = req.headers['authorization'];
+  const mfaVerifyCode = req.body.mfaVerifyCode;
+
+  if (!authorizationHeader) {
+    return res.status(400).json({ error: 'Authorization header is missing' });
+  }
+
+  const tokenParts = authorizationHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(400).json({ error: 'Invalid authorization header format' });
+  }
+
+  const mfa_token = tokenParts[1];
+  try {
+    const decoded = jwt.verify(mfa_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const mfaLoginSecret = decoded.mfaLoginSecret;
+    const userData = await userDB.findOne({ userId: userId, mfaLoginSecret: mfaLoginSecret });
+
+    if (!userData) {
+      res.clearCookie('mfa_token');
+      return res.redirect('/login');
+    }
+
+    const mfaEnabled = userData.mfaEnabled;
+    const mfaSecret = userData.mfaSecret;
+    const sid = userData.sid;
+    const username = userData.username;
+
+
+    if (mfaEnabled !== true) {
+      return res.status(460).json({ error: 'User has mfa not enabled' });
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: mfaSecret,
+      encoding: 'base64',
+      token: mfaVerifyCode,
+      window: 2
+  });
+  if (verified) {
+    const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+    notifyLogin(username);
+    res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
+    return res.status(200).json({ success: true });
+  } else {
+    return res.status(461).json({ success: false, error: 'Invalid verification code'})
+  }
+  } catch (error) {
+    notifyError(error);
+    return res.status(460).json({ error: 'User has mfa not enabled' });
+  }
+});
+
+
+  
 
 
 // Send the email verification email

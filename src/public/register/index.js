@@ -1,3 +1,9 @@
+const errorBox = document.createElement('div');
+const successBox = document.createElement('div');
+
+errorBox.className = 'error-box';
+successBox.className = 'success-box';
+
 function getCookie(name) {
   const cookieArray = document.cookie.split(';');
   for (const cookie of cookieArray) {
@@ -137,32 +143,14 @@ function handleResponse(response) {
 function handle460Error() {
   const emailInput = document.getElementById('email');
   emailInput.value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Email already registered';
-  emailInput.parentElement.appendChild(alertDiv);
-  emailInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Error: Email already registered')
 }
 
 
 function handle461Error() {
   const usernameInput = document.getElementById('username');
   usernameInput.value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Username already used';
-  usernameInput.parentElement.appendChild(alertDiv);
-  usernameInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Error: Username already used')
 }
 
 function handle462Error() {
@@ -170,132 +158,55 @@ function handle462Error() {
   const passwordInputRetype = document.getElementById('password-retype');
   passwordInput.value = '';
   passwordInputRetype.value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Password must have at least 8 characters';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Error: Password must have at least 8 characters')
 }
 
 
 function handle463Error() {
   const usernameInput = document.getElementById('username');
   usernameInput.value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Username cannot have more than 20 characters';
-  usernameInput.parentElement.appendChild(alertDiv);
-  usernameInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Error: Username cannot have more than 20 characters')
 }
 
 function handle465Error() {
   const passwordInput = document.getElementById('password');
   passwordInput.value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Pasword must have at least 8 characters';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Error: Pasword must have at least 8 characters')
 }
 
 function handle464Error() {
   const passwordInput = document.getElementById('password');
   passwordInput.value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Pasword cannot have more than 23 characters';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Error: Pasword cannot have more than 23 characters')
 }
 
 function handle466Error() {
-  const emailInput = document.getElementById('email');
   emailInput.value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Invalid email address';
-  emailInput.parentElement.appendChild(alertDiv);
-  emailInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Error: Invalid email address')
 }
-
 
 function handle467Error() {
   document.getElementById('passwordRequirementComponents').style.color = "red";
-  const passwordRetype_imput = document.getElementById('password-retype');
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Password doesnt meet our requirements';
-  passwordRetype_imput.parentElement.appendChild(alertDiv);
-  passwordRetype_imput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
+  displayError('Error: Password doesnt meet our requirements')
 }
-
-
-
 
 function handleError() {
-  const passwordInput = document.getElementById('password');
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Something went wrong';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
+  displayError('Error: Something went wrong')
 }
 
 
-function sendAccessToken() {
-  const accessToken = getCookie('access_token');
-  if (accessToken) {
-    const requestOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    };
-    fetch(`/api/sso/token`, requestOptions)
-      .then(handleTokenResponse)
-      .catch(handleTokenError);
-  }
+function displaySuccess(successMessage) {
+  successBox.textContent = successMessage;
+  document.body.appendChild(successBox);
+  setTimeout(() => {
+      successBox.remove();
+  }, 2500);
 }
 
-
-function handleTokenResponse(response) {
-  if (response.ok) {
-    return response.json().then((data) => {
-      window.location.href = '/home/';
-    });
-  }
-}
-
-
-function handleTokenError() {
+function displayError(errorMessage) {
+  errorBox.textContent = errorMessage;
+  document.body.appendChild(errorBox);
+  setTimeout(() => {
+      errorBox.remove();
+  }, 2500);
 }

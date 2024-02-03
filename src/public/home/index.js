@@ -1,3 +1,9 @@
+const errorBox = document.createElement('div');
+const successBox = document.createElement('div');
+
+errorBox.className = 'error-box';
+successBox.className = 'success-box';
+
 function getCookie(name) {
   const cookieArray = document.cookie.split(';');
   for (const cookie of cookieArray) {
@@ -24,7 +30,7 @@ function get_username() {
         if (response.ok) {
           return response.json();
         } else {
-          throw new Error('Something went wrong');
+          displayError(`Error: Fetching username failed`);
         }
       })
       .then(username => {
@@ -34,19 +40,7 @@ function get_username() {
       })
       .catch(error => {
         window.location.href = '/login';
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert';
-        alertDiv.textContent = error.message;
-        const newPasswordInput = document.getElementById('newPassword');
-        newPasswordInput.parentElement.appendChild(alertDiv);
-        
-        newPasswordInput.addEventListener('click', () => {
-          alertDiv.remove();
-        });
-        
-        setTimeout(() => {
-          alertDiv.remove();
-        }, 5000);
+        displayError(`User verification error:${error}`);
       });
   }
 }
@@ -82,6 +76,9 @@ function logoutAll() {
   }
 }
 
+function setup_mfa() {
+  window.location.href = '/home/mfa/setup';
+}
 
 function setNewPassword() {
   var password1 = document.getElementById("newPassword").value;
@@ -89,25 +86,13 @@ function setNewPassword() {
   if (password1 === password2) {
     changePassword();
   } else {
-    const passwordRetype_input = document.getElementById('newPassword-retype');
-    const alertDiv = document.createElement('div');
-    alertDiv.className = 'alert';
-    alertDiv.textContent = 'Passwords do not match';
-    document.getElementById("newPassword-retype").value = '';
-    passwordRetype_input.parentElement.appendChild(alertDiv);
-    passwordRetype_input.addEventListener('click', () => {
-      alertDiv.remove();
-    });
-    setTimeout(() => {
-      alertDiv.remove();
-    }, 5000);
+    displayError('Error: Passwords do not match');
   }
 }
 
 const password = document.getElementById('newPassword');
 password.addEventListener('input', passwordRequirements);
 password.addEventListener('blur', checkPasswordOnBlur);
-password.addEventListener('click', removePasswordAlert);
 
 function isStrongPassword(password) {
   const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
@@ -134,22 +119,10 @@ function checkPasswordOnBlur(event) {
     document.getElementById('passwordRequirementComponents').style.color = "red";
 
     if (!document.getElementById('passwordError')) {
-      const alertDiv = document.createElement('div');
-      alertDiv.textContent = 'Password doesn\'t match our requirements';
-      alertDiv.className = 'alert';
-      alertDiv.id = 'passwordError';
-      document.getElementById('newPassword-retype').parentElement.appendChild(alertDiv);
+      displayError('Password doesn\'t match our requirements');
     }
   }
 }
-
-function removePasswordAlert() {
-  const alertElement = document.getElementById('passwordError');
-  if (alertElement) {
-    alertElement.parentElement.removeChild(alertElement);
-  }
-}
-
 
 function changePassword() {
   const passwordInput = document.getElementById('newPassword');
@@ -189,90 +162,47 @@ function handleResponse(response) {
 
 
 function handle200() {
-  const passwordInput = document.getElementById('newPassword');
-  document.getElementById("newPassword-retype").value = '';
-  document.getElementById("newPassword").value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert200';
-  alertDiv.textContent = 'Password successfully changed';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displaySuccess('Success: Password successfully changed');
 }
 
 
 function handle460Error() {
-  const passwordInput = document.getElementById('newPassword');
   document.getElementById('newPassword').value = '';
   document.getElementById('newPassword-retype').value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Password must be at least 5 characters';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Error: Password must be at least 5 characters');
 }
 
 function handle461Error() {
-  const passwordInput = document.getElementById('newPassword');
   document.getElementById('newPassword').value = '';
   document.getElementById('newPassword-retype').value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Password must not have more than 23 characters';
+  displayError('Error: Password must not have more than 23 characters');
   document.getElementById('passwordRequirementComponents').style.color = "red";
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
 }
 
 function handle462Error() {
-  const passwordInput = document.getElementById('newPassword');
   document.getElementById('newPassword').value = '';
   document.getElementById('newPassword-retype').value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Password doesnt meet our requirements';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Error: Password doesnt meet our requirements');
 }
 
-
-
 function handleError() {
-  const passwordInput = document.getElementById('newPassword');
   document.getElementById('newPassword').value = '';
   document.getElementById('newPassword-retype').value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Something went wrong';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
+  displayError('Error: Something went wrong');
+}
 
+function displaySuccess(successMessage) {
+  successBox.textContent = successMessage;
+  document.body.appendChild(successBox);
   setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+      successBox.remove();
+  }, 2500);
+}
+
+function displayError(errorMessage) {
+  errorBox.textContent = errorMessage;
+  document.body.appendChild(errorBox);
+  setTimeout(() => {
+      errorBox.remove();
+  }, 2500);
 }

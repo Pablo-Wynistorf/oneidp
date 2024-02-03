@@ -1,3 +1,9 @@
+const errorBox = document.createElement('div');
+const successBox = document.createElement('div');
+
+errorBox.className = 'error-box';
+successBox.className = 'success-box';
+
 function redirect_login() {
     window.location.href = '/login'
   }
@@ -19,9 +25,7 @@ function sendResetCode() {
 
 function handleResponse(response) {
   if (response.status === 200) {
-    return response.json().then(data => {
       window.location.href = '/setpassword/';
-    });
   } else if (response.status === 460) {
     handle460Error();
   }else {
@@ -30,29 +34,28 @@ function handleResponse(response) {
 }
 
 function handle460Error() {
-  const usernameInput = document.getElementById('email');
   usernameInput.value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Email not found';
-  usernameInput.parentElement.appendChild(alertDiv);
-  usernameInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Email not found')
 }
 
 
 function handleError() {
-  const emailImput = document.getElementById('email');
   document.getElementById('email').value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Something went wrong';
-  emailImput.parentElement.appendChild(alertDiv);
-  emailImput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
+  displayError('Something went wrong')
+}
+
+function displaySuccess(successMessage) {
+  successBox.textContent = successMessage;
+  document.body.appendChild(successBox);
+  setTimeout(() => {
+      successBox.remove();
+  }, 2500);
+}
+
+function displayError(errorMessage) {
+  errorBox.textContent = errorMessage;
+  document.body.appendChild(errorBox);
+  setTimeout(() => {
+      errorBox.remove();
+  }, 2500);
 }

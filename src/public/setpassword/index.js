@@ -1,3 +1,9 @@
+const errorBox = document.createElement('div');
+const successBox = document.createElement('div');
+
+errorBox.className = 'error-box';
+successBox.className = 'success-box';
+
 function ingestCode() {
   const password_reset_code = getCookie('password_reset_code');
   if (password_reset_code) {
@@ -96,90 +102,39 @@ function handleResponse(response) {
 }
 
 function handle460Error() {
-  const reset_codeInput = document.getElementById('reset-code');
   document.getElementById('reset-code').value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Wrong recovery code entered';
-  reset_codeInput.parentElement.appendChild(alertDiv);
-  reset_codeInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Error: Wrong recovery code entered')
 }
 
 function handle463Error() {
-  const passwordInput = document.getElementById('password');
   document.getElementById('password').value = '';
   document.getElementById('password-retype').value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Password must have at least 8 characters';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Password must have at least 8 characters')
 }
 
 function handle464Error() {
-  const passwordInput = document.getElementById('password');
   document.getElementById('password').value = '';
   document.getElementById('password-retype').value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Password cannot have more than 23 characters';
-  document.getElementById('passwordRequirementComponents').style.color = "#f23f42";
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Password cannot have more than 23 characters')
 }
-
 
 
 function handle461Error() {
-  const passwordInput = document.getElementById('password');
   document.getElementById('password').value = '';
   document.getElementById('password-retype').value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Password must have at least 5 characters';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
-  setTimeout(() => {
-    alertDiv.remove();
-  }, 5000);
+  displayError('Password must have at least 5 characters')
 }
 
 function handleError() {
-  const passwordInput = document.getElementById('password');
   document.getElementById('password').value = '';
   document.getElementById('password-retype').value = '';
-  const alertDiv = document.createElement('div');
-  alertDiv.className = 'alert';
-  alertDiv.textContent = 'Something went wrong';
-  passwordInput.parentElement.appendChild(alertDiv);
-  passwordInput.addEventListener('click', () => {
-    alertDiv.remove();
-  });
+  displayError('Error: Something went wrong')
 }
 
 
 const password = document.getElementById('password');
 password.addEventListener('input', passwordRequirements);
 password.addEventListener('blur', checkPasswordOnBlur);
-password.addEventListener('click', removePasswordAlert);
 
 function isStrongPassword(password) {
   const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
@@ -206,18 +161,24 @@ function checkPasswordOnBlur(event) {
     document.getElementById('passwordRequirementComponents').style.color = "#f23f42";
 
     if (!document.getElementById('passwordError')) {
-      const alertDiv = document.createElement('div');
-      alertDiv.textContent = 'Password doesn\'t match our requirements';
-      alertDiv.className = 'alert';
-      alertDiv.id = 'passwordError';
-      document.getElementById('password-retype').parentElement.appendChild(alertDiv);
-    }
+      displayError('Password doesn\'t match our requirements')
   }
+ }
 }
 
-function removePasswordAlert() {
-  const alertElement = document.getElementById('passwordError');
-  if (alertElement) {
-    alertElement.parentElement.removeChild(alertElement);
-  }
+
+function displaySuccess(successMessage) {
+  successBox.textContent = successMessage;
+  document.body.appendChild(successBox);
+  setTimeout(() => {
+      successBox.remove();
+  }, 2500);
+}
+
+function displayError(errorMessage) {
+  errorBox.textContent = errorMessage;
+  document.body.appendChild(errorBox);
+  setTimeout(() => {
+      errorBox.remove();
+  }, 2500);
 }

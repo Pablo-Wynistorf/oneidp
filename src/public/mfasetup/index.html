@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Setup MFA</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="mfa-box">
+      <h1>Setup MFA</h1>
+      <form>
+        <div class="textbox">
+          <img id="qrCode" src="" alt="QR Code">
+          <i class="fas fa-user"></i>
+        </div>
+      </form>
+      <h2>Enter MFA Code:</h2>
+      <form>
+        <div class="textbox" id="mfaInputContainer">
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+        </div>
+      </form>
+    </div>
+    <script src="index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
+  </body>
+</html>

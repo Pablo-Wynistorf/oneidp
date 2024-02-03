@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>MFA</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="mfa-box">
+      <h1>Enter MFA Code:</h1>
+      <form>
+        <div class="textbox" id="mfaInputContainer">
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+        </div>
+      </form>
+    </div>
+    <script src="index.js"></script>
+  </body>
+</html>

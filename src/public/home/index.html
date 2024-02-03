@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>Home</title>
-    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="style.css">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   </head>
   <body>
@@ -25,10 +25,11 @@
         </div>
       </form>
       <input type="button" class="btn" value="Change Password" onclick="setNewPassword()">
+      <input type="button" class="btn" value="Setup MFA" onclick="setup_mfa()">
       <input type="button" class="btn" value="Sign Out" onclick="logout()">
       <input type="button" class="btn" value="Sign out on all devices" onclick="logoutAll()">
       <input type="button" class="btn" value="Fetch Data" onclick="get_username()">
     </div>
-    <script src="home.js"></script>
+    <script src="index.js"></script>
   </body>
 </html>
