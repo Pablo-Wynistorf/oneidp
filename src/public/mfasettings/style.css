@@ -17,7 +17,7 @@ body {
 
 .mfa-box {
   width: 300px;
-  height: 500px;
+  height: 589px;
   background: #202225;
   color: #fff;
   position: absolute;
@@ -26,7 +26,7 @@ body {
   transform: translate(-50%, -50%);
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
   border-radius: 35px;
-  padding: 30px; 
+  padding: 30px;
   text-align: center;
 }
 
@@ -69,6 +69,24 @@ body {
 .textbox input:focus {
   border-color: #4caf50; 
 }
+
+
+#btn {
+  width: 100%;
+  background: none;
+  border: 2px solid red; /* Updated color here */
+  color: #fff;
+  padding: 5px;
+  font-size: 18px;
+  cursor: pointer;
+  margin: 9px 0;
+  /* border-radius: 5px; */
+}
+
+#btn:hover {
+  background-color: red; /* Updated color here */
+}
+
 
 
 @keyframes color-wave {

@@ -13,7 +13,7 @@
           <i class="fas fa-user"></i>
         </div>
       </form>
-      <h2>Enter MFA Code:</h2>
+      <h2 id="code-box" >Enter MFA Code:</h2>
       <form>
         <div class="textbox" id="mfaInputContainer">
           <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
@@ -24,6 +24,7 @@
           <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
         </div>
       </form>
+      <imput type="button" id="btn" style="display: none;" onclick="disable_mfa()">Disable MFA</imput>
     </div>
     <script src="index.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode"></script>

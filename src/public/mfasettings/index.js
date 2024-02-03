@@ -25,15 +25,16 @@ if (accessToken) {
       'Authorization': `Bearer ${accessToken}`
     }
   })
-  .then(response => handleResponse(response)) 
+  .then(response => response.json())
   .then(data => {
-    if(data){
+    if (data) {
       document.getElementById('qrCode').src = data.imageUrl;
       document.getElementById('secret').value = data.secret;
       qrCodeLoaded = true;
     } 
   })
 }
+
 
 var inputs = document.querySelectorAll('#mfaInputContainer input');
 var collectedInputs = '';
@@ -55,24 +56,63 @@ inputs.forEach(function(input) {
                     'mfaVerifyCode': collectedInputs
                 })
             })
-            .then(response => handleResponseVerify(response)) 
+            .then(response => handleResponseVerify(response))
             .catch(error => handleError(error));
         }
     });
 });
 
 
+function activate_mfa() {
+  document.getElementById('btn').style.display = 'none';
+  fetch(`/api/mfa/setup`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`
+    }
+  })
+  .then(response => handleResponse(response))
+  .then(response => response.json())
+  .then(data => {
+    if(data){
+      document.getElementById('qrCode').src = data.imageUrl;
+      document.getElementById('secret').value = data.secret;
+      qrCodeLoaded = true;
+    } 
+  })
+}
+
+function disable_mfa() {
+  fetch(`/api/mfa/disable`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`
+    }
+  })
+  .then(response => handleResponseMfaDisable(response))
+}
+
+function handleResponseMfaDisable(response) {
+  if (response.status === 200) {
+
+  } else if (response.status === 462) {
+    return handle462Error();
+  } else {
+    handleError();
+  }
+}
 
 function handleResponse(response) {
   if (response.status === 200) {
+    document.getElementsByClassName('textbox').style.display = 'block';
   } else if (response.status === 460) {
     return handle460Error();
   } else {
     handleError();
   }
 }
-
-
 
 function handleResponseVerify(response) {
   if (response.status === 200) {
@@ -89,9 +129,11 @@ function handleResponseVerify(response) {
   }
 }
 
-
 function handle460Error() {
-  displayError('MFA already enabled');
+  document.getElementById('code-box').style.display = 'none';
+  document.getElementById('qrCode').style.display = 'none';
+  document.getElementById('btn').style.display = 'block';
+  displayError('MFA is already enabled');
 }
 
 function handle461Error() {
@@ -99,6 +141,12 @@ function handle461Error() {
   clearInputValues();
   jumpToFirstInput();
 }
+
+function handle462Error() {
+  displayError('MFA is not enabled');
+  document.getElementById('btn').style.display = 'block';
+}
+
 
 function clearInputValues() {
   var inputs = document.querySelectorAll('#mfaInputContainer input');
@@ -123,7 +171,7 @@ function displayError(errorMessage) {
   document.body.appendChild(errorBox);
   setTimeout(() => {
       errorBox.remove();
-  }, 2500);
+  }, 5000);
 }
 
 function displaySuccess(successMessage) {
@@ -133,7 +181,6 @@ function displaySuccess(successMessage) {
       successBox.remove();
   }, 2500);
 }
-
 
 function moveToNextOrPreviousInput(input, isBackspace) {
   const maxLength = parseInt(input.getAttribute('maxlength'));

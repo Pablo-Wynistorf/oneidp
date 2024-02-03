@@ -122,7 +122,7 @@ const verifyToken = (req, res, next) => {
           res.clearCookie('access_token');
           return res.redirect('/login');
         }
-        if (requestedPath !== '/home' && requestedPath !== '/home/mfa/setup') {
+        if (requestedPath !== '/home' && requestedPath !== '/home/mfa/settings') {
           return res.redirect('/home');
         }
         res.clearCookie('email_verification_token');
@@ -691,6 +691,50 @@ app.get('/api/mfa/setup', async (req, res) => {
         res.status(200).json({ imageUrl, secret: mfaSecret.ascii });
       }
     });
+  } catch (error) {
+    notifyError(error);
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
+});
+
+
+
+// Disable MFA
+app.get('/api/mfa/disable', async (req, res) => {
+  const authorizationHeader = req.headers['authorization'];
+
+  if (!authorizationHeader) {
+    return res.status(400).json({ error: 'Authorization header is missing' });
+  }
+
+  const tokenParts = authorizationHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(400).json({ error: 'Invalid authorization header format' });
+  }
+
+  const access_token = tokenParts[1];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    
+    const userData = await userDB.findOne({ userId: userId, sid: sid });
+    if (!userData) {
+      res.clearCookie('access_token');
+      return res.redirect('/login');
+    }
+    const mfaEnabled = userData.mfaEnabled;
+
+    if (mfaEnabled === false) {
+      return res.status(462).json({ success: false, error: 'MFA is not enabled'})
+    }
+
+    await userDB.updateOne({ userId }, { $unset: { mfaSecret: 1 } });
+    await userDB.updateOne({ userId }, { $unset: { mfaLoginSecret: 1 } });
+    await userDB.updateOne({ userId }, { $set: { mfaEnabled: false }});
+
+    return res.status(200).json({ success: true, message: 'MFA has been successfully disabled' });
   } catch (error) {
     notifyError(error);
     return res.status(500).json({ error: 'Something went wrong, try again later' });
