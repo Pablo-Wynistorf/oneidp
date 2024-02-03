@@ -688,7 +688,7 @@ app.get('/api/mfa/setup', async (req, res) => {
       if (err) {
         res.status(500).json({ error: 'Something went wrong, try again later' });
       } else {
-        res.status(200).json({ imageUrl, secret: mfaSecret.ascii });
+        res.status(200).json({ success: true, imageUrl, secret: mfaSecret.ascii });
       }
     });
   } catch (error) {
@@ -700,7 +700,7 @@ app.get('/api/mfa/setup', async (req, res) => {
 
 
 // Disable MFA
-app.get('/api/mfa/disable', async (req, res) => {
+app.post('/api/mfa/disable', async (req, res) => {
   const authorizationHeader = req.headers['authorization'];
 
   if (!authorizationHeader) {

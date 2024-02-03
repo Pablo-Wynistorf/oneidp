@@ -27,11 +27,20 @@ if (accessToken) {
   })
   .then(response => response.json())
   .then(data => {
-    if (data) {
+    if (data.success === true) {
+      document.getElementById('code-box').style.display = 'block'
+      document.getElementById('qrCode').style.display = 'block'
+      document.getElementById('imputbox1').style.display = 'block'
+      document.getElementById('imputbox2').style.display = 'block'
+      document.getElementById('imputbox3').style.display = 'block'
+      document.getElementById('imputbox4').style.display = 'block'
+      document.getElementById('imputbox5').style.display = 'block'
+      document.getElementById('imputbox6').style.display = 'block'
       document.getElementById('qrCode').src = data.imageUrl;
       document.getElementById('secret').value = data.secret;
       qrCodeLoaded = true;
-    } 
+    }
+    document.getElementById('btn').style.display = 'block';
   })
 }
 
@@ -64,7 +73,6 @@ inputs.forEach(function(input) {
 
 
 function activate_mfa() {
-  document.getElementById('btn').style.display = 'none';
   fetch(`/api/mfa/setup`, {
     method: 'GET',
     headers: {
@@ -72,20 +80,20 @@ function activate_mfa() {
       'Authorization': `Bearer ${accessToken}`
     }
   })
-  .then(response => handleResponse(response))
   .then(response => response.json())
   .then(data => {
-    if(data){
+    if (data.success === true) {
       document.getElementById('qrCode').src = data.imageUrl;
       document.getElementById('secret').value = data.secret;
       qrCodeLoaded = true;
-    } 
+    }
+    document.getElementById('btn').style.display = 'block';
   })
 }
 
 function disable_mfa() {
   fetch(`/api/mfa/disable`, {
-    method: 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${accessToken}`
@@ -96,7 +104,17 @@ function disable_mfa() {
 
 function handleResponseMfaDisable(response) {
   if (response.status === 200) {
-
+    displaySuccess("Success: MFA Disabled")
+    document.getElementById('btn').style.display = 'none';
+    document.getElementById('code-box').style.display = 'block'
+    document.getElementById('qrCode').style.display = 'block'
+    document.getElementById('imputbox1').style.display = 'block'
+    document.getElementById('imputbox2').style.display = 'block'
+    document.getElementById('imputbox3').style.display = 'block'
+    document.getElementById('imputbox4').style.display = 'block'
+    document.getElementById('imputbox5').style.display = 'block'
+    document.getElementById('imputbox6').style.display = 'block'
+    activate_mfa();
   } else if (response.status === 462) {
     return handle462Error();
   } else {
@@ -212,4 +230,9 @@ function handleKeyDown(event) {
     const input = event.target;
     moveToNextOrPreviousInput(input, true);
   }
+}
+
+
+function redirect_home() {
+ window.location.replace('/home')
 }
