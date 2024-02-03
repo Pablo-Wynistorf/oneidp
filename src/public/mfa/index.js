@@ -146,10 +146,11 @@ function moveToNextOrPreviousInput(input, isBackspace) {
 
 function onlyNumbers(event) {
   const key = event.key;
-  if (isNaN(key) && key !== "Backspace") {
+  if (!/^\d$/.test(key) && key !== "Backspace") {
     event.preventDefault();
   }
 }
+
 
 function handleKeyDown(event) {
   const key = event.key;

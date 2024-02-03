@@ -669,7 +669,8 @@ app.get('/api/mfa/setup', async (req, res) => {
     const email = userData.email;
 
     if (mfaEnabled === true) {
-      return res.status(460).json({ error: 'User has mfa already enabled'})
+      const imageUrl = './img/qr-placeholder.jpg'
+      return res.status(460).json({ success: false, imageUrl, error: 'User has mfa already enabled'})
     }
     
     const mfaSecret = speakeasy.generateSecret({ length: 20 });
@@ -687,7 +688,7 @@ app.get('/api/mfa/setup', async (req, res) => {
       if (err) {
         res.status(500).json({ error: 'Something went wrong, try again later' });
       } else {
-        res.json({ imageUrl, secret: mfaSecret.ascii });
+        res.status(200).json({ imageUrl, secret: mfaSecret.ascii });
       }
     });
   } catch (error) {

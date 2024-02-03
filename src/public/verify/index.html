@@ -1,23 +1,20 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Email verification</title>
+    <title>Email Verification</title>
     <link rel="stylesheet" href="style.css">
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   </head>
   <body>
-    <div class="login-box">
-      <h1>Email verification</h1>
+    <div class="verify-box">
+      <h1>Verify Email:</h1>
       <form>
-        <div class="textbox">
-          <i class="fas fa-lock"></i>
-          <input type="text" pattern="[0-9]{1,6}" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" placeholder="Verification Code" name="verification-code" id="verification-code" required maxlength="6">
-        </div>
-        <input type="button" class="btn" value="Verify Email" onclick="verifyEmail()">
-        <br>
-        <br>
-        <div class="textbox">
-        <p>Verified with the Link?</p>
+        <div class="textbox" id="mfaInputContainer">
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
         </div>
         <input type="button" class="btn" value="Login Now!" onclick="redirect_login()">
       </form>

@@ -25,13 +25,14 @@ if (accessToken) {
       'Authorization': `Bearer ${accessToken}`
     }
   })
-  .then(response => response.json())
-  .then(data => {
-    document.getElementById('qrCode').src = data.imageUrl;
-    document.getElementById('secret').value = data.secret;
-    qrCodeLoaded = true;
-  })
   .then(response => handleResponse(response)) 
+  .then(data => {
+    if(data){
+      document.getElementById('qrCode').src = data.imageUrl;
+      document.getElementById('secret').value = data.secret;
+      qrCodeLoaded = true;
+    } 
+  })
 }
 
 var inputs = document.querySelectorAll('#mfaInputContainer input');
@@ -72,6 +73,7 @@ function handleResponse(response) {
 }
 
 
+
 function handleResponseVerify(response) {
   if (response.status === 200) {
     displaySuccess('Success: MFA Enabled. You\'re getting redirected')
@@ -89,10 +91,7 @@ function handleResponseVerify(response) {
 
 
 function handle460Error() {
-  displayError('Error: MFA already enabled');
-  setTimeout(() => {
-    window.location.replace('/home');
-  }, 5000);
+  displayError('MFA already enabled');
 }
 
 function handle461Error() {
@@ -155,7 +154,7 @@ function moveToNextOrPreviousInput(input, isBackspace) {
 
 function onlyNumbers(event) {
   const key = event.key;
-  if (isNaN(key) && key !== "Backspace") {
+  if (!/^\d$/.test(key) && key !== "Backspace") {
     event.preventDefault();
   }
 }

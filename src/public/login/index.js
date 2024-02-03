@@ -24,6 +24,11 @@ function redirect_resetpassword() {
   window.location.href = '/recover'
 }
 
+document.getElementById("loginForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+  login();
+});
+
 
 function login() {
   const usernameInput = document.getElementById('username');
