@@ -46,7 +46,6 @@ function get_username() {
 }
 
 
-
 function logout() {
   var pastDate = new Date(0);
   document.cookie = "access_token=; expires=" + pastDate.toUTCString() + "; path=/";
