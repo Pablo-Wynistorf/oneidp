@@ -59,10 +59,10 @@ function handleResponse(response) {
 
 function handleResponseVerify(response) {
   if (response.status === 200) {
-    displaySuccess('Success: Verified! . You\'re getting redirected')
+    displaySuccess('>Success: MFA verification successful<')
     setTimeout(() => {
       window.location.replace('/home')
-  }, 2500);
+  }, 1000);
   } else if (response.status === 460) {
     return handle460Error();
   } else if (response.status === 461) {

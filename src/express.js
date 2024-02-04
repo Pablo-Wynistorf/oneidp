@@ -298,6 +298,10 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
     return res.status(463).json({ success: false, error: 'Username cannot have more than 20 characters' });
   }
 
+  if (typeof username !== 'string' || username.length < 3) {
+    return res.status(462).json({ success: false, error: 'Username must have more than 3 characters' });
+  }
+
   try {
     let userId;
     let existingUser;

@@ -134,7 +134,7 @@ function handleResponse(response) {
 
 function handleResponseVerify(response) {
   if (response.status === 200) {
-    displaySuccess('Success: MFA Enabled. You\'re getting redirected')
+    displaySuccess('Success: MFA enabled')
     setTimeout(() => {
       window.location.replace('/home')
   }, 2500);
@@ -182,6 +182,9 @@ function jumpToFirstInput() {
 
 function handleError() {
   displayError('Something went wrong, try again later')
+  clearInputValues();
+  jumpToFirstInput();
+  window.location.replace('/home')
 }
 
 function displayError(errorMessage) {

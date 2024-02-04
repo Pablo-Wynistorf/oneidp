@@ -1,40 +1,65 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
   <head>
-    <title>Register</title>
-    <link rel="stylesheet" href="style.css">
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-  </head>
-  <body>
-    <div class="login-box">
-      <h1>Register</h1>
-      <form>
-        <div class="textbox">
-          <i class="fas fa-lock"></i>
-          <input type="text" placeholder="Email Address" name="email" id="email" required>
-        </div>
-        <div class="textbox">
-          <i class="fas fa-user"></i>
-          <input type="text" placeholder="Username" name="username" id="username" required>
-        </div>
-        <div class="textbox">
-          <i class="fas fa-lock"></i>
-          <input type="password" placeholder="Password" name="password" id="password" required>
-        </div>
-        <div class="textbox">
-          <i class="fas fa-lock"></i>
-          <input type="password" placeholder="Retype Password" name="password-retype" id="password-retype" required>
-        </div>
-        <div class="passwordRequirements">
-          <i class="fas fa-lock"></i>
-          <p>Passwort requirements:<p>
-          <p id="passwordRequirementComponents">AaBbCc, 123&#$, Mind. 8 Zeichen</p>
-        </div>
+  	<title>ONEDNS REGISTER</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-        <input type="button" class="btn" id="btn" value="Create User" disabled=true onclick="createUser()">
-        <input type="button" class="login" value="Back to Login" onclick="redirect_login()">
-      </form>
-    </div>
-    <script src="index.js"></script>
-  </body>
+	<link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet">
+
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+	
+	<link rel="stylesheet" href="css/style.css">
+
+	</head>
+	<body class="img js-fullheight" style="background-image: url(images/bg.jpg);">
+	<section class="ftco-section">
+		<div class="container">
+			<div class="row justify-content-center">
+				<div class="col-md-6 text-center mb-5">
+					<h2 class="heading-section">ONEDNS REGISTER</h2>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<div class="col-md-6 col-lg-4">
+					<div class="login-wrap p-0">
+		      	<h3 class="mb-4 text-center">Don't have an account?</h3>
+		      		<div class="form-group">
+		      			<input type="text" id="email-field" class="form-control" placeholder="Email" required>
+		      		</div>
+		      		<div class="form-group">
+		      			<input type="text" id="username-field" class="form-control" placeholder="Username" required>
+		      		</div>
+	            <div class="form-group">
+	              <input id="password-field" type="password" class="form-control" placeholder="Password" required>
+	              <span toggle="#password-field" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+	            </div>
+	            <div class="form-group">
+					<input id="password-retype-field" type="password" class="form-control" placeholder="Retype Password" required>
+					<span toggle="#password-retype-field" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+				  </div>
+				  <p>Passwort requirements:<p>
+					<p id="passwordRequirementComponents">AaBbCc, 123&#$, Mind. 8 Zeichen</p>
+				  <div class="form-group">
+	            	<button type="submit" id="login-button" class="form-control btn btn-primary submit px-3" onclick="createUser()">Register</button>
+	            </div>
+	            <div class="form-group d-md-flex">
+	            	<div class="w-50">
+		            	<div class="w-50 text-md-right">
+							<a href="/login" style="color: #fff">Login</a>
+						</div>
+	            </div>
+	          </form>
+			</div>
+		</div>
+	</section>
+
+	<script src="js/jquery.min.js"></script>
+  <script src="js/popper.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/index.js"></script>
+
+	</body>
 </html>
+
