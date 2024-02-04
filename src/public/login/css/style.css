@@ -4,7 +4,7 @@
  * Copyright 2011-2019 Twitter, Inc.
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  */
-:root {
+ :root {
   --blue: #007bff;
   --indigo: #6610f2;
   --purple: #6f42c1;
@@ -8227,14 +8227,15 @@ h1, h2, h3, h4, h5,
   border: none;
   height: 50px;
   color: white !important;
-  border: 1px solid transparent;
+  border: 1px solid white;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 40px;
   padding-left: 20px;
   padding-right: 20px;
   -webkit-transition: 0.3s;
   -o-transition: 0.3s;
-  transition: 0.3s; }
+  transition: 0.3s;
+  }
   @media (prefers-reduced-motion: reduce) {
     .form-control {
       -webkit-transition: none;
@@ -8331,9 +8332,10 @@ textarea.form-control {
   .btn:hover, .btn:active, .btn:focus {
     outline: none; }
   .btn.btn-primary {
-    background: #fbceb5 !important;
+    background: #a16f0a !important;
     border: 1px solid #fbceb5 !important;
-    color: #000 !important; }
+    color: #000 !important;
+    }
     .btn.btn-primary:hover {
       border: 1px solid #fbceb5;
       background: transparent;

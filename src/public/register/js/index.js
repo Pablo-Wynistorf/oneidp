@@ -89,6 +89,8 @@ function handleResponse(response) {
     return response.json().then((data) => {
       window.location.href = '/verify';
     });
+  } else if (response.status === 429) {
+    handle429Error();
   } else if (response.status === 460) {
     handle460Error();
   } else if (response.status === 461) {
@@ -110,48 +112,51 @@ function handleResponse(response) {
   }
 }
 
+function handle429Error() {
+  displayError('Error: Too many requests')
+}
+
 
 function handle460Error() {
-  const emailInput = document.getElementById('email');
+  const emailInput = document.getElementById('email-field');
   emailInput.value = '';
   displayError('Error: Email already registered')
 }
 
 
 function handle461Error() {
-  const usernameInput = document.getElementById('username');
+  const usernameInput = document.getElementById('username-field');
   usernameInput.value = '';
   displayError('Error: Username already used')
 }
 
 function handle462Error() {
-  const passwordInput = document.getElementById('password');
-  const passwordInputRetype = document.getElementById('password-retype');
-  passwordInput.value = '';
-  passwordInputRetype.value = '';
-  displayError('Error: Password must have at least 8 characters')
+  const usernameInput = document.getElementById('username-field');
+  usernameInput.value = '';
+  displayError('Error: Username must have more than 3 characters')
 }
 
 
 function handle463Error() {
-  const usernameInput = document.getElementById('username');
+  const usernameInput = document.getElementById('username-field');
   usernameInput.value = '';
   displayError('Error: Username cannot have more than 20 characters')
 }
 
 function handle465Error() {
-  const passwordInput = document.getElementById('password');
+  const passwordInput = document.getElementById('password-field');
   passwordInput.value = '';
   displayError('Error: Pasword must have at least 8 characters')
 }
 
 function handle464Error() {
-  const passwordInput = document.getElementById('password');
+  const passwordInput = document.getElementById('password-field');
   passwordInput.value = '';
   displayError('Error: Pasword cannot have more than 23 characters')
 }
 
 function handle466Error() {
+  const emailInput = document.getElementById('email-field');
   emailInput.value = '';
   displayError('Error: Invalid email address')
 }
