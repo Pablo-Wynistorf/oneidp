@@ -44,20 +44,23 @@ html {
   font-family: sans-serif;
   line-height: 1.15;
   -webkit-text-size-adjust: 100%;
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0); }
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0); 
+  font-family: Ubuntu, "times new roman", times, roman, serif;
+}
 
 article, aside, figcaption, figure, footer, header, hgroup, main, nav, section {
   display: block; }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-family: Ubuntu, "times new roman", times, roman, serif;
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;
   color: #212529;
   text-align: left;
-  background-color: #fff; }
+  background-color: #fff;
+}
 
 [tabindex="-1"]:focus {
   outline: 0 !important; }
@@ -153,7 +156,7 @@ pre,
 code,
 kbd,
 samp {
-  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: Ubuntu, "times new roman", times, roman, serif;
   font-size: 1em; }
 
 pre {
@@ -447,39 +450,23 @@ pre {
   overflow-y: scroll; }
 
 .container {
-  width: 100%;
-  padding-right: 15px;
-  padding-left: 15px;
-  margin-right: auto;
-  margin-left: auto; }
-  @media (min-width: 576px) {
-    .container {
-      max-width: 540px; } }
-  @media (min-width: 768px) {
-    .container {
-      max-width: 720px; } }
-  @media (min-width: 992px) {
-    .container {
-      max-width: 960px; } }
-  @media (min-width: 1200px) {
-    .container {
-      max-width: 1140px; } }
-
-.container-fluid {
-  width: 100%;
-  padding-right: 15px;
-  padding-left: 15px;
-  margin-right: auto;
-  margin-left: auto; }
+  width: 40rem;
+  height: 35rem;
+  margin: 2rem;
+  padding: 2rem;
+  backdrop-filter: blur(12px);
+  box-shadow: rgba(50, 50, 93, 0.5) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.5) 0px 18px 36px -18px inset;
+  border-radius: 20px;
+}
 
 .row {
   display: -webkit-box;
   display: -ms-flexbox;
+  width: 100%;
   display: flex;
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
-  margin-right: -15px;
-  margin-left: -15px; }
+}
 
 .no-gutters {
   margin-right: 0;
@@ -497,8 +484,7 @@ pre {
 .col-xl-auto {
   position: relative;
   width: 100%;
-  padding-right: 15px;
-  padding-left: 15px; }
+}
 
 .col {
   -ms-flex-preferred-size: 0;
@@ -1701,7 +1687,9 @@ textarea.form-control {
   height: auto; }
 
 .form-group {
-  margin-bottom: 1rem; }
+  margin-bottom: 1rem; 
+  width: 100%;
+}
 
 .form-text {
   display: block;
@@ -4884,7 +4872,7 @@ a.close.disabled {
   z-index: 1070;
   display: block;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-family: Ubuntu, "times new roman", times, roman, serif;
   font-style: normal;
   font-weight: 400;
   line-height: 1.5;
@@ -4969,7 +4957,7 @@ a.close.disabled {
   z-index: 1060;
   display: block;
   max-width: 276px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-family: Ubuntu, "times new roman", times, roman, serif;
   font-style: normal;
   font-weight: 400;
   line-height: 1.5;
@@ -7902,7 +7890,8 @@ button.bg-dark:focus {
     margin-left: auto !important; } }
 
 .text-monospace {
-  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important; }
+  font-family: Ubuntu, "times new roman", times, roman, serif;
+ }
 
 .text-justify {
   text-align: justify !important; }
@@ -8133,7 +8122,7 @@ a.text-dark:hover, a.text-dark:focus {
     border-color: #dee2e6; } }
 
 body {
-  font-family: "Lato", Arial, sans-serif;
+  font-family: Ubuntu, "times new roman", times, roman, serif;
   font-size: 16px;
   line-height: 1.8;
   font-weight: normal;
@@ -8167,7 +8156,7 @@ h1, h2, h3, h4, h5,
 .h1, .h2, .h3, .h4, .h5 {
   line-height: 1.5;
   font-weight: 400;
-  font-family: "Lato", Arial, sans-serif;
+  font-family: Ubuntu, "times new roman", times, roman, serif;
   color: #000; }
 
 .bg-primary {
@@ -8183,8 +8172,14 @@ h1, h2, h3, h4, h5,
   padding-bottom: 0; }
 
 .heading-section {
-  font-size: 28px;
-  color: #fff; }
+  font-weight: 900;
+  font-size: 40px;
+  color: #fff;
+}
+
+.text-section {
+  color: #fff;
+}
 
 .img {
   background-size: cover;
@@ -8211,7 +8206,9 @@ h1, h2, h3, h4, h5,
         border-color: #000; }
 
 .form-group {
-  position: relative; }
+  position: relative; 
+  width: 80%;
+}
 
 .field-icon {
   position: absolute;
@@ -8295,7 +8292,7 @@ textarea.form-control {
 /* Create the checkmark/indicator (hidden when not checked) */
 .checkmark:after {
   content: "\f0c8";
-  font-family: "FontAwesome";
+  font-family: Ubuntu, "times new roman", times, roman, serif;
   position: absolute;
   color: rgba(255, 255, 255, 0.1);
   font-size: 20px;
@@ -8313,7 +8310,7 @@ textarea.form-control {
 .checkbox-wrap input:checked ~ .checkmark:after {
   display: block;
   content: "\f14a";
-  font-family: "FontAwesome";
+  font-family: Ubuntu, "times new roman", times, roman, serif;
   color: rgba(0, 0, 0, 0.2); }
 
 /* Style the checkmark/indicator */

@@ -22,7 +22,6 @@ const DC_MONITORING_WEBHOOK_URL = process.env.DC_MONITORING_WEBHOOK_URL;
 
 const app = express();
 
-
 function connectToDatabase() {
   mongoose.connect(DATABASE_URI);
 }
