@@ -181,6 +181,39 @@ app.use('/home/mfa/settings', existingToken, express.static(path.join(__dirname,
 app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
 
 
+// Login to the account, if account not verified, resend verification email.
+app.post('/api/sso/token/check', async (req, res) => {
+  const { access_token } = req.body;
+  jwt.verify(access_token, JWT_SECRET, async (error, decoded) => {
+    if (error) {
+      res.clearCookie('access_token');
+      return res.redirect(`${URL}/login`);
+    }
+
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+
+    try {
+      const userData = await userDB.findOne({ userId: userId, sid: sid });
+      if (!userData) {
+        res.clearCookie('access_token');
+        return res.redirect(`${URL}/login`);
+      }
+      res.clearCookie('email_verification_token');
+      res.clearCookie('password_reset_token');
+      res.clearCookie('password_reset_code');
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error:', error);
+      res.clearCookie('access_token');
+      return res.redirect('/login');
+    }
+  });
+
+});
+
+
+
 
 // Login to the account, if account not verified, resend verification email.
 app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {

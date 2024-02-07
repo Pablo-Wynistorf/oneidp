@@ -45,6 +45,13 @@ function get_username() {
   }
 }
 
+function chatapp_sso() {
+  const access_token = getCookie('access_token');
+  if (access_token) {
+    window.location.replace(`http://127.0.0.1:3000/api/chat/sso/accesstoken/${access_token}`);
+  }
+}
+
 
 function logout() {
   var pastDate = new Date(0);
