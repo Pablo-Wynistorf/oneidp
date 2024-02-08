@@ -528,43 +528,6 @@ app.post('/api/sso/data/changepassword', async (req, res) => {
 
 
 
-// Handle username fetch
-app.post('/api/sso/data/username', async (req, res) => {
-  const authorizationHeader = req.headers['authorization'];
-
-  if (!authorizationHeader) {
-    return res.status(400).json({ error: 'Authorization header is missing' });
-  }
-
-  const tokenParts = authorizationHeader.split(' ');
-  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(400).json({ error: 'Invalid authorization header format' });
-  }
-
-  const access_token = tokenParts[1];
-
-  try {
-    const decoded = jwt.verify(access_token, JWT_SECRET);
-    const userId = decoded.userId;
-    const sid = decoded.sid;
-    
-    const userData = await userDB.findOne({ userId: userId, sid: sid });
-    if (!userData) {
-      res.clearCookie('access_token');
-      return res.redirect('/login');
-    }
-
-    const username = userData.username;
-
-    res.status(200).json({ success: true, username: username });
-  } catch (error) {
-    notifyError(error)
-    return res.status(500).json({ error: 'Something went wrong, try again later' });
-  }
-});
-
-
-
 // Handle logout and change session id. (Invalidate access token)
 app.post('/api/sso/auth/logout', async (req, res) => {
   const authorizationHeader = req.headers['authorization'];
@@ -965,6 +928,40 @@ app.post('/api/oauth/token', async (req, res) => {
   }
 });
 
+
+
+// Added userinfo endpoint
+app.post('/api/oauth/userinfo', async (req, res) => {
+  const authorizationHeader = req.headers['authorization'];
+
+  if (!authorizationHeader) {
+    return res.status(400).json({ error: 'Authorization header is missing' });
+  }
+
+  const tokenParts = authorizationHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(400).json({ error: 'Invalid authorization header format' });
+  }
+
+  const access_token = tokenParts[1];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    
+    const userData = await userDB.findOne({ userId: userId, sid: sid });
+    if (!userData) {
+      res.clearCookie('access_token');
+      return res.redirect('/login');
+    }
+
+    res.status(200).json({ userId: userId, username: userData.username, email: userData.email });
+  } catch (error) {
+    notifyError(error)
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
+});
 
 
 

@@ -19,7 +19,7 @@ function getCookie(name) {
 function get_username() {
   const accessToken = getCookie('access_token');
   if (accessToken) {
-    fetch(`/api/sso/data/username`, {
+    fetch(`/api/oauth/userinfo`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
