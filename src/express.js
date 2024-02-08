@@ -956,8 +956,9 @@ app.post('/api/oauth/token', async (req, res) => {
     const userId = oauth_user.userId;
     const sid = oauth_user.sid;
 
-    const oauth_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
-    res.json({ access_token: oauth_token });
+    const oauth_access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+    const oauth_refresh_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '96h' });
+    res.json({ access_token: oauth_access_token, refresh_token: oauth_refresh_token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'server_error', error_description: 'Server error' });
