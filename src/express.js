@@ -228,7 +228,7 @@ app.post('/api/sso/token/check', async (req, res) => {
 
 // Login to the account, if account not verified, resend verification email.
 app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
-  const { username_or_email, password } = req.body;
+  const { username_or_email, password, redirectURI } = req.body;
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 
   try {
@@ -268,7 +268,7 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
       res.status(461).json({ success: true, Message: 'Email not verified' });
       sendVerificationEmail(username, email, email_verification_token, new_email_verification_code, res);
     } else {
-      loginSuccess(userId, username, sid, res, mfaEnabled);
+      loginSuccess(userId, username, sid, res, mfaEnabled, redirectURI);
     }
   } catch (error) {
     notifyError(error);
@@ -279,7 +279,7 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
 
 
 // Handle successful login and generate access tokens
-async function loginSuccess(userId, username, sid, res, mfaEnabled) {
+async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectURI) {
   if (!sid) {
     const newsid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
     await userDB.updateOne({ userId }, { $set: { sid: newsid } });
@@ -289,7 +289,7 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled) {
       await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
       const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
       res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, path: '/' });
-      return res.status(463).json({ success: true, message: 'Redirecting to mfa site'});
+      return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectURI: redirectURI});
     }
 
     notifyLogin(username);
@@ -303,13 +303,14 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled) {
     await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
     const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
     res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, path: '/' });
-    return res.status(463).json({ success: true, message: 'Redirecting to mfa site'})
+    return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectURI: redirectURI})
   }
 
   const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
   notifyLogin(username);
   res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
-  return res.status(200).json({ success: true });
+
+  return res.status(200).json({ success: true, redirectURI: redirectURI });
 }
 
 
@@ -847,6 +848,7 @@ app.post('/api/mfa/setup/verify', async (req, res) => {
 app.post('/api/mfa/verify', async (req, res) => {
   const authorizationHeader = req.headers['authorization'];
   const mfaVerifyCode = req.body.mfaVerifyCode;
+  const redirectURI = req.body.redirectURI;
 
   if (!authorizationHeader) {
     return res.status(400).json({ error: 'Authorization header is missing' });
@@ -889,7 +891,7 @@ app.post('/api/mfa/verify', async (req, res) => {
     const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
     notifyLogin(username);
     res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, redirectURI: redirectURI });
   } else {
     return res.status(461).json({ success: false, error: 'Invalid verification code'})
   }

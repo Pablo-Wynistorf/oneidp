@@ -28,27 +28,27 @@ inputs.forEach(function(input) {
             collectedInputs += input.value;
         });
         if (collectedInputs.length === inputs.length) {
+            const redirectURI = getRedirectURI();
             fetch(`/api/mfa/verify`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${mfa_token}`
                 },
-                body: JSON.stringify({
-                    'mfaVerifyCode': collectedInputs
-                })
+                body: JSON.stringify({ mfaVerifyCode: collectedInputs, redirectURI: redirectURI })
             })
-            .then(response => handleResponseVerify(response)) 
-            .catch(error => handleError(error));
+            .then(response => handleResponse(response, { redirectURI }));
         }
     });
 });
 
 
 
-function handleResponse(response) {
+function handleResponse(response, data) {
+  const redirectURI = data.redirectURI;
   if (response.status === 200) {
-    document.cookie = "mfa_token=; expires=" + pastDate.toUTCString() + "; path=/";
+    document.cookie = "mfa_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.href = redirectURI || '/home';
   } else if (response.status === 460) {
     return handle460Error();
   } else {
@@ -59,7 +59,7 @@ function handleResponse(response) {
 
 function handleResponseVerify(response) {
   if (response.status === 200) {
-    displaySuccess('>Success: MFA verification successful<')
+    displaySuccess('Success: MFA verification successful')
     setTimeout(() => {
       window.location.replace('/home')
   }, 1000);
@@ -158,4 +158,10 @@ function handleKeyDown(event) {
     const input = event.target;
     moveToNextOrPreviousInput(input, true);
   }
+}
+
+function getRedirectURI() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const redirectURI = urlParams.get('redirect_uri');
+  return redirectURI;
 }

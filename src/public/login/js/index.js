@@ -35,31 +35,34 @@ function login() {
   const passwordInput = document.getElementById('password-field');
   const username_or_email = usernameInput.value;
   const password = passwordInput.value;
-
+  const redirectURI = getRedirectURI();
   fetch(`/api/sso/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ username_or_email, password })
+    body: JSON.stringify({ username_or_email, password, redirectURI })
   })
-    .then(handleResponse)
+    .then(response => handleResponse(response, { redirectURI }));
 }
 
 
-function handleResponse(response) {
+function handleResponse(response, data) {
+  const redirectURI = data.redirectURI;
   if (response.status === 200) {
-    window.location.href = '/home';
+    window.location.href = redirectURI || '/home';
   } else if (response.status === 461) {
     handle461Error();
   } else if (response.status === 462) {
     handle462Error();
   } else if (response.status === 463) {
-    handle463Error();
+    handle463Error(redirectURI);
   } else {
     handleError();
   }
 }
+
+
 
 
 function handle461Error() {
@@ -77,14 +80,20 @@ function handle462Error() {
   displayError('Username or password wrong')
 }
 
-function handle463Error() {
-  window.location.replace('/mfa')
+function handle463Error(redirectURI) {
+  window.location.replace(`/mfa/?redirect_uri=${redirectURI}` || '/mfa')
 }
 
 function handleError() {
   displayError('Something went wrong')
 }
 
+
+function getRedirectURI() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const redirectURI = urlParams.get('redirect_uri');
+  return redirectURI;
+}
 
 
 
