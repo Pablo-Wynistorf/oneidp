@@ -63,7 +63,7 @@ const userSchema = new Schema({
   mfaLoginSecret: String,
   mfaEnabled: Boolean,
   accountRole: String,
-  oauthClientApps: Array,
+  oauthClientAppIds: Array,
   oauthAuthorizationCode: String,
 }, {
   timestamps: true
@@ -80,7 +80,7 @@ const oAuthClientSchema = new mongoose.Schema({
 
 
 const userDB = mongoose.model('users', userSchema);
-const oAuthClientDB = mongoose.model('oauthclients', oAuthClientSchema);
+const oAuthClientAppDB = mongoose.model('oauthClientApps', oAuthClientSchema);
 
 app.use((req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
@@ -888,7 +888,7 @@ app.get('/api/oauth/authorize', async (req, res) => {
   const access_token = req.cookies.access_token;
   const clientId = client_id;
   try {
-    const oauth_client = await oAuthClientDB.findOne({ clientId });
+    const oauth_client = await oAuthClientAppDB.findOne({ clientId });
 
     const redirect_uri = oauth_client.redirectUri;
     if (!oauth_client) {
@@ -923,7 +923,7 @@ app.post('/api/oauth/token', async (req, res) => {
   const clientId = client_id;
   const clientSecret = client_secret;
   try {
-    const oauth_client = await oAuthClientDB.findOne({ clientId, clientSecret });
+    const oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
     const oauth_user = await userDB.findOne({ oauthAuthorizationCode: code });
     const oauthAuthorizationCode = code;
     await userDB.updateOne({ oauthAuthorizationCode }, { $unset: { oauthAuthorizationCode: 1 } });
