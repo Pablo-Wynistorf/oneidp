@@ -28,16 +28,16 @@ inputs.forEach(function(input) {
             collectedInputs += input.value;
         });
         if (collectedInputs.length === inputs.length) {
-            const redirectURI = getRedirectURI();
+            const redirectUri = getRedirectUri();
             fetch(`/api/mfa/verify`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${mfa_token}`
                 },
-                body: JSON.stringify({ mfaVerifyCode: collectedInputs, redirectURI: redirectURI })
+                body: JSON.stringify({ mfaVerifyCode: collectedInputs, redirectUri: redirectUri })
             })
-            .then(response => handleResponse(response, { redirectURI }));
+            .then(response => handleResponse(response, { redirectUri }));
         }
     });
 });
@@ -45,10 +45,10 @@ inputs.forEach(function(input) {
 
 
 function handleResponse(response, data) {
-  const redirectURI = data.redirectURI;
+  const redirectUri = data.redirectUri;
   if (response.status === 200) {
     document.cookie = "mfa_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = redirectURI || '/home';
+    window.location.href = redirectUri || '/home';
   } else if (response.status === 460) {
     return handle460Error();
   } else {
@@ -160,8 +160,8 @@ function handleKeyDown(event) {
   }
 }
 
-function getRedirectURI() {
+function getRedirectUri() {
   const urlParams = new URLSearchParams(window.location.search);
-  const redirectURI = urlParams.get('redirect_uri');
-  return redirectURI;
+  const redirectUri = urlParams.get('redirect_uri');
+  return redirectUri;
 }

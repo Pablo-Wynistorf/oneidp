@@ -63,15 +63,17 @@ const userSchema = new Schema({
   mfaLoginSecret: String,
   mfaEnabled: Boolean,
   accountRole: String,
-  oauth_authorizationCode: String,
+  oauthClientApps: Array,
+  oauthAuthorizationCode: String,
 }, {
   timestamps: true
 });
 
 const oAuthClientSchema = new mongoose.Schema({
-  client_id: String,
-  client_secret: String,
-  redirect_uri: String,
+  oauthClientAppId: String,
+  clientId: String,
+  clientSecret: String,
+  redirectUri: String,
 }, {
   timestamps: true
 });
@@ -228,7 +230,7 @@ app.post('/api/sso/token/check', async (req, res) => {
 
 // Login to the account, if account not verified, resend verification email.
 app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
-  const { username_or_email, password, redirectURI } = req.body;
+  const { username_or_email, password, redirectUri } = req.body;
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 
   try {
@@ -268,7 +270,7 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
       res.status(461).json({ success: true, Message: 'Email not verified' });
       sendVerificationEmail(username, email, email_verification_token, new_email_verification_code, res);
     } else {
-      loginSuccess(userId, username, sid, res, mfaEnabled, redirectURI);
+      loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri);
     }
   } catch (error) {
     notifyError(error);
@@ -279,7 +281,7 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
 
 
 // Handle successful login and generate access tokens
-async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectURI) {
+async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri) {
   if (!sid) {
     const newsid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
     await userDB.updateOne({ userId }, { $set: { sid: newsid } });
@@ -289,7 +291,7 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectURI)
       await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
       const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
       res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, path: '/' });
-      return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectURI: redirectURI});
+      return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri: redirectUri});
     }
 
     notifyLogin(username);
@@ -303,14 +305,14 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectURI)
     await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
     const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
     res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, path: '/' });
-    return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectURI: redirectURI})
+    return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri: redirectUri})
   }
 
   const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
   notifyLogin(username);
   res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
 
-  return res.status(200).json({ success: true, redirectURI: redirectURI });
+  return res.status(200).json({ success: true, redirectUri: redirectUri });
 }
 
 
@@ -811,7 +813,7 @@ app.post('/api/mfa/setup/verify', async (req, res) => {
 app.post('/api/mfa/verify', async (req, res) => {
   const authorizationHeader = req.headers['authorization'];
   const mfaVerifyCode = req.body.mfaVerifyCode;
-  const redirectURI = req.body.redirectURI;
+  const redirectUri = req.body.redirectUri;
 
   if (!authorizationHeader) {
     return res.status(400).json({ error: 'Authorization header is missing' });
@@ -854,7 +856,7 @@ app.post('/api/mfa/verify', async (req, res) => {
     const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
     notifyLogin(username);
     res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
-    return res.status(200).json({ success: true, redirectURI: redirectURI });
+    return res.status(200).json({ success: true, redirectUri: redirectUri });
   } else {
     return res.status(461).json({ success: false, error: 'Invalid verification code'})
   }
@@ -865,31 +867,45 @@ app.post('/api/mfa/verify', async (req, res) => {
 });
 
 
+
+// Get oauth apps
+app.get('/api/oauth/settings/get', async (req, res) => {
+  
+});
+
+
+
+// Add oauth app
+app.get('/api/oauth/settings/add', async (req, res) => {
+  
+});
+
+
   
 // Oauth2 authorize endpoint
 app.get('/api/oauth/authorize', async (req, res) => {
   const { client_id } = req.query;
   const access_token = req.cookies.access_token;
+  const clientId = client_id;
   try {
-    const oauth_client = await oAuthClientDB.findOne({ client_id });
+    const oauth_client = await oAuthClientDB.findOne({ clientId });
 
-    const oauth_client_url = oauth_client.redirect_uri;
+    const redirect_uri = oauth_client.redirectUri;
     if (!oauth_client) {
       return res.status(401).json({ error: 'invalid_client', error_description: 'Invalid client' });
     }
     jwt.verify(access_token, JWT_SECRET, async (error, decoded) => {
       if (error) {
-        return res.redirect(`/login?redirect_uri=${oauth_client_url}`);
+        return res.redirect(`/login?redirect_uri=${redirect_uri}`);
       }
       const { userId, sid } = decoded;
       const user = await userDB.findOne({ userId, sid });
       if (!user) {
-        return res.redirect(`/login?redirect_uri=${oauth_client_url}`);
+        return res.redirect(`/login?redirect_uri=${redirect_uri}`);
       }
-      const redirect_uri = oauth_client.redirect_uri;
       const authorizationCode = [...Array(35)].map(() => Math.random().toString(36)[2]).join('');
       
-      await userDB.updateOne({ userId }, { $set: { oauth_authorizationCode: authorizationCode } });
+      await userDB.updateOne({ userId }, { $set: { oauthAuthorizationCode: authorizationCode } });
       
       res.redirect(`${redirect_uri}?code=${authorizationCode}`);
     });
@@ -904,11 +920,13 @@ app.get('/api/oauth/authorize', async (req, res) => {
 // Oauth Token endpoint
 app.post('/api/oauth/token', async (req, res) => {
   const { code, client_id, client_secret } = req.body;
+  const clientId = client_id;
+  const clientSecret = client_secret;
   try {
-    const oauth_client = await oAuthClientDB.findOne({ client_id, client_secret });
-    const oauth_user = await userDB.findOne({ oauth_authorizationCode: code });
-    const oauth_authorizationCode = code;
-    await userDB.updateOne({ oauth_authorizationCode }, { $unset: { oauth_authorizationCode: 1 } });
+    const oauth_client = await oAuthClientDB.findOne({ clientId, clientSecret });
+    const oauth_user = await userDB.findOne({ oauthAuthorizationCode: code });
+    const oauthAuthorizationCode = code;
+    await userDB.updateOne({ oauthAuthorizationCode }, { $unset: { oauthAuthorizationCode: 1 } });
     if (!oauth_client) {
       return res.status(401).json({ error: 'invalid_client', error_description: 'Invalid client' });
     }
