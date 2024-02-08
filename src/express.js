@@ -142,7 +142,6 @@ const verifyToken = (req, res, next) => {
         res.clearCookie('password_reset_code');
         next();
       } catch (error) {
-        console.error('Error:', error);
         res.clearCookie('access_token');
         return res.redirect('/login');
       }
@@ -217,7 +216,6 @@ app.post('/api/sso/token/check', async (req, res) => {
       res.clearCookie('password_reset_code');
       res.status(200).json({ success: true });
     } catch (error) {
-      console.error('Error:', error);
       res.clearCookie('access_token');
       return res.redirect('/login');
     }
@@ -870,14 +868,119 @@ app.post('/api/mfa/verify', async (req, res) => {
 
 // Get oauth apps
 app.get('/api/oauth/settings/get', async (req, res) => {
-  
+  const authorizationHeader = req.headers['authorization'];
+
+  if (!authorizationHeader) {
+    return res.status(400).json({ error: 'Authorization header is missing' });
+  }
+
+  const tokenParts = authorizationHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(400).json({ error: 'Invalid authorization header format' });
+  }
+
+  const access_token = tokenParts[1];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    
+    const userData = await userDB.findOne({ userId, sid });
+    if (!userData) {
+      res.clearCookie('access_token');
+      return res.redirect('/login');
+    }
+    console.log(userData)
+
+    let oauthApps = userData.oauthClientAppIds || [];
+
+    if (!Array.isArray(oauthApps)) {
+      return res.status(400).json({ error: 'Invalid format for oauthApps' });
+    }
+
+    if (oauthApps.length === 0) {
+      return res.status(404).json({ error: 'No OAuth apps found for this user' });
+    }
+
+    const oauthAppsData = await oAuthClientAppDB.find({ oauthClientAppId: { $in: oauthApps } }).exec();
+
+    if (!oauthAppsData || oauthAppsData.length === 0) {
+      return res.status(404).json({ error: 'No OAuth apps found' });
+    }
+
+    const organizedData = oauthAppsData.map(app => ({
+      clientId: app.clientId,
+      clientSecret: app.clientSecret,
+      redirectUri: app.redirectUri,
+      oauthClientAppId: app.oauthClientAppId
+    }));
+
+    res.json({ oauthApps: organizedData });
+  } catch (error) {
+    res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
 });
 
 
 
 // Add oauth app
 app.get('/api/oauth/settings/add', async (req, res) => {
-  
+  const authorizationHeader = req.headers['authorization'];
+  const redirectUri = req.body.redirectUri;
+
+  if (!authorizationHeader) {
+    return res.status(400).json({ error: 'Authorization header is missing' });
+  }
+
+  const tokenParts = authorizationHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(400).json({ error: 'Invalid authorization header format' });
+  }
+
+  const access_token = tokenParts[1];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    
+    const userData = await userDB.findOne({ userId: userId, sid: sid });
+    if (!userData) {
+      res.clearCookie('access_token');
+      return res.redirect('/login');
+    }
+
+    let oauthClientAppId;
+    let existingoauthClientAppId;
+    do {
+      oauthClientAppId = Math.floor(Math.random() * 900000) + 100000;
+      existingoauthClientAppId = await oAuthClientAppDB.findOne({ oauthClientAppId });
+    } while (existingoauthClientAppId);
+
+    let clientId;
+    let existingClientId;
+    do {
+      clientId = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+      existingClientId = await oAuthClientAppDB.findOne({ existingClientId });
+    } while (existingClientId);
+
+    const clientSecret = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
+
+
+    const newoauthClientApp = new oAuthClientAppDB({
+      oauthClientAppId: oauthClientAppId,
+      clientId: clientId,
+      clientSecret: clientSecret,
+      redirectUri: redirectUri
+    });
+
+    await newoauthClientApp.save();
+    await userDB.updateOne({ userId }, { $push: { oauthClientAppIds: oauthClientAppId } });
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+  }
 });
 
 
@@ -910,7 +1013,6 @@ app.get('/api/oauth/authorize', async (req, res) => {
       res.redirect(`${redirect_uri}?code=${authorizationCode}`);
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: 'server_error', error_description: 'Server error' });
   }
 });
@@ -941,7 +1043,6 @@ app.post('/api/oauth/token', async (req, res) => {
     const oauth_refresh_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '96h' });
     res.json({ access_token: oauth_access_token, refresh_token: oauth_refresh_token });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: 'server_error', error_description: 'Server error' });
   }
 });
