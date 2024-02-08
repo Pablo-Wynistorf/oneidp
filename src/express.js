@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -21,6 +22,10 @@ const MJ_SENDER_EMAIL = process.env.MJ_SENDER_EMAIL;
 const DC_MONITORING_WEBHOOK_URL = process.env.DC_MONITORING_WEBHOOK_URL;
 
 const app = express();
+app.use(cors());
+app.use(bodyParser.json());
+app.use(cookieParser()); 
+app.use(bodyParser.urlencoded({ extended: true }));
 
 function connectToDatabase() {
   mongoose.connect(DATABASE_URI);
@@ -58,11 +63,22 @@ const userSchema = new Schema({
   mfaLoginSecret: String,
   mfaEnabled: Boolean,
   accountRole: String,
+  oauth_authorizationCode: String,
 }, {
   timestamps: true
 });
 
+const OauthClientSchema = new mongoose.Schema({
+  client_id: String,
+  client_secret: String,
+  redirect_uri: String,
+}, {
+  timestamps: true
+});
+
+
 const userDB = mongoose.model('users', userSchema);
+const oauthClientDB = mongoose.model('oauthClients', OauthClientSchema);
 
 app.use((req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
@@ -82,11 +98,6 @@ const authRegisterLimiter = rateLimit({
   max: 3,
   message: 'Too many requests. Please try again later.',
 });
-
-
-app.use(cors());
-
-app.use(bodyParser.json());
 
 
 // Verify access token
@@ -890,6 +901,68 @@ app.post('/api/mfa/verify', async (req, res) => {
 
 
   
+// Oauth2 authorize endpoint
+app.get('/api/oauth/authorize', async (req, res) => {
+  const { client_id } = req.query;
+  const access_token = req.cookies.access_token;
+  try {
+    const oauth_client = await oauthClientDB.findOne({ client_id });
+
+    const oauth_client_url = oauth_client.redirect_uri;
+    if (!oauth_client) {
+      return res.status(401).json({ error: 'invalid_client', error_description: 'Invalid client' });
+    }
+    jwt.verify(access_token, JWT_SECRET, async (error, decoded) => {
+      if (error) {
+        return res.redirect(`/login?redirect_uri=${oauth_client_url}`);
+      }
+      const { userId, sid } = decoded;
+      const user = await userDB.findOne({ userId, sid });
+      if (!user) {
+        return res.redirect(`/login?redirect_uri=${oauth_client_url}`);
+      }
+      const redirect_uri = oauth_client.redirect_uri;
+      const authorizationCode = [...Array(35)].map(() => Math.random().toString(36)[2]).join('');
+      
+      await userDB.updateOne({ userId }, { $set: { oauth_authorizationCode: authorizationCode } });
+      
+      res.redirect(`${redirect_uri}?code=${authorizationCode}`);
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'server_error', error_description: 'Server error' });
+  }
+});
+
+
+
+// Oauth Token endpoint
+app.post('/api/oauth/token', async (req, res) => {
+  const { code, client_id, client_secret } = req.body;
+  try {
+    const oauth_client = await oauthClientDB.findOne({ client_id, client_secret });
+    const oauth_user = await userDB.findOne({ oauth_authorizationCode: code });
+    const oauth_authorizationCode = code;
+    await userDB.updateOne({ oauth_authorizationCode }, { $unset: { oauth_authorizationCode: 1 } });
+    if (!oauth_client) {
+      return res.status(401).json({ error: 'invalid_client', error_description: 'Invalid client' });
+    }
+
+    if (!oauth_user) {
+      return res.status(400).json({ error: 'invalid_grant', error_description: 'Invalid authorization code' });
+    }
+    const userId = oauth_user.userId;
+    const sid = oauth_user.sid;
+
+    const oauth_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+    res.json({ access_token: oauth_token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'server_error', error_description: 'Server error' });
+  }
+});
+
+
 
 
 // Send the email verification email
