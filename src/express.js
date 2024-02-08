@@ -68,7 +68,7 @@ const userSchema = new Schema({
   timestamps: true
 });
 
-const OauthClientSchema = new mongoose.Schema({
+const oAuthClientSchema = new mongoose.Schema({
   client_id: String,
   client_secret: String,
   redirect_uri: String,
@@ -78,7 +78,7 @@ const OauthClientSchema = new mongoose.Schema({
 
 
 const userDB = mongoose.model('users', userSchema);
-const oauthClientDB = mongoose.model('oauthClients', OauthClientSchema);
+const oAuthClientDB = mongoose.model('oauthclients', oAuthClientSchema);
 
 app.use((req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
@@ -871,7 +871,7 @@ app.get('/api/oauth/authorize', async (req, res) => {
   const { client_id } = req.query;
   const access_token = req.cookies.access_token;
   try {
-    const oauth_client = await oauthClientDB.findOne({ client_id });
+    const oauth_client = await oAuthClientDB.findOne({ client_id });
 
     const oauth_client_url = oauth_client.redirect_uri;
     if (!oauth_client) {
@@ -905,7 +905,7 @@ app.get('/api/oauth/authorize', async (req, res) => {
 app.post('/api/oauth/token', async (req, res) => {
   const { code, client_id, client_secret } = req.body;
   try {
-    const oauth_client = await oauthClientDB.findOne({ client_id, client_secret });
+    const oauth_client = await oAuthClientDB.findOne({ client_id, client_secret });
     const oauth_user = await userDB.findOne({ oauth_authorizationCode: code });
     const oauth_authorizationCode = code;
     await userDB.updateOne({ oauth_authorizationCode }, { $unset: { oauth_authorizationCode: 1 } });
