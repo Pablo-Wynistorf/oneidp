@@ -891,8 +891,6 @@ app.get('/api/oauth/settings/get', async (req, res) => {
       res.clearCookie('access_token');
       return res.redirect('/login');
     }
-    console.log(userData)
-
     let oauthApps = userData.oauthClientAppIds || [];
 
     if (!Array.isArray(oauthApps)) {
@@ -925,7 +923,7 @@ app.get('/api/oauth/settings/get', async (req, res) => {
 
 
 // Add oauth app
-app.get('/api/oauth/settings/add', async (req, res) => {
+app.post('/api/oauth/settings/add', async (req, res) => {
   const authorizationHeader = req.headers['authorization'];
   const redirectUri = req.body.redirectUri;
 
@@ -961,7 +959,7 @@ app.get('/api/oauth/settings/add', async (req, res) => {
     let clientId;
     let existingClientId;
     do {
-      clientId = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+      clientId = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
       existingClientId = await oAuthClientAppDB.findOne({ existingClientId });
     } while (existingClientId);
 
@@ -980,6 +978,7 @@ app.get('/api/oauth/settings/add', async (req, res) => {
 
     res.status(200).json({ success: true });
   } catch (error) {
+    res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
 
