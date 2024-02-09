@@ -84,8 +84,8 @@ function mfa_settings() {
 }
 
 function setNewPassword() {
-  var password1 = document.getElementById("newPassword").value;
-  var password2 = document.getElementById("newPassword-retype").value;
+  var password1 = document.getElementById("password-field").value;
+  var password2 = document.getElementById("password-retype-field").value;
   if (password1 === password2) {
     changePassword();
   } else {
@@ -93,7 +93,7 @@ function setNewPassword() {
   }
 }
 
-const password = document.getElementById('newPassword');
+const password = document.getElementById('password-field');
 password.addEventListener('input', passwordRequirements);
 password.addEventListener('blur', checkPasswordOnBlur);
 
@@ -128,7 +128,7 @@ function checkPasswordOnBlur(event) {
 }
 
 function changePassword() {
-  const passwordInput = document.getElementById('newPassword');
+  const passwordInput = document.getElementById('password-field');
   const password = passwordInput.value;
   const accessToken = getCookie('access_token');
   if (accessToken) {
@@ -165,32 +165,35 @@ function handleResponse(response) {
 
 
 function handle200() {
+  document.getElementById('password-field').value = '';
+  document.getElementById('password-retype-field').value = '';
+  document.getElementById('passwordRequirementComponents').style.color = "red";
   displaySuccess('Success: Password successfully changed');
 }
 
 
 function handle460Error() {
-  document.getElementById('newPassword').value = '';
-  document.getElementById('newPassword-retype').value = '';
+  document.getElementById('password-field').value = '';
+  document.getElementById('password-retype-field').value = '';
   displayError('Error: Password must be at least 5 characters');
 }
 
 function handle461Error() {
-  document.getElementById('newPassword').value = '';
-  document.getElementById('newPassword-retype').value = '';
+  document.getElementById('password-field').value = '';
+  document.getElementById('password-retype-field').value = '';
   displayError('Error: Password must not have more than 23 characters');
   document.getElementById('passwordRequirementComponents').style.color = "red";
 }
 
 function handle462Error() {
-  document.getElementById('newPassword').value = '';
-  document.getElementById('newPassword-retype').value = '';
+  document.getElementById('password-field').value = '';
+  document.getElementById('password-retype-field').value = '';
   displayError('Error: Password doesnt meet our requirements');
 }
 
 function handleError() {
-  document.getElementById('newPassword').value = '';
-  document.getElementById('newPassword-retype').value = '';
+  document.getElementById('password-field').value = '';
+  document.getElementById('password-retype-field').value = '';
   displayError('Error: Something went wrong');
 }
 

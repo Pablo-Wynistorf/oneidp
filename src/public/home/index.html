@@ -1,36 +1,49 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
   <head>
-    <title>Home</title>
-    <link rel="stylesheet" href="style.css">
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-  </head>
-  <body>
-    <div class="login-box">
-      <h1>Welcome</h1>
-      <p id="get-username"></p>
-      <form>
-        <div class="textbox">
-          <i class="fas fa-user"></i>
-          <input type="password" placeholder="New Password" name="newPassword" id="newPassword" required>
-        </div>
-        <div class="textbox">
-          <i class="fas fa-user"></i>
-          <input type="password" placeholder="Retype new password" name="newPassword-retype" id="newPassword-retype" required>
-        </div>
-        <div class="passwordRequirements">
-          <i class="fas fa-lock"></i>
-          <p>Passwort requirements:<p>
-          <p id="passwordRequirementComponents">AaBbCc, 123&#$, Mind. 8 Zeichen</p>
-        </div>
-      </form>
-      <input type="button" class="btn" value="Change Password" onclick="setNewPassword()">
-      <input type="button" class="btn" value="MFA Settings" onclick="mfa_settings()">
-      <input type="button" class="btn" value="Register oAuth2 App" onclick="add_oauth2_app()">
-      <input type="button" class="btn" value="Sign Out" onclick="logout()">
-      <input type="button" class="btn" value="Sign out on all devices" onclick="logoutAll()">
-      <input type="button" class="btn" value="Fetch Data" onclick="get_username()">
-    </div>
-    <script src="index.js"></script>
-  </body>
+  	<title>ONEDNS HOME</title>
+	  <meta charset="utf-8">
+	  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	  <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Ubuntu:regular,bold&subset=Latin">
+	  <link rel="stylesheet" href="css/style.css">
+	  </head>
+	<body class="img js-fullheight" style="background-image: url(images/bg.jpg);">
+		<center><div class="container">
+			<div class="row justify-content-center">
+				<div class="text-center mb-3 mt-3">
+					<h2 class="heading-section">ONEDNS HOME</h2>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+                <div class="form-group">
+                    <input id="password-field" type="password" class="form-control" placeholder="Password" required>
+                    <span toggle="#password-field" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+                </div>
+                <div class="form-group">
+                    <input id="password-retype-field" type="password" class="form-control" placeholder="Retype Password" required>
+                    <span toggle="#password-retype-field" class="fa fa-fw fa-eye field-icon toggle-password"></span>
+                </div>
+				<p style="color: #fff" class="w-50 text-md-center">Password requirements:</p>
+                <p style="color: #ff0000" class="w-50 text-md-center" id="passwordRequirementComponents">AaBbCc, 123&#$, Min. 8 Characters</p>
+	            <div class="form-group">
+	            	<button type="submit" id="login-button" class="form-control btn btn-primary submit px-3" onclick="setNewPassword()">Change Password</button>
+	            </div>
+				<div class="form-group">
+	            	<button type="submit" class="form-control btn btn-primary submit px-3" onclick="mfa_settings()">MFA Settings</button>
+	            </div>
+				<div class="form-group">
+	            	<button type="submit" class="form-control btn btn-primary submit px-3" onclick="add_oauth2_app()">OAUTH Settings</button>
+	            </div>
+				<div class="form-group">
+	            	<button type="submit" class="form-control btn btn-primary submit px-3" onclick="logout()">Sign Out</button>
+	            </div>
+				<div class="form-group">
+	            	<button type="submit" class="form-control btn btn-primary submit px-3" onclick="logoutAll()">Sign Out everywhere</button>
+	            </div>
+	          </form>
+			</div>
+		</div></center>
+	<script src="js/index.js"></script>
+	</body>
 </html>
+

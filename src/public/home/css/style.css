@@ -132,7 +132,7 @@ h3 {
 
 .container {
   max-width: 40rem;
-  min-height: 30rem;
+  min-height: 42rem;
   max-height: 40rem;
   margin: 2rem;
   padding: 2rem;
@@ -569,8 +569,6 @@ h2, h3 {
       background: rgb(245, 203, 15) !important;
       color: #000 !important;
      }
-
-
 .error-box {
   font-size: 20px;
   position: fixed;

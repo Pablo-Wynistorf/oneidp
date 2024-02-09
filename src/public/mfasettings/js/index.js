@@ -87,7 +87,9 @@ function moveToNextOrPreviousInput(input, isBackspace) {
 }
 
 
-
+backHome.addEventListener('click', () => {
+  window.location.replace('/home');
+});
 
 
 function activate_mfa() {
