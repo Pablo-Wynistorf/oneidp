@@ -10,6 +10,7 @@ const mailjet = require('node-mailjet');
 const path = require('path');
 const qrcode = require('qrcode');
 const speakeasy = require('speakeasy');
+const e = require('express');
 require('dotenv').config();
 
 const URL = process.env.URL;
@@ -322,31 +323,35 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
   const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
 
+  // Check username length
+  if (typeof username !== 'string' || username.length > 20 || username.length < 3) {
+    return res.status(462).json({ success: false, error: 'Username must be between 3 and 20 characters' });
+  }
+
+  // Check email validity
   if (!emailRegex.test(email)) {
     return res.status(466).json({ success: false, error: 'Invalid email address' });
   }
 
-  if (!passwordPattern.test(password)) {
-    return res.status(467).json({ success: false, error: 'Password doesn\'t meet our requirements' });
-  }
-
-  if (typeof password !== 'string' || password.length < 8) {
-    return res.status(465).json({ success: false, error: 'Password must have at least 8 characters' });
-  }
-
-  if (typeof password !== 'string' || password.length > 23) {
-    return res.status(464).json({ success: false, error: 'Password must not have more than 23 characters' });
-  }
-
-  if (typeof username !== 'string' || username.length > 20) {
-    return res.status(463).json({ success: false, error: 'Username cannot have more than 20 characters' });
-  }
-
-  if (typeof username !== 'string' || username.length < 3) {
-    return res.status(462).json({ success: false, error: 'Username must have more than 3 characters' });
+  // Check password length and pattern
+  if (typeof password !== 'string' || password.length < 8 || password.length > 23 || !passwordPattern.test(password)) {
+    return res.status(465).json({ success: false, error: 'Password must be between 8 and 23 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
   }
 
   try {
+    let existingUsername = await userDB.findOne({ username });
+    let existingEmail = await userDB.findOne({ email });
+
+    if (existingEmail) {
+      return res.status(460).json({ success: false, error: 'Email already used, try login' });
+    }
+
+    if (existingUsername) {
+      return res.status(461).json({ success: false, error: 'Username already taken' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     let userId;
     let existingUser;
 
@@ -354,8 +359,6 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
       userId = Math.floor(Math.random() * 900000) + 100000;
       existingUser = await userDB.findOne({ userId });
     } while (existingUser);
-
-    const hashedPassword = await bcrypt.hash(password, 10);
 
     const email_verification_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '1d' });
     const email_verification_code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -377,7 +380,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
     res.status(200).json({ success: true });
     return notifyRegister(username);
   } catch (error) {
-    notifyError(error)
+    notifyError(error);
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });

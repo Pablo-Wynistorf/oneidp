@@ -45,11 +45,7 @@ function checkPasswordOnBlur(event) {
     document.getElementById('passwordRequirementComponents').style.color = "red";
 
     if (!document.getElementById('passwordError')) {
-      const alertDiv = document.createElement('div');
-      alertDiv.textContent = 'Password doesn\'t match our requirements';
-      alertDiv.className = 'alert';
-      alertDiv.id = 'passwordError';
-      document.getElementById('password-retype').parentElement.appendChild(alertDiv);
+      displayError('Error: Password doesn\'t match our requirements');
     }
   }
 }
@@ -61,8 +57,10 @@ function createUser() {
     if (password1 === password2) {
         register();
     } else {
-      const passwordRetype_imput = document.getElementById('password-retype-field');
-      const alertDiv = document.createElement('div');
+      displayError("Error: Passwords do not match")
+      document.getElementById("password-field").value = '';
+      document.getElementById("password-retype-field").value = '';
+
     }
 }
 
@@ -143,16 +141,16 @@ function handle463Error() {
   displayError('Error: Username cannot have more than 20 characters')
 }
 
-function handle465Error() {
-  const passwordInput = document.getElementById('password-field');
-  passwordInput.value = '';
-  displayError('Error: Pasword must have at least 8 characters')
-}
-
 function handle464Error() {
   const passwordInput = document.getElementById('password-field');
   passwordInput.value = '';
   displayError('Error: Pasword cannot have more than 23 characters')
+}
+
+function handle465Error() {
+  const passwordInput = document.getElementById('password-field');
+  passwordInput.value = '';
+  displayError('Error: Pasword must have at least 8 characters')
 }
 
 function handle466Error() {
@@ -186,3 +184,12 @@ function displayError(errorMessage) {
       errorBox.remove();
   }, 2500);
 }
+
+
+document.querySelector('#email-field').focus();
+
+document.addEventListener('keypress', function(event) {
+  if (event.key === 'Enter') {
+    createUser();
+  }
+});

@@ -56,3 +56,11 @@ function displayError(errorMessage) {
       errorBox.remove();
   }, 2500);
 }
+
+document.querySelector('#email-field').focus();
+
+document.addEventListener('keypress', function(event) {
+  if (event.key === 'Enter') {
+    sendResetCode();
+  }
+});

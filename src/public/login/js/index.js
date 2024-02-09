@@ -113,3 +113,11 @@ function displayError(errorMessage) {
       errorBox.remove();
   }, 3500);
 }
+
+document.querySelector('#username-field').focus();
+
+document.addEventListener('keypress', function(event) {
+  if (event.key === 'Enter') {
+    login();
+  }
+});
