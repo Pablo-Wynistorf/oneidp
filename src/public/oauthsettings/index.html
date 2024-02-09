@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  	<title>ONEDNS LOGIN</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Ubuntu:regular,bold&subset=Latin">
+	<link rel="stylesheet" href="css/style.css">
+	</head>
+	<body class="img js-fullheight" style="background-image: url(images/bg.jpg);">
+		<center>
+		  <div class="container">
+			<div class="row justify-content-center">
+				<div class="text-center mb-3 mt-3">
+					<h2 class="heading-section">ONEDNS OAUTH APPS</h2>
+				</div>
+			</div>
+			<div class="row justify-content-center">
+				<h3 class="text-section mb-4 text-center">Enter the redirect url of your app</h3>
+				<div class="form-group">
+					<input type="text" id="redirecturl-field" class="form-control" placeholder="Example: https://example.com/api/auth/callback" required>
+				</div>
+			  <div class="form-group">
+				  <button type="submit" id="create-app-button" class="form-control btn btn-primary submit px-3" onclick="create_app()">Get oauth app credentials</button>
+			  </div>
+			</div>
+            <div id="oauth-apps-container" class="row justify-content-center"></div> <!-- Container for OAuth apps -->
+		</div>
+	  </center>
+	<script>
+	document.addEventListener('DOMContentLoaded', () => {
+		fetchData();
+	});
+
+	function displayOAuthApps(data) {
+  const container = document.querySelector('.container'); // Select the container
+  data.oauthApps.forEach(app => {
+      const appBox = document.createElement('div');
+      appBox.classList.add('oauth-app-box'); // Add 'container' class to style like the big container
+      appBox.innerHTML = `
+          <h4>OAUTH APP ID: ${app.oauthClientAppId}</h4>
+          <p>Client ID: ${app.clientId}</p>
+          <p>Client Secret: ${app.clientSecret}</p>
+          <p>Redirect URI: ${app.redirectUri}</p>
+          <!-- Add more information as needed -->
+      `;
+      container.appendChild(appBox);
+  });
+}
+
+	</script>
+	<script src="js/index.js"></script>
+	</body>
+</html>

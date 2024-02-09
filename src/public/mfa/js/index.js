@@ -47,7 +47,10 @@ function handleResponse(response, data) {
   const redirectUri = data.redirectUri;
   if (response.status === 200) {
     document.cookie = "mfa_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = redirectUri || '/home';
+    if (redirectUri !== null) {
+      window.location.href = redirectUri;
+    }
+    window.location.href = '/home';
   } else if (response.status === 460) {
     return handle460Error();
   } else {
@@ -114,9 +117,34 @@ function onlyNumbers(event) {
 
 function handleKeyDown(event) {
   const key = event.key;
+  const input = event.target;
+
   if (key === "Backspace") {
-    const input = event.target;
     moveToNextOrPreviousInput(input, true);
+  } else if ((event.ctrlKey || event.metaKey) && key === "v" && input === document.querySelector('.mfa-code-input:first-child')) {
+    event.preventDefault();
+    navigator.clipboard.readText().then(pastedText => {
+      if (pastedText.length === 6 && /^\d+$/.test(pastedText)) {
+        const codes = pastedText.split('');
+        codeInputs.forEach((input, index) => {
+          input.value = codes[index];
+          if (index < codeInputs.length - 1) {
+            moveToNextOrPreviousInput(input, false);
+          }
+        });
+
+        verifyCode();
+      }
+    }).catch(err => {
+      console.error('Failed to read clipboard data: ', err);
+    });
+  } else {
+    const inputValue = input.value;
+    if (inputValue.length === 1 && /^\d+$/.test(inputValue)) {
+      moveToNextOrPreviousInput(input, false);
+    } else if (inputValue.length === 6 && /^\d+$/.test(inputValue)) {
+      verifyCode();
+    }
   }
 }
 

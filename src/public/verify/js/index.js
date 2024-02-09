@@ -113,11 +113,42 @@ function onlyNumbers(event) {
 
 function handleKeyDown(event) {
   const key = event.key;
+  const input = event.target;
+
   if (key === "Backspace") {
-    const input = event.target;
     moveToNextOrPreviousInput(input, true);
+  } else if ((event.ctrlKey || event.metaKey) && key === "v" && input === document.querySelector('.verification-code-input:first-child')) {
+    event.preventDefault();
+    navigator.clipboard.readText().then(pastedText => {
+      if (pastedText.length === 6 && /^\d+$/.test(pastedText)) {
+        const codes = pastedText.split('');
+        codeInputs.forEach((input, index) => {
+          input.value = codes[index];
+          if (index < codeInputs.length - 1) {
+            moveToNextOrPreviousInput(input, false);
+          }
+        });
+
+        verifyCode();
+      }
+    }).catch(err => {
+      console.error('Failed to read clipboard data: ', err);
+    });
+  } else {
+    const inputValue = input.value;
+    if (inputValue.length === 1 && /^\d+$/.test(inputValue)) {
+      moveToNextOrPreviousInput(input, false);
+    } else if (inputValue.length === 6 && /^\d+$/.test(inputValue)) {
+      verifyCode();
+    }
   }
 }
+
+
+
+
+
+
 
 const codeInputs = document.querySelectorAll('.verification-code-input');
 codeInputs.forEach(input => {

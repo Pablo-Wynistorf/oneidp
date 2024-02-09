@@ -192,7 +192,7 @@ app.use('/verify', existingToken, express.static(path.join(__dirname, 'public/ve
 app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
 app.use('/home/mfa/settings', existingToken, express.static(path.join(__dirname, 'public/mfasettings')));
 app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
-
+app.use('/home/oauth/settings', express.static(path.join(__dirname, 'public/oauthsettings')));
 
 // Login to the account, if account not verified, resend verification email.
 app.post('/api/sso/token/check', async (req, res) => {
@@ -296,7 +296,7 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri)
     notifyLogin(username);
     const token = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
     res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, redirectUri: redirectUri });
   }
 
   if (mfaEnabled === true) {
