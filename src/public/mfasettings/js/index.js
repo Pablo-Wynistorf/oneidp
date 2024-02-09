@@ -43,36 +43,51 @@ if (accessToken) {
 
 var inputs = document.querySelectorAll('.input-container input');
 
-inputs.forEach(function(input) {
-    input.addEventListener('input', function(event) {
-        var isBackspace = event.inputType === 'deleteContentBackward';
-        moveToNextOrPreviousInput(input, isBackspace);
-        var collectedInputs = '';
-        inputs.forEach(function(input) {
-            input.value = input.value.replace(/\D/g, '');
-            collectedInputs += input.value;
-        });
-        if (collectedInputs.length === inputs.length) {
-            fetch(`/api/mfa/setup/verify`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                body: JSON.stringify({
-                    'mfaVerifyCode': collectedInputs
-                })
-            })
-            .then(response => handleResponseVerify(response))
-            .catch(error => handleError(error));
-        }
-    });
+inputs.forEach(function(input, index) {
+  input.addEventListener('input', function(event) {
+      var isBackspace = event.inputType === 'deleteContentBackward';
+      moveToNextOrPreviousInput(input, isBackspace);
+
+      var collectedInputs = '';
+      inputs.forEach(function(input) {
+          collectedInputs += input.value;
+      });
+      if (collectedInputs.length === inputs.length) {
+          fetch(`/api/mfa/setup/verify`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${accessToken}`
+              },
+              body: JSON.stringify({
+                  'mfaVerifyCode': collectedInputs
+              })
+          })
+          .then(response => handleResponseVerify(response))
+          .catch(error => handleError(error));
+      }
+  });
+  input.addEventListener('keydown', function(event) {
+      if (event.key === 'Backspace' && input.value === '' && index > 0) {
+          inputs[index - 1].focus();
+      }
+  });
+
+  input.addEventListener('keypress', function(event) {
+      const charCode = event.which ? event.which : event.keyCode;
+      if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+          event.preventDefault();
+      }
+  });
 });
+
+
+
 
 function moveToNextOrPreviousInput(input, isBackspace) {
   const maxLength = parseInt(input.getAttribute('maxlength'));
   const currentLength = input.value.length;
-
+  
   if (isBackspace && currentLength === 0) {
     const previousInput = input.previousElementSibling;
     if (previousInput) {
@@ -80,7 +95,7 @@ function moveToNextOrPreviousInput(input, isBackspace) {
     }
   } else if (!isBackspace && currentLength >= maxLength) {
     const nextInput = input.nextElementSibling;
-    if (nextInput && !isNaN(parseInt(event.data))) {
+    if (nextInput) {
       nextInput.focus();
     }
   }

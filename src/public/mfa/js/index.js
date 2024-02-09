@@ -35,7 +35,7 @@ function verifyCode() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${mfa_token}`
       },
-      body: JSON.stringify({ mfaVerifyCode: code, redirectUri: redirectUri })
+      body: JSON.stringify({ mfaVerifyCode: code, redirectUri })
     })
       .then(response => handleResponse(response, { redirectUri }))
       .catch(handleError);
@@ -45,12 +45,16 @@ function verifyCode() {
 
 function handleResponse(response, data) {
   const redirectUri = data.redirectUri;
+  console.log(redirectUri)
   if (response.status === 200) {
     document.cookie = "mfa_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    if (redirectUri !== null) {
-      window.location.href = redirectUri;
+    if (redirectUri === 'null') {
+      window.location.href = '/home';
+    } else if (!redirectUri) {
+      window.location.href = 'home';
+    } else {
+    window.location.href = redirectUri;
     }
-    window.location.href = '/home';
   } else if (response.status === 460) {
     return handle460Error();
   } else {

@@ -50,10 +50,13 @@ function login() {
 function handleResponse(response, data) {
   const redirectUri = data.redirectUri;
   if (response.status === 200) {
-    if (redirectUri !== null) {
-      window.location.href = redirectUri;
+    if (redirectUri === 'null') {
+      window.location.href = '/home';
+    } else if (!redirectUri) {
+      window.location.href = 'home';
+    } else {
+    window.location.href = redirectUri;
     }
-    window.location.href = '/home';
   } else if (response.status === 461) {
     handle461Error();
   } else if (response.status === 462) {

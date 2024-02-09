@@ -290,13 +290,13 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri)
       await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
       const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
       res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, path: '/' });
-      return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri: redirectUri});
+      return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri });
     }
 
     notifyLogin(username);
     const token = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
     res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
-    return res.status(200).json({ success: true, redirectUri: redirectUri });
+    return res.status(200).json({ success: true, redirectUri  });
   }
 
   if (mfaEnabled === true) {
@@ -304,14 +304,14 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri)
     await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
     const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
     res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, path: '/' });
-    return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri: redirectUri})
+    return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri })
   }
 
   const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
   notifyLogin(username);
   res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
 
-  return res.status(200).json({ success: true, redirectUri: redirectUri });
+  return res.status(200).json({ success: true, redirectUri });
 }
 
 
@@ -854,7 +854,7 @@ app.post('/api/mfa/verify', async (req, res) => {
     const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
     notifyLogin(username);
     res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
-    return res.status(200).json({ success: true, redirectUri: redirectUri });
+    return res.status(200).json({ success: true, redirectUri });
   } else {
     return res.status(461).json({ success: false, error: 'Invalid verification code'})
   }

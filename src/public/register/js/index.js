@@ -17,6 +17,8 @@ function getCookie(name) {
 
 
 const password = document.getElementById('password-field');
+password.addEventListener('input', passwordRequirements);
+
 
 function isStrongPassword(password) {
   const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
@@ -30,10 +32,10 @@ function passwordRequirements(event) {
 
   if (isStrong) {
     document.getElementById('passwordRequirementComponents').style.color = "green";
-    document.getElementById('btn').disabled = false;
+    document.getElementById('register-button').disabled = false;
   } else {
     document.getElementById('passwordRequirementComponents').style.color = "red";
-    document.getElementById('btn').disabled = true;
+    document.getElementById('register-button').disabled = true;
   }
 }
 
@@ -58,6 +60,8 @@ function createUser() {
         register();
     } else {
       displayError("Error: Passwords do not match")
+      document.getElementById('passwordRequirementComponents').style.color = "red";
+      document.getElementById('register-button').disabled = true;
       document.getElementById("password-field").value = '';
       document.getElementById("password-retype-field").value = '';
 
@@ -69,6 +73,7 @@ function register() {
   const username = document.getElementById('username-field').value;
   const password = document.getElementById('password-field').value;
   const email = document.getElementById('email-field').value;
+  document.getElementById('register-button').disabled = true;
   fetch(`/api/sso/auth/register`, {
     method: 'POST',
     headers: {
@@ -144,12 +149,16 @@ function handle463Error() {
 function handle464Error() {
   const passwordInput = document.getElementById('password-field');
   passwordInput.value = '';
+  document.getElementById('passwordRequirementComponents').style.color = "red";
+  document.getElementById('register-button').disabled = true;
   displayError('Error: Pasword cannot have more than 23 characters')
 }
 
 function handle465Error() {
   const passwordInput = document.getElementById('password-field');
   passwordInput.value = '';
+  document.getElementById('passwordRequirementComponents').style.color = "red";
+  document.getElementById('register-button').disabled = true;
   displayError('Error: Pasword must have at least 8 characters')
 }
 
@@ -161,6 +170,7 @@ function handle466Error() {
 
 function handle467Error() {
   document.getElementById('passwordRequirementComponents').style.color = "red";
+  document.getElementById('register-button').disabled = true;
   displayError('Error: Password doesnt meet our requirements')
 }
 
