@@ -70,7 +70,6 @@ function handleResponse(response, data) {
 
 
 
-
 function handle461Error() {
   displayError('Email not verified')
   window.location.href = '/verify';
