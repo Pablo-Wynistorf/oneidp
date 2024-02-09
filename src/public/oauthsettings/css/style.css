@@ -60,6 +60,10 @@ body {
   color: #212529;
   text-align: left;
   background-color: #fff;
+  display: flex;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
 }
 
 h2, h3 {
@@ -130,7 +134,7 @@ h3 {
   min-height: 39rem;
   margin: 2rem;
   padding: 2rem;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(32px);
   box-shadow: rgba(50, 50, 93, 0.5) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.5) 0px 18px 36px -18px inset;
   border-radius: 20px;
 }
@@ -445,18 +449,7 @@ h3 {
       padding: 0;
       background-attachment: fixed; /* Added property */
     }
-    
-    body:after {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      content: '';
-      background: #000;
-      opacity: .3;
-      z-index: -1;
-    }
+  
     
 a {
   -webkit-transition: .3s all ease;
@@ -568,14 +561,15 @@ h2, h3 {
   .btn:hover, .btn:active, .btn:focus {
     outline: none; }
   .btn.btn-primary {
-    background: #a16f0a !important;
-    border: 1px solid #fbceb5 !important;
+    background: #ffd20a !important;
+    border: 1.5px solid #ffffff !important;
     color: #000 !important;
     }
     .btn.btn-primary:hover {
-      border: 1px solid #fbceb5;
-      background: transparent;
-      color: #fbceb5; }
+      border: 1.5px solid #ffffff;
+      background: rgb(245, 203, 15) !important;
+      color: #000 !important;
+     }
 
 
 .error-box {
@@ -607,7 +601,7 @@ h2, h3 {
   margin: 1rem;
   padding: 1rem;
   color: #fff;
-  backdrop-filter: blur(1px);
-  box-shadow: rgba(50, 50, 93, 0.5) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.5) 0px 18px 36px -18px inset;
+  background-color: #2d2a2a;
   border-radius: 20px;
+  margin-bottom: 10px;
 }

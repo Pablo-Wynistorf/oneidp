@@ -24,30 +24,13 @@
 				  <button type="submit" id="create-app-button" class="form-control btn btn-primary submit px-3" onclick="create_app()">Get oauth app credentials</button>
 			  </div>
 			</div>
-            <div id="oauth-apps-container" class="row justify-content-center"></div> <!-- Container for OAuth apps -->
+            <div id="oauth-apps-container" class="row justify-content-center"></div>
 		</div>
 	  </center>
 	<script>
 	document.addEventListener('DOMContentLoaded', () => {
 		fetchData();
 	});
-
-	function displayOAuthApps(data) {
-  const container = document.querySelector('.container'); // Select the container
-  data.oauthApps.forEach(app => {
-      const appBox = document.createElement('div');
-      appBox.classList.add('oauth-app-box'); // Add 'container' class to style like the big container
-      appBox.innerHTML = `
-          <h4>OAUTH APP ID: ${app.oauthClientAppId}</h4>
-          <p>Client ID: ${app.clientId}</p>
-          <p>Client Secret: ${app.clientSecret}</p>
-          <p>Redirect URI: ${app.redirectUri}</p>
-          <!-- Add more information as needed -->
-      `;
-      container.appendChild(appBox);
-  });
-}
-
 	</script>
 	<script src="js/index.js"></script>
 	</body>

@@ -976,7 +976,7 @@ app.post('/api/oauth/settings/add', async (req, res) => {
     await newoauthClientApp.save();
     await userDB.updateOne({ userId }, { $push: { oauthClientAppIds: oauthClientAppId } });
 
-    res.status(200).json({ success: true });
+    res.status(200).json({ success: true, clientId, clientSecret, redirectUri, oauthClientAppId });
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }
