@@ -1,33 +1,42 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>MFA Settings</title>
-    <link rel="stylesheet" href="style.css">
-  </head>
-  <body>
-    <div class="mfa-box">
-      <h1>MFA Settings</h1>
-      <form>
-        <div class="textbox">
-          <img id="qrCode" style="display: none;" src="./img/qr-placeholder.jpg" alt="QR Code">
-          <i class="fas fa-user"></i>
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ONEDNS LOGIN</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Ubuntu:regular,bold&subset=Latin">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="img js-fullheight" style="background-image: url(images/bg.jpg);">
+    <center>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="text-center mb-3 mt-3">
+                    <h2 class="heading-section">ONEDNS MFA Settings</h2>
+                </div>
+            </div>
+            <h3 class="text-section mb-4 text-center" id="scan-info" style="display: none;">Scan QR-Code with authenticator app</h3>
+            <form>
+                <div class="textbox">
+                  <img id="qrCode" style="display: none;" src="./img/qr-placeholder.jpg" alt="QR Code">
+                  <i class="fas fa-user"></i>
+                </div>
+              </form>
+            <div class="row justify-content-center" id="code-box" style="display: none;">
+                <h3 class="text-section mb-4 text-center">Enter your MFA activation code</h3>
+                <div class="form-group input-container">
+                    <input type="text" class="form-control mfa-code-input" maxlength="1" required>
+                    <input type="text" class="form-control mfa-code-input" maxlength="1" required>
+                    <input type="text" class="form-control mfa-code-input" maxlength="1" required>
+                    <input type="text" class="form-control mfa-code-input" maxlength="1" required>
+                    <input type="text" class="form-control mfa-code-input" maxlength="1" required>
+                    <input type="text" class="form-control mfa-code-input" maxlength="1" required>
+                </div>
+            </div>
+            <button type="submit" id="btn" style="display: none;" class="form-control btn btn-primary submit px-3" onclick="disable_mfa()">Disable MFA</button>
         </div>
-      </form>
-      <h2 id="code-box" style="display: none;">Enter MFA Code:</h2>
-      <form>
-        <div class="textbox" id="mfaInputContainer">
-          <input type="text" id="imputbox1" style="display: none;" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
-          <input type="text" id="imputbox2" style="display: none;" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
-          <input type="text" id="imputbox3" style="display: none;" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
-          <input type="text" id="imputbox4" style="display: none;" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
-          <input type="text" id="imputbox5" style="display: none;" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
-          <input type="text" id="imputbox6" style="display: none;" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
-          <imput type="button" id="btn" style="display: none;" onclick="disable_mfa()">Disable MFA</imput>
-        </div>
-      </form>
-      <imput type="button" id="btn2" style="display: block;" onclick="redirect_home()">Go back to home</imput>
-    </div>
-    <script src="index.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
-  </body>
+    </center>
+<script src="https://cdn.jsdelivr.net/npm/qrcode"></script>
+<script src="js/index.js"></script>
+</body>
 </html>
