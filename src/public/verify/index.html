@@ -1,24 +1,37 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Email Verification</title>
-    <link rel="stylesheet" href="style.css">
-  </head>
-  <body>
-    <div class="verify-box">
-      <h1>Verify Email:</h1>
-      <form>
-        <div class="textbox" id="mfaInputContainer">
-          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
-          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
-          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
-          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
-          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
-          <input type="text" maxlength="1" pattern="[0-9]" inputmode="numeric" oninput="moveToNextOrPreviousInput(this, false)" onkeydown="handleKeyDown(event)" required>
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ONEDNS LOGIN</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Ubuntu:regular,bold&subset=Latin">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="img js-fullheight" style="background-image: url(images/bg.jpg);">
+<section class="ftco-section">
+    <center>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="text-center mb-3 mt-3">
+                    <h2 class="heading-section">ONEDNS Verify</h2>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <h3 class="text-section mb-4 text-center">Enter your verification code</h3>
+                <div class="form-group input-container">
+                    <input type="text" class="form-control verification-code-input" maxlength="1" required>
+                    <input type="text" class="form-control verification-code-input" maxlength="1" required>
+                    <input type="text" class="form-control verification-code-input" maxlength="1" required>
+                    <input type="text" class="form-control verification-code-input" maxlength="1" required>
+                    <input type="text" class="form-control verification-code-input" maxlength="1" required>
+                    <input type="text" class="form-control verification-code-input" maxlength="1" required>
+                </div>
+            </div>
         </div>
-        <input type="button" class="btn" value="Login Now!" onclick="redirect_login()">
-      </form>
-    </div>
-    <script src="index.js"></script>
-  </body>
+    </center>
+</section>
+<script src="js/jquery.min.js"></script>
+<script src="js/main.js"></script>
+<script src="js/index.js"></script>
+</body>
 </html>
