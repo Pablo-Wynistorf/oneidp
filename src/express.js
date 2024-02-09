@@ -323,17 +323,14 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
   const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
 
-  // Check username length
   if (typeof username !== 'string' || username.length > 20 || username.length < 3) {
     return res.status(462).json({ success: false, error: 'Username must be between 3 and 20 characters' });
   }
 
-  // Check email validity
   if (!emailRegex.test(email)) {
     return res.status(466).json({ success: false, error: 'Invalid email address' });
   }
 
-  // Check password length and pattern
   if (typeof password !== 'string' || password.length < 8 || password.length > 23 || !passwordPattern.test(password)) {
     return res.status(465).json({ success: false, error: 'Password must be between 8 and 23 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
   }
