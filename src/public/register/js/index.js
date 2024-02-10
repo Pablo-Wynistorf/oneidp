@@ -88,6 +88,7 @@ function register() {
 
 
 function handleResponse(response) {
+  document.getElementById('register-button').disabled = false;
   if (response.status === 200) {
     return response.json().then((data) => {
       window.location.href = '/verify';

@@ -31,6 +31,7 @@ document.getElementById("login-button").addEventListener("submit", function(even
 
 
 function login() {
+  document.getElementById('login-button').disabled = true;
   const usernameInput = document.getElementById('username-field');
   const passwordInput = document.getElementById('password-field');
   const username_or_email = usernameInput.value;
@@ -48,6 +49,7 @@ function login() {
 
 
 function handleResponse(response, data) {
+  document.getElementById('login-button').disabled = false;
   const redirectUri = data.redirectUri;
   if (response.status === 200) {
     if (redirectUri === 'null') {

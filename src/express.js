@@ -10,7 +10,6 @@ const mailjet = require('node-mailjet');
 const path = require('path');
 const qrcode = require('qrcode');
 const speakeasy = require('speakeasy');
-const e = require('express');
 require('dotenv').config();
 
 const URL = process.env.URL;
