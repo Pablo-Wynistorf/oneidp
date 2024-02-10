@@ -18,8 +18,6 @@ function getCookie(name) {
 
 function create_app() {
   const container = document.querySelector('.container');
-  const existingAppBox = container.querySelector('.oauth-app-box');
-  const newAppBox = document.createElement('div');
   const accessToken = getCookie('access_token');
   const redirectUri = document.getElementById('redirecturl-field').value;
 
@@ -39,35 +37,36 @@ function create_app() {
       return response.json();
     })
     .then(data => {
+      const newAppBox = document.createElement('div');
+      newAppBox.classList.add('oauth-app-box');
+      newAppBox.id = data.oauthClientAppId;
+      
       const appBoxHTML = `
-       <div class="oauth-app-box" id="${data.oauthClientAppId}">
-       <a href="#" class="icon-button" id="${data.oauthClientAppId}">
-        <img src="./images/trash.svg" alt="Trash Icon">
+        <a href="#" class="icon-button" id="${data.oauthClientAppId}">
+          <img src="./images/trash.svg" alt="Trash Icon">
         </a>
         <h4>OAUTH APP ID: ${data.oauthClientAppId}</h4>
         <p>Client ID: ${data.clientId}</p>
         <p>Client Secret: ${data.clientSecret}</p>
         <p>Redirect URI: ${data.redirectUri}</p>
-      </div>
       `;
-      if (existingAppBox) {
-        container.insertBefore(newAppBox, existingAppBox);
-      } else {
-        const oauthAppsContainer = document.querySelector('.oauth-apps-container');
-        if (oauthAppsContainer) {
-          oauthAppsContainer.appendChild(newAppBox);
-          displaySuccess('App created successfully');
-        } else {
-          container.appendChild(newAppBox);
-          displaySuccess('App created successfully');
-        }
-      }
+      
       newAppBox.innerHTML = appBoxHTML;
+
+      const oauthAppInfo = container.querySelector('.oauth-app-info');
+      if (oauthAppInfo) {
+        oauthAppInfo.insertAdjacentElement('afterend', newAppBox);
+      } else {
+        container.appendChild(newAppBox);
+      }
+      displaySuccess('App created successfully');
     })
     .catch(error => {
+      // Handle errors
     });
   }
 }
+
 
 document.addEventListener('click', function(event) {
   const iconButton = event.target.closest('.icon-button');
