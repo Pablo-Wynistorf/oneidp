@@ -911,7 +911,7 @@ app.get('/api/oauth/settings/get', async (req, res) => {
       clientId: app.clientId,
       clientSecret: app.clientSecret,
       redirectUri: app.redirectUri,
-      oauthClientAppId: app.oauthClientAppId
+      oauthClientAppId: app.oauthClientAppId,
     }));
 
     res.json({ oauthApps: organizedData });
@@ -970,13 +970,61 @@ app.post('/api/oauth/settings/add', async (req, res) => {
       oauthClientAppId: oauthClientAppId,
       clientId: clientId,
       clientSecret: clientSecret,
-      redirectUri: redirectUri
+      redirectUri: redirectUri,
     });
 
+    
     await newoauthClientApp.save();
     await userDB.updateOne({ userId }, { $push: { oauthClientAppIds: oauthClientAppId } });
 
     res.status(200).json({ success: true, clientId, clientSecret, redirectUri, oauthClientAppId });
+  } catch (error) {
+    res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
+});
+
+
+
+// Add oauth delete app
+app.post('/api/oauth/settings/delete', async (req, res) => {
+  const authorizationHeader = req.headers['authorization'];
+  const oauthClientAppId = req.body.oauthClientAppId;
+
+  if (!authorizationHeader) {
+    return res.status(400).json({ error: 'Authorization header is missing' });
+  }
+
+  const tokenParts = authorizationHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(400).json({ error: 'Invalid authorization header format' });
+  }
+
+  const access_token = tokenParts[1];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    
+    const userData = await userDB.findOne({ userId: userId, sid: sid });
+    if (!userData) {
+      res.clearCookie('access_token');
+      return res.redirect('/login');
+    }
+
+    const testOauthClientAppId = userData.oauthClientAppIds.includes(oauthClientAppId);
+    
+    if (testOauthClientAppId === false) {
+    return res.status(460).json({ error: 'User does not own this oauth app' });
+    }
+
+    await oAuthClientAppDB.deleteOne({ oauthClientAppId });
+    await userDB.updateOne(
+      { userId },
+      { $pull: { oauthClientAppIds: parseInt(oauthClientAppId) } }
+    );
+    
+    res.status(200).json({ success: true, message: 'OAuth app has been successfully deleted' });
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }

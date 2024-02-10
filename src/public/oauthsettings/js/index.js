@@ -18,11 +18,8 @@ function getCookie(name) {
 
 function create_app() {
   const container = document.querySelector('.container');
-
   const existingAppBox = container.querySelector('.oauth-app-box');
-
   const newAppBox = document.createElement('div');
-  newAppBox.classList.add('oauth-app-box');
   const accessToken = getCookie('access_token');
   const redirectUri = document.getElementById('redirecturl-field').value;
 
@@ -42,16 +39,16 @@ function create_app() {
       return response.json();
     })
     .then(data => {
-      const clientId = data.clientId;
-      const clientSecret = data.clientSecret;
-      const oauthClientAppId = data.oauthClientAppId;
       const appBoxHTML = `
-        <div class="oauth-app-box">
-          <h4>OAUTH APP ID: ${oauthClientAppId}</h4>
-          <p>Client ID: ${clientId}</p>
-          <p>Client Secret: ${clientSecret}</p>
-          <p>Redirect URI: ${redirectUri}</p>
-        </div>
+       <div class="oauth-app-box" id="${data.oauthClientAppId}">
+       <a href="#" class="icon-button" id="${data.oauthClientAppId}">
+        <img src="./images/trash.svg" alt="Trash Icon">
+        </a>
+        <h4>OAUTH APP ID: ${data.oauthClientAppId}</h4>
+        <p>Client ID: ${data.clientId}</p>
+        <p>Client Secret: ${data.clientSecret}</p>
+        <p>Redirect URI: ${data.redirectUri}</p>
+      </div>
       `;
       if (existingAppBox) {
         container.insertBefore(newAppBox, existingAppBox);
@@ -59,21 +56,69 @@ function create_app() {
         const oauthAppsContainer = document.querySelector('.oauth-apps-container');
         if (oauthAppsContainer) {
           oauthAppsContainer.appendChild(newAppBox);
+          displaySuccess('App created successfully');
         } else {
           container.appendChild(newAppBox);
+          displaySuccess('App created successfully');
         }
       }
       newAppBox.innerHTML = appBoxHTML;
     })
     .catch(error => {
-      displayError('Something went wrong');
     });
   }
 }
 
+document.addEventListener('click', function(event) {
+  const iconButton = event.target.closest('.icon-button');
+  if (iconButton) {
+    showConfirmationBox(event);
+  }
+});
+
+function showConfirmationBox(event) {
+  var confirmationBox = document.getElementById('confirmation-box');
+  confirmationBox.style.display = 'block';
+  document.getElementById('delete-button').onclick = function() {
+    delete_app(event);
+    hideConfirmationBox();
+  }
+}
+
+function hideConfirmationBox() {
+  var confirmationBox = document.getElementById('confirmation-box');
+  confirmationBox.style.display = 'none';
+}
 
 
 
+function delete_app(event) {
+  event.preventDefault();
+  const oauthClientAppId = event.target.offsetParent.id;
+  const accessToken = getCookie('access_token');
+  if (accessToken) {
+    fetch(`/api/oauth/settings/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({ oauthClientAppId })
+    }).then(response => {
+      if (response.ok) {
+        event.target.offsetParent.remove();
+        document.getElementById(oauthClientAppId).remove();
+        displaySuccess('App deleted successfully');
+      } else if (response.status === 460) {
+        displayError('Error: App Deletion Failed')
+      } else {
+        handleError();
+      }})
+    .catch(error => {
+      displayError('Something went wrong');
+    });
+  }
+}
 
 
 
@@ -91,21 +136,24 @@ async function fetchData() {
         const data = await response.json();
         displayOAuthApps(data);
     } catch (error) {
-        console.error('There was a problem fetching the data:', error);
     }
 }
 
 
 function displayOAuthApps(data) {
-  const container = document.querySelector('.container'); // Select the container
+  const container = document.querySelector('.container');
   data.oauthApps.forEach(app => {
       const appBox = document.createElement('div');
-      appBox.classList.add('oauth-app-box'); // Add 'container' class to style like the big container
       appBox.innerHTML = `
+       <div class="oauth-app-box" id="${app.oauthClientAppId}">
+          <a href="#" class="icon-button" id="${app.oauthClientAppId}">
+          <img src="./images/trash.svg" alt="Trash Icon">
+          </a>
           <h4>OAUTH APP ID: ${app.oauthClientAppId}</h4>
           <p>Client ID: ${app.clientId}</p>
           <p>Client Secret: ${app.clientSecret}</p>
           <p>Redirect URI: ${app.redirectUri}</p>
+       </div>
       `;
       container.appendChild(appBox);
   });
@@ -132,6 +180,14 @@ function handle460Error() {
 function handleError() {
   displayError('Something went wrong')
 }
+
+
+var currentURL = window.location.origin;
+document.getElementById('authorization-url').textContent = currentURL + "/api/oauth/authorize";
+document.getElementById('token-url').textContent = currentURL + "/api/oauth/token";
+document.getElementById('userinfo-uri').textContent = currentURL + "/api/oauth/userinfo";
+
+
 
 function displaySuccess(successMessage) {
   successBox.textContent = successMessage;

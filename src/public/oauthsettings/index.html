@@ -25,6 +25,16 @@
 				  <button type="submit" id="create-app-button" class="form-control btn btn-primary submit px-3" onclick="create_app()">Get oauth app credentials</button>
 			  </div>
 			</div>
+			<div class="oauth-app-info">
+				<p>Authorization URL: <span id="authorization-url"></span></p>
+				<p>Token URL: <span id="token-url"></span></p>
+				<p>Userinfo URI: <span id="userinfo-uri"></span></p>
+			</div>
+			<div id="confirmation-box" style="display: none;">
+				<h2>Do you really want to delete this app?</h2>
+				<button type="submit" id="delete-button" class="btn btn-yes">Yes</button>
+				<button type="submit" class="btn btn-no" onclick="hideConfirmationBox()">No</button>
+			</div>
             <div id="oauth-apps-container" class="row justify-content-center"></div>
 		</div>
 	  </center>
