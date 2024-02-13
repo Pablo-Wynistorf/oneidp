@@ -70,6 +70,7 @@ const userSchema = new Schema({
 });
 
 const oAuthClientSchema = new mongoose.Schema({
+  oauthAppName: String,
   oauthClientAppId: String,
   clientId: String,
   clientSecret: String,
@@ -915,6 +916,7 @@ app.get('/api/oauth/settings/get', async (req, res) => {
     }
 
     const organizedData = oauthAppsData.map(app => ({
+      oauthAppName: app.oauthAppName,
       clientId: app.clientId,
       clientSecret: app.clientSecret,
       redirectUri: app.redirectUri,
@@ -932,6 +934,7 @@ app.get('/api/oauth/settings/get', async (req, res) => {
 // Add oauth app
 app.post('/api/oauth/settings/add', async (req, res) => {
   const authorizationHeader = req.headers['authorization'];
+  const oauthAppName = req.body.oauthAppName;
   const redirectUri = req.body.redirectUri;
 
   if (!authorizationHeader) {
@@ -974,6 +977,7 @@ app.post('/api/oauth/settings/add', async (req, res) => {
 
 
     const newoauthClientApp = new oAuthClientAppDB({
+      oauthAppName: oauthAppName,
       oauthClientAppId: oauthClientAppId,
       clientId: clientId,
       clientSecret: clientSecret,
@@ -984,7 +988,7 @@ app.post('/api/oauth/settings/add', async (req, res) => {
     await newoauthClientApp.save();
     await userDB.updateOne({ userId }, { $push: { oauthClientAppIds: oauthClientAppId } });
 
-    res.status(200).json({ success: true, clientId, clientSecret, redirectUri, oauthClientAppId });
+    res.status(200).json({ success: true, clientId, clientSecret, redirectUri, oauthClientAppId, oauthAppName});
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }

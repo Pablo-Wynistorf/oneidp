@@ -19,6 +19,7 @@ function getCookie(name) {
 function create_app() {
   const container = document.querySelector('.container');
   const accessToken = getCookie('access_token');
+  const oauthAppName = document.getElementById('appname-field').value;
   const redirectUri = document.getElementById('redirecturl-field').value;
 
   if (accessToken) {
@@ -28,7 +29,7 @@ function create_app() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`
       },
-      body: JSON.stringify({ redirectUri })
+      body: JSON.stringify({ redirectUri, oauthAppName })
     })
     .then(response => {
       if (!response.ok) {
@@ -45,7 +46,8 @@ function create_app() {
         <a href="#" class="icon-button" id="${data.oauthClientAppId}">
           <img src="./images/trash.svg" alt="Trash Icon">
         </a>
-        <h4>OAUTH APP ID: ${data.oauthClientAppId}</h4>
+        <h4>APP NAME: ${data.oauthAppName}</h4>
+        <p>OAuth App ID: ${data.oauthClientAppId}</p>
         <p>Client ID: ${data.clientId}</p>
         <p>Client Secret: ${data.clientSecret}</p>
         <p>Redirect URI: ${data.redirectUri}</p>
@@ -148,7 +150,8 @@ function displayOAuthApps(data) {
           <a href="#" class="icon-button" id="${app.oauthClientAppId}">
           <img src="./images/trash.svg" alt="Trash Icon">
           </a>
-          <h4>OAUTH APP ID: ${app.oauthClientAppId}</h4>
+          <h4>APP NAME: ${app.oauthAppName}</h4>
+          <p>OAuth App ID: ${app.oauthClientAppId}</p>
           <p>Client ID: ${app.clientId}</p>
           <p>Client Secret: ${app.clientSecret}</p>
           <p>Redirect URI: ${app.redirectUri}</p>
