@@ -287,28 +287,28 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri)
     if (mfaEnabled === true) {
       const newMfaLoginSecret = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
       await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
-      const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+      const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' });
       res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, path: '/' });
       return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri });
     }
 
     notifyLogin(username);
-    const token = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
-    res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
+    const token = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+    res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
     return res.status(200).json({ success: true, redirectUri  });
   }
 
   if (mfaEnabled === true) {
     const newMfaLoginSecret = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
     await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
-    const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+    const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' });
     res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, path: '/' });
     return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri })
   }
 
-  const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+  const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
   notifyLogin(username);
-  res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
+  res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
 
   return res.status(200).json({ success: true, redirectUri });
 }
@@ -372,7 +372,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
 
     sendVerificationEmail(username, email, email_verification_token, email_verification_code);
 
-    res.cookie('email_verification_token', email_verification_token, { maxAge: 7 * 24 * 60 * 60 * 1000, path: '/' });
+    res.cookie('email_verification_token', email_verification_token, { maxAge: 24 * 60 * 60 * 1000, path: '/' });
     res.status(200).json({ success: true });
     return notifyRegister(username);
   } catch (error) {
@@ -403,8 +403,8 @@ app.post('/api/sso/verify', async (req, res) => {
           const sid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
           await userDB.updateOne({ userId }, { $set: { sid: sid } });
           await userDB.updateOne({ userId }, { $unset: { verifyCode: 1 } });
-          const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
-          res.cookie('access_token', access_token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
+          const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+          res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
           res.status(200).json({ success: true})
         } else {
           return res.status(460).json({ success: false, error: 'Wrong verification code entered' });
@@ -442,8 +442,8 @@ app.all('/api/sso/confirmationlink/:email_verification_token/:email_verification
           const sid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
           await userDB.updateOne({ userId }, { $set: { sid: sid } });
           await userDB.updateOne({ userId }, { $unset: { verifyCode: 1 } });
-          const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
-          res.cookie('access_token', access_token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
+          const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+          res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
           return res.redirect('/home')
         } else {
           return res.status(460).json({ success: false, error: 'Wrong verification code entered' });
@@ -515,9 +515,9 @@ app.post('/api/sso/data/changepassword', async (req, res) => {
 
     await userDB.updateOne({ userId }, { $set: { password: hashedPassword, sid: newsid } });
 
-    const newAccessToken = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+    const newAccessToken = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
 
-    res.cookie('access_token', newAccessToken, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
+    res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
     res.status(200).json({ success: true });
   } catch (error) {
     notifyError(error)
@@ -633,9 +633,9 @@ app.post('/api/sso/data/setpassword', async (req, res) => {
       await userDB.updateOne({ userId }, { $unset: { resetCode: 1 } });
 
 
-      const access_token = jwt.sign({userId: userId, sid: newsid}, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+      const access_token = jwt.sign({userId: userId, sid: newsid}, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
       res.clearCookie('password_reset_token');
-      res.cookie('access_token', access_token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
+      res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
       res.status(200).json({ success: true });
 
   
@@ -850,9 +850,9 @@ app.post('/api/mfa/verify', async (req, res) => {
       window: 2
   });
   if (verified) {
-    const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
+    const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
     notifyLogin(username);
-    res.cookie('access_token', token, { maxAge: 12 * 60 * 60 * 1000, path: '/' });
+    res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
     return res.status(200).json({ success: true, redirectUri });
   } else {
     return res.status(461).json({ success: false, error: 'Invalid verification code'})
