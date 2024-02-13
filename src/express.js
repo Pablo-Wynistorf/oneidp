@@ -137,6 +137,14 @@ const verifyToken = (req, res, next) => {
         if (requestedPath !== '/home' && requestedPath !== '/home/mfa/settings') {
           return res.redirect('/home');
         }
+
+        const now = Math.floor(Date.now() / 1000);
+        const tokenExpirationThreshold = now + (12 * 60 * 60);
+        if (decoded.exp < tokenExpirationThreshold) {
+          const newAccessToken = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+          res.cookie('access_token', newAccessToken, { httpOnly: true, maxAge: 48 * 60 * 60 * 1000 });
+        }
+
         res.clearCookie('email_verification_token');
         res.clearCookie('password_reset_token');
         res.clearCookie('password_reset_code');
