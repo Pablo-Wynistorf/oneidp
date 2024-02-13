@@ -598,7 +598,7 @@ h2, h3 {
 
 
 .oauth-app-box {
-  margin: 1rem;
+  /* margin: 1rem; */
   padding: 1rem;
   color: #fff;
   background-color: #2d2a2a;
@@ -636,7 +636,7 @@ h2, h3 {
   color: #fff;
   background-color: #2d2a2a;
   border-radius: 20px;
-  margin-bottom: 10px;
+  /* margin-bottom: 10px; */
 }
 
 .btn-yes {
