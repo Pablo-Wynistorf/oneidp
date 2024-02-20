@@ -375,7 +375,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
       email: email,
       verifyCode: email_verification_code,
       mfaEnabled: false,
-      roles: ['standardUser, oauthUser'],
+      roles: ['standardUser', 'oauthUser'],
     });
 
     await newUser.save();
