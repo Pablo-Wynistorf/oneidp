@@ -1084,7 +1084,15 @@ app.get('/api/oauth/authorize', async (req, res) => {
       if (!user) {
         return res.redirect(`/login?redirect_uri=${redirect_uri}`);
       }
-      const authorizationCode = [...Array(35)].map(() => Math.random().toString(36)[2]).join('');
+
+      
+      let authorizationCode;
+      let existingAuthorizationCode;
+
+      do {
+        authorizationCode = [...Array(35)].map(() => Math.random().toString(36)[2]).join('');
+        existingAuthorizationCode = await userDB.findOne({ oauthAuthorizationCode: authorizationCode });
+      } while (existingAuthorizationCode);
       
       await userDB.updateOne({ userId }, { $set: { oauthAuthorizationCode: authorizationCode } });
       
@@ -1099,31 +1107,68 @@ app.get('/api/oauth/authorize', async (req, res) => {
 
 // Oauth Token endpoint
 app.post('/api/oauth/token', async (req, res) => {
-  const { code, client_id, client_secret } = req.body;
+  const { code, client_id, client_secret, refresh_token } = req.body;
   const clientId = client_id;
   const clientSecret = client_secret;
+  const refreshToken = refresh_token;
   try {
-    const oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
-    const oauth_user = await userDB.findOne({ oauthAuthorizationCode: code });
-    const oauthAuthorizationCode = code;
-    await userDB.updateOne({ oauthAuthorizationCode }, { $unset: { oauthAuthorizationCode: 1 } });
-    if (!oauth_client) {
-      return res.status(401).json({ error: 'invalid_client', error_description: 'Invalid client' });
-    }
+    let oauth_client;
+    let oauth_user;
+    let userId;
+    let sid;
 
-    if (!oauth_user) {
+    if (refreshToken) {
+      const decodedRefreshToken = jwt.verify(refreshToken, JWT_SECRET);
+      userId = decodedRefreshToken.userId;
+      sid = decodedRefreshToken.sid;
+
+      const refresh_token_clientId = decodedRefreshToken.clientId;
+      oauth_client = await oAuthClientAppDB.findOne({ clientId: refresh_token_clientId, clientSecret: clientSecret });
+      oauth_user = await userDB.findOne({ userId });
+
+
+      if (!oauth_client) {
+        return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client or invalid refresh token' });
+      }
+      if (!oauth_user) {
+        return res.status(401).json({ error: 'invalid_user', error_description: 'Invalid user' });
+      }
+
+
+      const oauth_access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+      const oauth_refresh_token = jwt.sign({ userId: userId, sid: sid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '96h' });
+      return res.json({ access_token: oauth_access_token, refresh_token: oauth_refresh_token });
+
+
+    } else if (code) {
+      oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
+      oauth_user = await userDB.findOne({ oauthAuthorizationCode: code });
+      const oauthAuthorizationCode = code;
+      await userDB.updateOne({ oauthAuthorizationCode }, { $unset: { oauthAuthorizationCode: 1 } });
+
+      if (!oauth_client) {
+        return res.status(401).json({ error: 'invalid_client', error_description: 'Invalid client' });
+      }
+
+      if (!oauth_user) {
+        return res.status(400).json({ error: 'invalid_grant', error_description: 'Invalid authorization code' });
+      }
+      userId = oauth_user.userId;
+      sid = oauth_user.sid;
+    } else {
       return res.status(400).json({ error: 'invalid_grant', error_description: 'Invalid authorization code' });
     }
-    const userId = oauth_user.userId;
-    const sid = oauth_user.sid;
+
 
     const oauth_access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
-    const oauth_refresh_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '96h' });
+    const oauth_refresh_token = jwt.sign({ userId: userId, sid: sid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '96h' });
     res.json({ access_token: oauth_access_token, refresh_token: oauth_refresh_token });
+
   } catch (error) {
     res.status(500).json({ error: 'server_error', error_description: 'Server error' });
   }
 });
+
 
 
 
