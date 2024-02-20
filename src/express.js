@@ -57,6 +57,7 @@ const userSchema = new Schema({
   password: String,
   email: String,
   sid: String,
+  oauthSid: String,
   verifyCode: String,
   resetCode: String,
   mfaSecret: String,
@@ -291,7 +292,8 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
 async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri) {
   if (!sid) {
     const newsid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
-    await userDB.updateOne({ userId }, { $set: { sid: newsid } });
+    const newoAuthSid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+    await userDB.updateOne({ userId }, { $set: { sid: newsid, oauthSid: newoAuthSid } });
 
     if (mfaEnabled === true) {
       const newMfaLoginSecret = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
@@ -411,7 +413,8 @@ app.post('/api/sso/verify', async (req, res) => {
 
         if (existingUserId) {
           const sid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
-          await userDB.updateOne({ userId }, { $set: { sid: sid } });
+          const oauthSid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+          await userDB.updateOne({ userId }, { $set: { sid: sid, oauthSid: oauthSid } });
           await userDB.updateOne({ userId }, { $unset: { verifyCode: 1 } });
           const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
           res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
@@ -450,7 +453,8 @@ app.all('/api/sso/confirmationlink/:email_verification_token/:email_verification
 
         if (existingUserId) {
           const sid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
-          await userDB.updateOne({ userId }, { $set: { sid: sid } });
+          const oauthSid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+          await userDB.updateOne({ userId }, { $set: { sid: sid, oauthSid: oauthSid } });
           await userDB.updateOne({ userId }, { $unset: { verifyCode: 1 } });
           const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
           res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
@@ -522,8 +526,9 @@ app.post('/api/sso/data/changepassword', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newsid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+    const newOauthSid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
 
-    await userDB.updateOne({ userId }, { $set: { password: hashedPassword, sid: newsid } });
+    await userDB.updateOne({ userId }, { $set: { password: hashedPassword, sid: newsid, oauthSid: newOauthSid} });
 
     const newAccessToken = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
 
@@ -563,7 +568,7 @@ app.post('/api/sso/auth/logout', async (req, res) => {
       return res.redirect('/login');
     }
 
-    await userDB.updateOne({ userId }, { $unset: { sid: 1 } });
+    await userDB.updateOne({ userId }, { $unset: { sid: 1, oauthSid: 1 } });
 
     res.status(200).json({ success: true});
   } catch (error) {
@@ -1115,16 +1120,18 @@ app.post('/api/oauth/token', async (req, res) => {
     let oauth_user;
     let userId;
     let sid;
+    let oauthSid;
 
     if (refreshToken) {
       const decodedRefreshToken = jwt.verify(refreshToken, JWT_SECRET);
       userId = decodedRefreshToken.userId;
       sid = decodedRefreshToken.sid;
+      oauthSid = decodedRefreshToken.oauthSid;
+
 
       const refresh_token_clientId = decodedRefreshToken.clientId;
       oauth_client = await oAuthClientAppDB.findOne({ clientId: refresh_token_clientId, clientSecret: clientSecret });
-      oauth_user = await userDB.findOne({ userId, sid});
-
+      oauth_user = await userDB.findOne({ userId, oauthSid});
 
       if (!oauth_client) {
         return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client or invalid refresh token' });
@@ -1134,7 +1141,7 @@ app.post('/api/oauth/token', async (req, res) => {
       }
 
       const oauth_access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
-      const oauth_refresh_token = jwt.sign({ userId: userId, sid: sid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
+      const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
       return res.json({ access_token: oauth_access_token, refresh_token: oauth_refresh_token });
 
 
@@ -1153,13 +1160,14 @@ app.post('/api/oauth/token', async (req, res) => {
       }
       userId = oauth_user.userId;
       sid = oauth_user.sid;
+      oauthSid = oauth_user.oauthSid;
     } else {
       return res.status(400).json({ error: 'invalid_grant', error_description: 'Invalid authorization code' });
     }
 
 
     const oauth_access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
-    const oauth_refresh_token = jwt.sign({ userId: userId, sid: sid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
+    const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
     res.json({ access_token: oauth_access_token, refresh_token: oauth_refresh_token });
 
   } catch (error) {
