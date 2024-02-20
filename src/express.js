@@ -1088,7 +1088,6 @@ app.get('/api/oauth/authorize', async (req, res) => {
       
       let authorizationCode;
       let existingAuthorizationCode;
-
       do {
         authorizationCode = [...Array(35)].map(() => Math.random().toString(36)[2]).join('');
         existingAuthorizationCode = await userDB.findOne({ oauthAuthorizationCode: authorizationCode });
