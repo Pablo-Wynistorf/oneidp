@@ -140,10 +140,10 @@ const verifyToken = (req, res, next) => {
         }
 
         const now = Math.floor(Date.now() / 1000);
-        const tokenExpirationThreshold = now + (12 * 60 * 60);
+        const tokenExpirationThreshold = now + (24 * 60 * 60);
         if (decoded.exp < tokenExpirationThreshold) {
           const newAccessToken = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
-          res.cookie('access_token', newAccessToken, { httpOnly: true, maxAge: 48 * 60 * 60 * 1000 });
+          res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000 });
         }
 
         res.clearCookie('email_verification_token');
