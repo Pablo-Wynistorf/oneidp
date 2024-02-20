@@ -756,8 +756,7 @@ app.post('/api/mfa/disable', async (req, res) => {
       return res.status(462).json({ success: false, error: 'MFA is not enabled'})
     }
     
-    await userDB.updateOne({ userId }, { $unset: { mfaSecret: 1 } });
-    await userDB.updateOne({ userId }, { $unset: { mfaLoginSecret: 1 } });
+    await userDB.updateOne({ userId }, { $unset: { mfaSecret: 1, mfaLoginSecret: 1 } });
     await userDB.updateOne({ userId }, { $set: { mfaEnabled: false }});
 
     return res.status(200).json({ success: true, message: 'MFA has been successfully disabled' });
