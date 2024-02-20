@@ -833,7 +833,7 @@ app.post('/api/mfa/verify', async (req, res) => {
 
   const tokenParts = authorizationHeader.split(' ');
   if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(400).json({ error: 'Invalid authorization header format' });
+    return res.status(400).json({ error: 'Invalid authorization header' });
   }
 
   const mfa_token = tokenParts[1];
