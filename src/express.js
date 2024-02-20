@@ -1134,7 +1134,7 @@ app.post('/api/oauth/token', async (req, res) => {
       }
 
       const oauth_access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
-      const oauth_refresh_token = jwt.sign({ userId: userId, sid: sid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '96h' });
+      const oauth_refresh_token = jwt.sign({ userId: userId, sid: sid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
       return res.json({ access_token: oauth_access_token, refresh_token: oauth_refresh_token });
 
 
@@ -1159,7 +1159,7 @@ app.post('/api/oauth/token', async (req, res) => {
 
 
     const oauth_access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
-    const oauth_refresh_token = jwt.sign({ userId: userId, sid: sid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '96h' });
+    const oauth_refresh_token = jwt.sign({ userId: userId, sid: sid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
     res.json({ access_token: oauth_access_token, refresh_token: oauth_refresh_token });
 
   } catch (error) {
