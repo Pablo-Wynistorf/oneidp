@@ -62,7 +62,7 @@ const userSchema = new Schema({
   mfaSecret: String,
   mfaLoginSecret: String,
   mfaEnabled: Boolean,
-  accountRole: String,
+  roles: Array,
   oauthClientAppIds: Array,
   oauthAuthorizationCode: String,
 }, {
@@ -261,7 +261,7 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
     const mfaEnabled = user.mfaEnabled;
     const sid = user.sid;
 
-    const passwordMatch = await bcrypt.compare(password, storedPasswordHash);
+    const passwordMatch = bcrypt.compare(password, storedPasswordHash);
 
     if (!passwordMatch) {
       return res.status(462).json({ success: false, error: 'Invalid username or password' });
@@ -375,6 +375,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
       email: email,
       verifyCode: email_verification_code,
       mfaEnabled: false,
+      roles: ['standardUser'],
     });
 
     await newUser.save();
@@ -1133,7 +1134,7 @@ app.post('/api/oauth/userinfo', async (req, res) => {
       return res.redirect('/login');
     }
 
-    res.status(200).json({ userId: userId, username: userData.username, email: userData.email });
+    res.status(200).json({ userId: userId, username: userData.username, email: userData.email, roles: userData.roles, mfaEnabled: userData.mfaEnabled, });
   } catch (error) {
     notifyError(error)
     return res.status(500).json({ error: 'Something went wrong, try again later' });
