@@ -262,7 +262,7 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
     const mfaEnabled = user.mfaEnabled;
     const sid = user.sid;
 
-    const passwordMatch = bcrypt.compare(password, storedPasswordHash);
+    const passwordMatch = await bcrypt.compare(password, storedPasswordHash);
 
     if (!passwordMatch) {
       return res.status(462).json({ success: false, error: 'Invalid username or password' });
@@ -278,6 +278,7 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
       res.status(461).json({ success: true, Message: 'Email not verified' });
       sendVerificationEmail(username, email, email_verification_token, new_email_verification_code, res);
     } else {
+    
       loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri);
     }
   } catch (error) {
