@@ -1123,16 +1123,15 @@ app.post('/api/oauth/token', async (req, res) => {
 
       const refresh_token_clientId = decodedRefreshToken.clientId;
       oauth_client = await oAuthClientAppDB.findOne({ clientId: refresh_token_clientId, clientSecret: clientSecret });
-      oauth_user = await userDB.findOne({ userId });
+      oauth_user = await userDB.findOne({ userId, sid});
 
 
       if (!oauth_client) {
         return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client or invalid refresh token' });
       }
       if (!oauth_user) {
-        return res.status(401).json({ error: 'invalid_user', error_description: 'Invalid user' });
+        return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid user credentials' });
       }
-
 
       const oauth_access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
       const oauth_refresh_token = jwt.sign({ userId: userId, sid: sid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '96h' });
