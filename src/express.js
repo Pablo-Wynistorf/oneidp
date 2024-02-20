@@ -375,7 +375,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
       email: email,
       verifyCode: email_verification_code,
       mfaEnabled: false,
-      roles: ['standardUser'],
+      roles: ['standardUser, oauthUser'],
     });
 
     await newUser.save();
@@ -900,6 +900,13 @@ app.get('/api/oauth/settings/get', async (req, res) => {
       res.clearCookie('access_token');
       return res.redirect('/login');
     }
+
+    const userAccess = await userDB.findOne({ userId: userId, sid: sid, roles: 'oauthUser'});
+
+    if (!userAccess) {
+      return res.status(465).json({ error: 'User does not have access to create oauth apps' });
+    }
+
     let oauthApps = userData.oauthClientAppIds || [];
 
     if (!Array.isArray(oauthApps)) {
@@ -958,6 +965,12 @@ app.post('/api/oauth/settings/add', async (req, res) => {
     if (!userData) {
       res.clearCookie('access_token');
       return res.redirect('/login');
+    }
+
+    const userAccess = await userDB.findOne({ userId: userId, sid: sid, roles: 'oauthUser'});
+
+    if (!userAccess) {
+      return res.status(465).json({ error: 'User does not have access to create oauth apps' });
     }
 
     let oauthClientAppId;
@@ -1022,6 +1035,12 @@ app.post('/api/oauth/settings/delete', async (req, res) => {
     if (!userData) {
       res.clearCookie('access_token');
       return res.redirect('/login');
+    }
+
+    const userAccess = await userDB.findOne({ userId: userId, sid: sid, roles: 'oauthUser'});
+
+    if (!userAccess) {
+      return res.status(465).json({ error: 'User does not have access to create oauth apps' });
     }
 
     const testOauthClientAppId = userData.oauthClientAppIds.includes(oauthClientAppId);

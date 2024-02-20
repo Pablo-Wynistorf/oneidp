@@ -33,7 +33,7 @@ function create_app() {
     })
     .then(response => {
       if (!response.ok) {
-        throw new Error('Something went wrong');
+        return handleResponse(response)
       }
       return response.json();
     })
@@ -64,7 +64,6 @@ function create_app() {
       displaySuccess('App created successfully');
     })
     .catch(error => {
-      // Handle errors
     });
   }
 }
@@ -132,7 +131,7 @@ async function fetchData() {
             }
         });
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+          handleResponse(response)
         }
         const data = await response.json();
         displayOAuthApps(data);
@@ -168,6 +167,8 @@ function handleResponse(response) {
     console.log(response);
   } else if (response.status === 460) {
     return handle460Error();
+  } else if (response.status === 465) {
+    return handle465Error();
   } else {
     handleError();
   }
@@ -177,6 +178,11 @@ function handleResponse(response) {
 function handle460Error() {
   displayError('Error: Invalid redirect URI')
 }
+
+function handle465Error() {
+  displayError('Error: You have no access to this resource')
+}
+
 
 
 function handleError() {
