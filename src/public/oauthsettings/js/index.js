@@ -193,6 +193,7 @@ function handleError() {
 var currentURL = window.location.origin;
 document.getElementById('authorization-url').textContent = currentURL + "/api/oauth/authorize";
 document.getElementById('token-url').textContent = currentURL + "/api/oauth/token";
+document.getElementById('token-check-url').textContent = currentURL + "/api/oauth/check_token";
 document.getElementById('userinfo-uri').textContent = currentURL + "/api/oauth/userinfo";
 
 

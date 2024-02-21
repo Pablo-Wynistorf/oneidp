@@ -10,6 +10,7 @@ const mailjet = require('node-mailjet');
 const path = require('path');
 const qrcode = require('qrcode');
 const speakeasy = require('speakeasy');
+const { deserialize } = require('v8');
 require('dotenv').config();
 
 const URL = process.env.URL;
@@ -1202,6 +1203,39 @@ app.post('/api/oauth/userinfo', async (req, res) => {
     }
 
     res.status(200).json({ userId: userId, username: userData.username, email: userData.email, roles: userData.roles, mfaEnabled: userData.mfaEnabled, });
+  } catch (error) {
+    notifyError(error)
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
+});
+
+
+// Added check_token endpoint
+app.post('/api/oauth/check_token', async (req, res) => {
+  const authorizationHeader = req.headers['authorization'];
+
+  if (!authorizationHeader) {
+    return res.status(400).json({ error: 'Authorization header is missing' });
+  }
+
+  const tokenParts = authorizationHeader.split(' ');
+  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+    return res.status(400).json({ error: 'Invalid authorization header format' });
+  }
+
+  const access_token = tokenParts[1];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const oauthSid = decoded.oauthSid;
+    
+    const userData = await userDB.findOne({ userId: userId, oauthSid: oauthSid });
+    if (!userData) {
+      res.status(401).json({ success: false, description: 'Access Token is invalid' });
+    }
+
+    res.status(200).json({ success: true, description: 'Access Token is valid' });
   } catch (error) {
     notifyError(error)
     return res.status(500).json({ error: 'Something went wrong, try again later' });
