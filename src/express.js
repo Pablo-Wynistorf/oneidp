@@ -1119,13 +1119,11 @@ app.post('/api/oauth/token', async (req, res) => {
     let oauth_client;
     let oauth_user;
     let userId;
-    let sid;
     let oauthSid;
 
     if (refreshToken) {
       const decodedRefreshToken = jwt.verify(refreshToken, JWT_SECRET);
       userId = decodedRefreshToken.userId;
-      sid = decodedRefreshToken.sid;
       oauthSid = decodedRefreshToken.oauthSid;
 
 
@@ -1140,7 +1138,7 @@ app.post('/api/oauth/token', async (req, res) => {
         return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid user credentials' });
       }
 
-      const oauth_access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+      const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
       const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
       return res.json({ access_token: oauth_access_token, refresh_token: oauth_refresh_token });
 
@@ -1159,14 +1157,13 @@ app.post('/api/oauth/token', async (req, res) => {
         return res.status(400).json({ error: 'invalid_grant', error_description: 'Invalid authorization code' });
       }
       userId = oauth_user.userId;
-      sid = oauth_user.sid;
       oauthSid = oauth_user.oauthSid;
     } else {
       return res.status(400).json({ error: 'invalid_grant', error_description: 'Invalid authorization code' });
     }
 
 
-    const oauth_access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+    const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
     const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
     res.json({ access_token: oauth_access_token, refresh_token: oauth_refresh_token });
 
