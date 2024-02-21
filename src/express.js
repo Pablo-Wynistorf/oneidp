@@ -1193,9 +1193,9 @@ app.post('/api/oauth/userinfo', async (req, res) => {
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
     const userId = decoded.userId;
-    const sid = decoded.sid;
+    const oauthSid = decoded.oauthSid;
     
-    const userData = await userDB.findOne({ userId: userId, sid: sid });
+    const userData = await userDB.findOne({ userId: userId, oauthSid: oauthSid });
     if (!userData) {
       res.clearCookie('access_token');
       return res.redirect('/login');
