@@ -36,11 +36,11 @@
 				<p>Userinfo URI: <span id="userinfo-uri"></span></p>
 			</div>
             <div id="oauth-apps-container" class="row justify-content-center"></div>
-			<div id="confirmation-box" style="display: none;">
+			<dialog data-modal id="confirmation-box">
 				<h2>Do you really want to delete this app?</h2>
 				<button type="submit" id="delete-button" class="btn btn-yes">Yes</button>
-				<button type="submit" class="btn btn-no" onclick="hideConfirmationBox()">No</button>
-			</div>
+				<button type="submit" class="btn btn-no" data-close-modal>NO</button>
+			</dialog>
 		</div>
 	  </center>
 	<script>
