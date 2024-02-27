@@ -79,7 +79,8 @@ function handleResponse(response) {
   document.getElementById('register-button').disabled = false;
   if (response.status === 200) {
     return response.json().then((data) => {
-      window.location.href = '/verify';
+      const redirectUri = getRedirectUri();
+      window.location.href = '/verify' + (redirectUri ? `?redirect_uri=${redirectUri}` : '');
     });
   } else if (response.status === 429) {
     handle429Error();
@@ -184,6 +185,11 @@ function displayError(errorMessage) {
   }, 4000);
 }
 
+function getRedirectUri() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const redirectUri = urlParams.get('redirect_uri');
+  return redirectUri;
+}
 
 document.querySelector('#email-field').focus();
 

@@ -10,7 +10,6 @@ function verifyCode() {
   codeInputs.forEach(input => {
     code += input.value;
   });
-
   if (code.length === 6) {
     fetch(`/api/sso/verify`, {
       method: 'POST',
@@ -24,16 +23,23 @@ function verifyCode() {
   }
 }
 
-function removeEmailVerificationToken() {
-  var pastDate = new Date(0);
-  document.cookie = "email_verification_token=; expires=" + pastDate.toUTCString() + "; path=/";
-  return null;
+async function getRedirectUri() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const redirectUri = urlParams.get('redirect_uri');
+  return redirectUri;
 }
 
-function handleResponse(response) {
+async function handleResponse(response) {
+  console.log(response)
   if (response.status === 200) {
-    removeEmailVerificationToken();
-    window.location.href = '/home';
+    const redirectUri = await getRedirectUri();
+    if (redirectUri === 'null') {
+      window.location.href = '/home';
+    } else if (!redirectUri) {
+      window.location.href = '/home';
+    } else {
+    window.location.href = redirectUri;
+    };
   } else if (response.status === 460) {
     handle460Error();
   } else if (response.status === 400) {

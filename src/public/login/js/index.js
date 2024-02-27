@@ -5,7 +5,8 @@ errorBox.className = 'error-box';
 successBox.className = 'success-box';
 
 function redirect_register() {
-  window.location.href = '/register'
+  const redirectUrl = getRedirectUri()
+  window.location.href = '/register' + (redirectUrl ? `?redirect_uri=${redirectUrl}` : '');
 }
 
 function redirect_resetpassword() {

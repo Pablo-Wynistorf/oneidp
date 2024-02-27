@@ -35,7 +35,7 @@ function handleResponse(response, data) {
     if (redirectUri === 'null') {
       window.location.href = '/home';
     } else if (!redirectUri) {
-      window.location.href = 'home';
+      window.location.href = '/home';
     } else {
     window.location.href = redirectUri;
     }
