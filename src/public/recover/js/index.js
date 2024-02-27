@@ -4,8 +4,6 @@ const successBox = document.createElement('div');
 errorBox.className = 'error-box';
 successBox.className = 'success-box';
 
-
-
 function sendResetCode() {
   const resetEmailImput = document.getElementById('email-field');
   const email = resetEmailImput.value;

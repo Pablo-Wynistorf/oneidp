@@ -4,18 +4,6 @@ const successBox = document.createElement('div');
 errorBox.className = 'error-box';
 successBox.className = 'success-box';
 
-function getCookie(name) {
-  const cookieArray = document.cookie.split(';');
-  for (const cookie of cookieArray) {
-    const [cookieName, cookieValue] = cookie.trim().split('=');
-    if (cookieName === name) {
-      return cookieValue;
-    }
-  }
-  return null;
-}
-
-
 function redirect_register() {
   window.location.href = '/register'
 }

@@ -4,35 +4,22 @@ const successBox = document.createElement("div");
 errorBox.className = "error-box";
 successBox.className = "success-box";
 
-function getCookie(name) {
-  const cookieArray = document.cookie.split(";");
-  for (const cookie of cookieArray) {
-    const [cookieName, cookieValue] = cookie.trim().split("=");
-    if (cookieName === name) {
-      return cookieValue;
-    }
-  }
-  return null;
-}
 
 function create_app() {
   const container = document.querySelector(".container");
-  const accessToken = getCookie("access_token");
   const oauthAppName = document.getElementById("appname-field").value;
   const redirectUri = document.getElementById("redirecturl-field").value;
-
-  if (accessToken) {
+  try {
     fetch(`/api/oauth/settings/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ redirectUri, oauthAppName }),
     })
       .then((response) => {
         if (!response.ok) {
-          return handleResponse(response);
+          return displayError("Error: Failed to create app, the redirect URI or the appname may be invalid");
         }
         return response.json();
       })
@@ -42,15 +29,15 @@ function create_app() {
         newAppBox.id = data.oauthClientAppId;
 
         const appBoxHTML = `
-        <a class="icon-button" id="${data.oauthClientAppId}">
-          <img src="./images/trash.svg" alt="Trash Icon">
-        </a>
-        <h4>APP NAME: ${data.oauthAppName}</h4>
-        <p>OAuth App ID: ${data.oauthClientAppId}</p>
-        <p>Client ID: ${data.clientId}</p>
-        <p>Client Secret: ${data.clientSecret}</p>
-        <p>Redirect URI: ${data.redirectUri}</p>
-      `;
+          <a class="icon-button" id="${data.oauthClientAppId}">
+            <img src="./images/trash.svg" alt="Trash Icon">
+          </a>
+          <h4>APP NAME: ${data.oauthAppName}</h4>
+          <p>OAuth App ID: ${data.oauthClientAppId}</p>
+          <p>Client ID: ${data.clientId}</p>
+          <p>Client Secret: ${data.clientSecret}</p>
+          <p>Redirect URI: ${data.redirectUri}</p>
+        `;
 
         newAppBox.innerHTML = appBoxHTML;
 
@@ -62,9 +49,15 @@ function create_app() {
         }
         displaySuccess("App created successfully");
       })
-      .catch((error) => {});
+      .catch((error) => {
+        return displayError("Error: Failed to create app, the redirect URI or the appname may be invalid");
+      });
+  } catch (error) {
+    console.error("Error:", error);
+    displayError("Failed to create app");
   }
 }
+
 
 const modal = document.querySelector("[data-modal]");
 const closeButton = document.querySelector("[data-close-modal]");
@@ -85,15 +78,14 @@ closeButton.addEventListener("click", function () {
   modal.close();
 });
 
+
 function delete_app(appId) {
   const oauthClientAppId = appId;
-  const accessToken = getCookie("access_token");
-  if (accessToken) {
+  try {
     fetch(`/api/oauth/settings/delete`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ oauthClientAppId }),
     })
@@ -110,16 +102,15 @@ function delete_app(appId) {
       .catch((error) => {
         displayError("Something went wrong");
       });
+  } catch (error) {
+    displayError("An error occurred while deleting the app");
   }
 }
 
+
 async function fetchData() {
   try {
-    const accessToken = getCookie("access_token");
     const response = await fetch("/api/oauth/settings/get", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
     });
     if (!response.ok) {
       handleResponse(response);
@@ -196,5 +187,5 @@ function displayError(errorMessage) {
   document.body.appendChild(errorBox);
   setTimeout(() => {
     errorBox.remove();
-  }, 2500);
+  }, 4000);
 }

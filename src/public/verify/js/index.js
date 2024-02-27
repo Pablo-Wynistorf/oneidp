@@ -4,17 +4,6 @@ const successBox = document.createElement('div');
 errorBox.className = 'error-box';
 successBox.className = 'success-box';
 
-function getCookie(name) {
-  const cookieArray = document.cookie.split(';');
-  for (const cookie of cookieArray) {
-    const [cookieName, cookieValue] = cookie.trim().split('=');
-    if (cookieName === name) {
-      return cookieValue;
-    }
-  }
-  return null;
-}
-
 function verifyCode() {
   const codeInputs = document.querySelectorAll('.verification-code-input');
   let code = '';
@@ -22,16 +11,13 @@ function verifyCode() {
     code += input.value;
   });
 
-  const email_verification_token = getCookie('email_verification_token');
-
-  if (code.length === 6 && email_verification_token) {
+  if (code.length === 6) {
     fetch(`/api/sso/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${email_verification_token}`
       },
-      body: JSON.stringify({ email_verification_token, email_verification_code: code })
+      body: JSON.stringify({ email_verification_code: code })
     })
       .then(handleResponse)
       .catch(handleError);
@@ -50,6 +36,8 @@ function handleResponse(response) {
     window.location.href = '/home';
   } else if (response.status === 460) {
     handle460Error();
+  } else if (response.status === 400) {
+    window.location.href = '/login';
   } else {
     handleError();
   }
@@ -143,11 +131,6 @@ function handleKeyDown(event) {
     }
   }
 }
-
-
-
-
-
 
 
 const codeInputs = document.querySelectorAll('.verification-code-input');

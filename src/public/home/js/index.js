@@ -4,76 +4,82 @@ const successBox = document.createElement('div');
 errorBox.className = 'error-box';
 successBox.className = 'success-box';
 
-function getCookie(name) {
-  const cookieArray = document.cookie.split(';');
-  for (const cookie of cookieArray) {
-    const [cookieName, cookieValue] = cookie.trim().split('=');
-    if (cookieName === name) {
-      return cookieValue;
-    }
-  }
-  window.location.href = '/login';
-}
-
 
 function get_username() {
-  const accessToken = getCookie('access_token');
-  if (accessToken) {
+  try {
     fetch(`/api/oauth/userinfo`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
       }
     })
-      .then(response => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          displayError(`Error: Fetching username failed`);
-        }
-      })
-      .then(username => {
-        const usernameData = username.username;
-        const usernameElement = document.getElementById('get-username');
-        usernameElement.innerHTML = usernameData;
-      })
-      .catch(error => {
-        window.location.href = '/login';
-        displayError(`User verification error:${error}`);
-      });
+    .then(response => {
+      if (response.ok) {
+        return response.json();
+      } else {
+        handleError();
+      }
+    })
+    .then(username => {
+      const usernameData = username.username;
+      const usernameElement = document.getElementById('get-username');
+      usernameElement.innerHTML = usernameData;
+    })
+    .catch(error => {
+      handleError();
+      window.location.href = '/login';
+    });
+  } catch (error) {
+    handleError();
   }
 }
 
 
+
 function logout() {
-  var pastDate = new Date(0);
-  document.cookie = "access_token=; expires=" + pastDate.toUTCString() + "; path=/";
-  window.location.href = '/login';
-  return null;
-}
-
-
-function logoutAll() {
-  const accessToken = getCookie('access_token');
-  if (accessToken) {
+  try {
     fetch(`/api/sso/auth/logout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
       }
     })
-      .then(response => {
-        if (response.ok) {
-          var pastDate = new Date(0);
-          document.cookie = "access_token=; expires=" + pastDate.toUTCString() + "; path=/";
-          window.location.href = '/login';
-          return null;
-        }
-      });
+    .then(response => {
+      if (response.ok) {
+        window.location.href = '/login';
+      } else {
+        handleError();
+      }
+    })
+  } catch (error) {
+    handleError();
   }
 }
+
+
+function logoutAll() {
+  try {
+    fetch(`/api/sso/auth/logout/all`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        window.location.href = '/login';
+      } else {
+        handleError();
+      }
+    })
+    .catch(error => {
+      handleError();
+    });
+  } catch (error) {
+    handleError();
+  }
+}
+
 
 function add_oauth2_app() {
   window.location.href = '/home/oauth/settings';
@@ -130,19 +136,20 @@ function checkPasswordOnBlur(event) {
 function changePassword() {
   const passwordInput = document.getElementById('password-field');
   const password = passwordInput.value;
-  const accessToken = getCookie('access_token');
-  if (accessToken) {
+  try {
     fetch(`/api/sso/data/changepassword`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
       },
-      body: JSON.stringify({ password, accessToken})
+      body: JSON.stringify({ password })
     })
     .then(handleResponse)
+  } catch (error) {
+    handleError();
   }
 }
+
 
 
 function handleResponse(response) {

@@ -19,7 +19,6 @@ function ingestCode() {
 }
 
 
-
 function getCookie(name) {
   const cookieArray = document.cookie.split(';');
   for (const cookie of cookieArray) {

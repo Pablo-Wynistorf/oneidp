@@ -4,18 +4,6 @@ const successBox = document.createElement('div');
 errorBox.className = 'error-box';
 successBox.className = 'success-box';
 
-function getCookie(name) {
-  const cookieArray = document.cookie.split(';');
-  for (const cookie of cookieArray) {
-    const [cookieName, cookieValue] = cookie.trim().split('=');
-    if (cookieName === name) {
-      return cookieValue;
-    }
-  }
-  return null;
-}
-
-
 const password = document.getElementById('password-field');
 password.addEventListener('input', passwordRequirements);
 
@@ -137,7 +125,7 @@ function handle461Error() {
 function handle462Error() {
   const usernameInput = document.getElementById('username-field');
   usernameInput.value = '';
-  displayError('Error: Username must have more than 3 characters')
+  displayError('Username must only contain letters, numbers, and dashes and be between 3 and 20 characters')
 }
 
 
@@ -193,7 +181,7 @@ function displayError(errorMessage) {
   document.body.appendChild(errorBox);
   setTimeout(() => {
       errorBox.remove();
-  }, 2500);
+  }, 4000);
 }
 
 

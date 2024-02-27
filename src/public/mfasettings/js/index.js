@@ -4,26 +4,13 @@ const successBox = document.createElement('div');
 errorBox.className = 'error-box';
 successBox.className = 'success-box';
 
-function getCookie(name) {
-  const cookieArray = document.cookie.split(';');
-  for (const cookie of cookieArray) {
-    const [cookieName, cookieValue] = cookie.trim().split('=');
-    if (cookieName === name) {
-      return cookieValue;
-    }
-  }
-  return null;
-}
 
-const accessToken = getCookie('access_token');
-
-if (accessToken) {
+if (true) {
   document.getElementById('scan-info').style.display = 'block';
   fetch(`/api/mfa/setup`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`
     }
   })
   .then(response => response.json())
@@ -57,7 +44,6 @@ inputs.forEach(function(input, index) {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${accessToken}`
               },
               body: JSON.stringify({
                   'mfaVerifyCode': collectedInputs
@@ -112,7 +98,6 @@ function activate_mfa() {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`
     }
   })
   .then(response => response.json())
@@ -133,7 +118,6 @@ function disable_mfa() {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`
     }
   })
   .then(response => handleResponseMfaDisable(response))

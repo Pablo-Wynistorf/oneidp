@@ -144,7 +144,7 @@ const verifyToken = (req, res, next) => {
         const tokenExpirationThreshold = now + (24 * 60 * 60);
         if (decoded.exp < tokenExpirationThreshold) {
           const newAccessToken = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
-          res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000 });
+          res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/'});
         }
 
         res.clearCookie('email_verification_token');
@@ -202,6 +202,7 @@ app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/r
 app.use('/home/mfa/settings', existingToken, express.static(path.join(__dirname, 'public/mfasettings')));
 app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
 app.use('/home/oauth/settings', express.static(path.join(__dirname, 'public/oauthsettings')));
+
 
 // Login to the account, if account not verified, resend verification email.
 app.post('/api/sso/token/check', async (req, res) => {
@@ -269,12 +270,12 @@ app.post('/api/sso/auth/login', authLoginLimiter, async (req, res) => {
     }
 
     if (email_verification_code) {
-      const email_verification_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '1d' });
+      const email_verification_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' });
 
       const new_email_verification_code = Math.floor(100000 + Math.random() * 900000).toString();
       await userDB.updateOne({ userId }, { $set: { verifyCode: new_email_verification_code } });
 
-      res.cookie('email_verification_token', email_verification_token, { maxAge: 7 * 24 * 60 * 60 * 1000, path: '/' });
+      res.cookie('email_verification_token', email_verification_token, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
       res.status(461).json({ success: true, Message: 'Email not verified' });
       sendVerificationEmail(username, email, email_verification_token, new_email_verification_code, res);
     } else {
@@ -300,13 +301,13 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri)
       const newMfaLoginSecret = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
       await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
       const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' });
-      res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, path: '/' });
+      res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
       return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri });
     }
 
     notifyLogin(username);
     const token = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
-    res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
+    res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
     return res.status(200).json({ success: true, redirectUri  });
   }
 
@@ -314,13 +315,13 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri)
     const newMfaLoginSecret = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
     await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
     const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' });
-    res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, path: '/' });
+    res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
     return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri })
   }
 
   const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
   notifyLogin(username);
-  res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
+  res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
 
   return res.status(200).json({ success: true, redirectUri });
 }
@@ -331,11 +332,12 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri)
 // Register as new user, store userdata in the database and send verification email
 app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
   const { username, password, email } = req.body;
+  const usernameRegex = /^[a-zA-Z0-9-]{3,20}$/;
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
   const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
 
-  if (typeof username !== 'string' || username.length > 20 || username.length < 3) {
-    return res.status(462).json({ success: false, error: 'Username must be between 3 and 20 characters' });
+  if (!usernameRegex.test(username)) {
+    return res.status(462).json({ success: false, error: 'Username must only contain letters, numbers, and dashes and be between 3 and 20 characters' });
   }
 
   if (!emailRegex.test(email)) {
@@ -368,7 +370,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
       existingUser = await userDB.findOne({ userId });
     } while (existingUser);
 
-    const email_verification_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '1d' });
+    const email_verification_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' });
     const email_verification_code = Math.floor(100000 + Math.random() * 900000).toString();
 
     const newUser = new userDB({
@@ -385,7 +387,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
 
     sendVerificationEmail(username, email, email_verification_token, email_verification_code);
 
-    res.cookie('email_verification_token', email_verification_token, { maxAge: 24 * 60 * 60 * 1000, path: '/' });
+    res.cookie('email_verification_token', email_verification_token, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
     res.status(200).json({ success: true });
     return notifyRegister(username);
   } catch (error) {
@@ -398,38 +400,47 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
 
 // Verify user with verification code and token, and later generate access tokens
 app.post('/api/sso/verify', async (req, res) => {
-  const { email_verification_token, email_verification_code } = req.body;
-
   try {
-    jwt.verify(email_verification_token, JWT_SECRET, async (error, decoded) => {
-      if (error) {
-        return res.status(400).json({ success: false, error: 'Verification token invalid, try a login to get a new verification token.'});
-      }
+    const { email_verification_code } = req.body;
+    const req_cookies = req.headers.cookie;
 
-      const userId = decoded.userId;
-      const verifyCode = email_verification_code;
+    if (!req_cookies) {
+      return res.status(400).json({ success: false, error: 'Email verification token not found' });
+    }
 
-      try {
-        const existingUserId = await userDB.findOne({ userId, verifyCode });
+    const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+      const [name, value] = cookie.trim().split('=');
+      cookiesObj[name] = value;
+      return cookiesObj;
+    }, {});
 
-        if (existingUserId) {
-          const sid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
-          const oauthSid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
-          await userDB.updateOne({ userId }, { $set: { sid: sid, oauthSid: oauthSid } });
-          await userDB.updateOne({ userId }, { $unset: { verifyCode: 1 } });
-          const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
-          res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
-          res.status(200).json({ success: true})
-        } else {
-          return res.status(460).json({ success: false, error: 'Wrong verification code entered' });
-        }
-      } catch (error) {
-        notifyError(error)
-        return res.status(500).json({ success: false, error: 'Something went wrong, try again later' });
-      }
+    const email_verification_token = cookies['email_verification_token'];
+    
+
+    const decoded = await jwt.verify(email_verification_token, JWT_SECRET);
+
+    const userId = decoded.userId;
+    const verifyCode = email_verification_code;
+
+    const existingUserId = await userDB.findOne({ userId, verifyCode });
+
+    if (!existingUserId) {
+      return res.status(460).json({ success: false, error: 'Wrong verification code entered' });
+    }
+
+    const sid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+    const oauthSid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+
+    await userDB.updateOne({ userId }, {
+      $set: { sid: sid, oauthSid: oauthSid },
+      $unset: { verifyCode: 1 }
     });
+
+    const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+    res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+    return res.status(200).json({ success: true });
   } catch (error) {
-    notifyError(error)
+    notifyError(error);
     return res.status(500).json({ success: false, error: 'Something went wrong, try again later' });
   }
 });
@@ -438,38 +449,33 @@ app.post('/api/sso/verify', async (req, res) => {
 
 // Verify user with verification code and token with the verificationlink, and later generate access tokens
 app.all('/api/sso/confirmationlink/:email_verification_token/:email_verification_code', async (req, res) => {
-  const { email_verification_token, email_verification_code } = req.params;
-
   try {
-    jwt.verify(email_verification_token, JWT_SECRET, async (error, decoded) => {
-      if (error) {
-        return res.status(400).json({ success: false, error: 'Verification token invalid, try a login to get a new verification token.'});
-      }
+    const { email_verification_token ,email_verification_code } = req.params;
 
-      const userId = decoded.userId;
-      const verifyCode = email_verification_code;
+    const decoded = await jwt.verify(email_verification_token, JWT_SECRET);
 
-      try {
-        const existingUserId = await userDB.findOne({ userId, verifyCode });
+    const userId = decoded.userId;
+    const verifyCode = email_verification_code;
 
-        if (existingUserId) {
-          const sid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
-          const oauthSid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
-          await userDB.updateOne({ userId }, { $set: { sid: sid, oauthSid: oauthSid } });
-          await userDB.updateOne({ userId }, { $unset: { verifyCode: 1 } });
-          const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
-          res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
-          return res.redirect('/home')
-        } else {
-          return res.status(460).json({ success: false, error: 'Wrong verification code entered' });
-        }
-      } catch (error) {
-        notifyError(error)
-        return res.status(500).json({ error: 'Something went wrong, try again later' });
-      }
+    const existingUserId = await userDB.findOne({ userId, verifyCode });
+
+    if (!existingUserId) {
+      return res.status(460).json({ success: false, error: 'Wrong verification code entered' });
+    }
+
+    const sid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+    const oauthSid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
+
+    await userDB.updateOne({ userId }, {
+      $set: { sid: sid, oauthSid: oauthSid },
+      $unset: { verifyCode: 1 }
     });
+
+    const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+    res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+    return res.redirect('/home');
   } catch (error) {
-    notifyError(error)
+    notifyError(error);
     return res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
@@ -479,8 +485,8 @@ app.all('/api/sso/confirmationlink/:email_verification_token/:email_verification
 // Convert link into usable password_reset_code and password_reset_token cookies
 app.all('/api/sso/setresettokens/:password_reset_token/:password_reset_code', (req, res) => {
   const { password_reset_token, password_reset_code } = req.params;
-    res.cookie('password_reset_token', password_reset_token, { maxAge: 1 * 60 * 60 * 1000, path: '/'});
-    res.cookie('password_reset_code', password_reset_code, { maxAge: 1 * 60 * 60 * 1000, path: '/'});
+    res.cookie('password_reset_token', password_reset_token, { maxAge: 1 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+    res.cookie('password_reset_code', password_reset_code, { maxAge: 1 * 60 * 60 * 1000, path: '/' });
     return res.redirect('/setpassword')
 });
 
@@ -489,18 +495,24 @@ app.all('/api/sso/setresettokens/:password_reset_token/:password_reset_code', (r
 // Handle password change, define new session id, store passwordhash in database and issue new access token. 
 app.post('/api/sso/data/changepassword', async (req, res) => {
   try {
-    const authorizationHeader = req.headers['authorization'];
     const { password } = req.body;
+    const req_cookies = req.headers.cookie;
+
+    if (!req_cookies) {
+      return res.status(400).json({ success: false, error: 'Access Token not found' });
+    }
+
+    const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+      const [name, value] = cookie.trim().split('=');
+      cookiesObj[name] = value;
+      return cookiesObj;
+    }, {});
+
+    const access_token = cookies['access_token'];
+
+
     const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
 
-    if (!authorizationHeader) {
-      return res.status(400).json({ error: 'Authorization header missing' });
-    }
-
-    const tokenParts = authorizationHeader.split(' ');
-    if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-      return res.status(400).json({ error: 'Invalid authorization header' });
-    }
 
     if (!passwordPattern.test(password)) {
       return res.status(462).json({ success: false, error: 'Password doesn\'t meet our requirements' });
@@ -514,7 +526,6 @@ app.post('/api/sso/data/changepassword', async (req, res) => {
       return res.status(461).json({ success: false, error: 'Password must not have more than 23 characters' });
     }
 
-    const access_token = tokenParts[1];
     const decoded = jwt.verify(access_token, JWT_SECRET)
     const userId = decoded.userId;
     const sid = decoded.sid;
@@ -533,7 +544,7 @@ app.post('/api/sso/data/changepassword', async (req, res) => {
 
     const newAccessToken = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
 
-    res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
+    res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
     res.status(200).json({ success: true });
   } catch (error) {
     notifyError(error)
@@ -542,21 +553,30 @@ app.post('/api/sso/data/changepassword', async (req, res) => {
 });
 
 
+// Handle logout
+app.post('/api/sso/auth/logout', async (req, res) => {
+  res.clearCookie('access_token');
+  res.status(200).json({ success: true });
+});
+
+
+
 
 // Handle logout and change session id. (Invalidate access token)
-app.post('/api/sso/auth/logout', async (req, res) => {
-  const authorizationHeader = req.headers['authorization'];
+app.post('/api/sso/auth/logout/all', async (req, res) => {
+  const req_cookies = req.headers.cookie;
 
-  if (!authorizationHeader) {
-    return res.status(400).json({ error: 'Authorization header is missing' });
+  if (!req_cookies) {
+    return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
 
-  const tokenParts = authorizationHeader.split(' ');
-  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(400).json({ error: 'Invalid authorization header format' });
-  }
+  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookiesObj[name] = value;
+    return cookiesObj;
+  }, {});
 
-  const access_token = tokenParts[1];
+  const access_token = cookies['access_token'];
 
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
@@ -599,7 +619,7 @@ app.post('/api/sso/data/resetpassword', async (req, res) => {
 
     try {
       sendRecoveryEmail(username, email, password_reset_token, password_reset_code, res);
-      res.cookie('password_reset_token', password_reset_token, { maxAge: 1 * 60 * 60 * 1000, path: '/' });
+      res.cookie('password_reset_token', password_reset_token, { maxAge: 1 * 60 * 60 * 1000, httpOnly: true, path: '/' });
       res.status(200).json({ success: true });
     } catch (error) {
       console.error('Mailjet error:', error);
@@ -615,9 +635,22 @@ app.post('/api/sso/data/resetpassword', async (req, res) => {
 
 // Set new password with recoverycode and recoverytoken. 
 app.post('/api/sso/data/setpassword', async (req, res) => {
-  const { password, password_reset_token, password_reset_code } = req.body;
+  const { password, password_reset_code } = req.body;
   const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
+  const req_cookies = req.headers.cookie;
 
+  if (!req_cookies) {
+    return res.status(400).json({ success: false, error: 'Access Token not found' });
+  }
+
+  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookiesObj[name] = value;
+    return cookiesObj;
+  }, {});
+
+  const password_reset_token = cookies['password_reset_token'];
+  
   try {
     if (!passwordPattern.test(password)) {
       return res.status(462).json({ success: false, error: 'Password doesn\'t meet our requirements' });
@@ -651,7 +684,7 @@ app.post('/api/sso/data/setpassword', async (req, res) => {
 
       const access_token = jwt.sign({userId: userId, sid: newsid}, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
       res.clearCookie('password_reset_token');
-      res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
+      res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
       res.status(200).json({ success: true });
 
   
@@ -668,18 +701,19 @@ app.post('/api/sso/data/setpassword', async (req, res) => {
 
 // Get the mfa qr code
 app.get('/api/mfa/setup', async (req, res) => {
-  const authorizationHeader = req.headers['authorization'];
+  const req_cookies = req.headers.cookie;
 
-  if (!authorizationHeader) {
-    return res.status(400).json({ error: 'Authorization header is missing' });
+  if (!req_cookies) {
+    return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
 
-  const tokenParts = authorizationHeader.split(' ');
-  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(400).json({ error: 'Invalid authorization header format' });
-  }
+  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookiesObj[name] = value;
+    return cookiesObj;
+  }, {});
 
-  const access_token = tokenParts[1];
+  const access_token = cookies['access_token'];
 
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
@@ -727,18 +761,19 @@ app.get('/api/mfa/setup', async (req, res) => {
 
 // Disable MFA
 app.post('/api/mfa/disable', async (req, res) => {
-  const authorizationHeader = req.headers['authorization'];
+  const req_cookies = req.headers.cookie;
 
-  if (!authorizationHeader) {
-    return res.status(400).json({ error: 'Authorization header is missing' });
+  if (!req_cookies) {
+    return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
 
-  const tokenParts = authorizationHeader.split(' ');
-  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(400).json({ error: 'Invalid authorization header format' });
-  }
+  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookiesObj[name] = value;
+    return cookiesObj;
+  }, {});
 
-  const access_token = tokenParts[1];
+  const access_token = cookies['access_token'];
 
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
@@ -770,19 +805,21 @@ app.post('/api/mfa/disable', async (req, res) => {
 
 // Mfa setup verify
 app.post('/api/mfa/setup/verify', async (req, res) => {
-  const authorizationHeader = req.headers['authorization'];
   const mfaVerifyCode = req.body.mfaVerifyCode;
 
-  if (!authorizationHeader) {
-    return res.status(400).json({ error: 'Authorization header is missing' });
+  const req_cookies = req.headers.cookie;
+
+  if (!req_cookies) {
+    return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
 
-  const tokenParts = authorizationHeader.split(' ');
-  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(400).json({ error: 'Invalid authorization header format' });
-  }
+  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookiesObj[name] = value;
+    return cookiesObj;
+  }, {});
 
-  const access_token = tokenParts[1];
+  const access_token = cookies['access_token'];
 
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
@@ -823,20 +860,23 @@ app.post('/api/mfa/setup/verify', async (req, res) => {
 
 // Verify the mfa code
 app.post('/api/mfa/verify', async (req, res) => {
-  const authorizationHeader = req.headers['authorization'];
   const mfaVerifyCode = req.body.mfaVerifyCode;
   const redirectUri = req.body.redirectUri;
 
-  if (!authorizationHeader) {
-    return res.status(400).json({ error: 'Authorization header is missing' });
+  const req_cookies = req.headers.cookie;
+
+  if (!req_cookies) {
+    return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
 
-  const tokenParts = authorizationHeader.split(' ');
-  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(400).json({ error: 'Invalid authorization header' });
-  }
+  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookiesObj[name] = value;
+    return cookiesObj;
+  }, {});
 
-  const mfa_token = tokenParts[1];
+  const mfa_token = cookies['mfa_token'];
+
   try {
     const decoded = jwt.verify(mfa_token, JWT_SECRET);
     const userId = decoded.userId;
@@ -867,7 +907,8 @@ app.post('/api/mfa/verify', async (req, res) => {
   if (verified) {
     const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
     notifyLogin(username);
-    res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, path: '/' });
+    res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+    res.clearCookie('mfa_token');
     return res.status(200).json({ success: true, redirectUri });
   } else {
     return res.status(461).json({ success: false, error: 'Invalid verification code'})
@@ -882,18 +923,19 @@ app.post('/api/mfa/verify', async (req, res) => {
 
 // Get oauth apps
 app.get('/api/oauth/settings/get', async (req, res) => {
-  const authorizationHeader = req.headers['authorization'];
+  const req_cookies = req.headers.cookie;
 
-  if (!authorizationHeader) {
-    return res.status(400).json({ error: 'Authorization header is missing' });
+  if (!req_cookies) {
+    return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
 
-  const tokenParts = authorizationHeader.split(' ');
-  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(400).json({ error: 'Invalid authorization header format' });
-  }
+  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookiesObj[name] = value;
+    return cookiesObj;
+  }, {});
 
-  const access_token = tokenParts[1];
+  const access_token = cookies['access_token'];
 
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
@@ -946,20 +988,34 @@ app.get('/api/oauth/settings/get', async (req, res) => {
 
 // Add oauth app
 app.post('/api/oauth/settings/add', async (req, res) => {
-  const authorizationHeader = req.headers['authorization'];
   const oauthAppName = req.body.oauthAppName;
   const redirectUri = req.body.redirectUri;
+  const req_cookies = req.headers.cookie;
 
-  if (!authorizationHeader) {
-    return res.status(400).json({ error: 'Authorization header is missing' });
+  if (!req_cookies) {
+    return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
 
-  const tokenParts = authorizationHeader.split(' ');
-  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(400).json({ error: 'Invalid authorization header format' });
+  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookiesObj[name] = value;
+    return cookiesObj;
+  }, {});
+
+  const access_token = cookies['access_token'];
+
+  const oauthAppNameRegex = /^[a-zA-Z0-9\-\.]{1,30}$/;
+
+  if (!oauthAppNameRegex.test(oauthAppName)) {
+    return res.status(460).json({ success: false, error: 'Invalid oauthAppName' }); 
   }
 
-  const access_token = tokenParts[1];
+  const oauthRedirectUrlRegex = /^[a-zA-Z0-9\.:\/_!?-]+$/;
+
+  if (!oauthRedirectUrlRegex.test(redirectUri)) {
+    return res.status(460).json({ success: false, error: 'Invalid oauthRedirectUrl' }); 
+}
+
 
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
@@ -1017,19 +1073,20 @@ app.post('/api/oauth/settings/add', async (req, res) => {
 
 // Add oauth delete app
 app.post('/api/oauth/settings/delete', async (req, res) => {
-  const authorizationHeader = req.headers['authorization'];
   const oauthClientAppId = req.body.oauthClientAppId;
+  const req_cookies = req.headers.cookie;
 
-  if (!authorizationHeader) {
-    return res.status(400).json({ error: 'Authorization header is missing' });
+  if (!req_cookies) {
+    return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
 
-  const tokenParts = authorizationHeader.split(' ');
-  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(400).json({ error: 'Invalid authorization header format' });
-  }
+  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookiesObj[name] = value;
+    return cookiesObj;
+  }, {});
 
-  const access_token = tokenParts[1];
+  const access_token = cookies['access_token'];
 
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
@@ -1071,7 +1128,20 @@ app.post('/api/oauth/settings/delete', async (req, res) => {
 // Oauth2 authorize endpoint
 app.get('/api/oauth/authorize', async (req, res) => {
   const { client_id } = req.query;
-  const access_token = req.cookies.access_token;
+  const req_cookies = req.headers.cookie;
+
+  if (!req_cookies) {
+    return res.status(400).json({ success: false, error: 'Access Token not found' });
+  }
+
+  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookiesObj[name] = value;
+    return cookiesObj;
+  }, {});
+
+  const access_token = cookies['access_token'];
+
   const clientId = client_id;
   try {
     const oauth_client = await oAuthClientAppDB.findOne({ clientId });
@@ -1177,69 +1247,105 @@ app.post('/api/oauth/token', async (req, res) => {
 
 // Added userinfo endpoint
 app.post('/api/oauth/userinfo', async (req, res) => {
+  let access_token;
+
   const authorizationHeader = req.headers['authorization'];
-
-  if (!authorizationHeader) {
-    return res.status(400).json({ error: 'Authorization header is missing' });
+  if (authorizationHeader && authorizationHeader.startsWith('Bearer ')) {
+    access_token = authorizationHeader.split(' ')[1];
   }
 
-  const tokenParts = authorizationHeader.split(' ');
-  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(400).json({ error: 'Invalid authorization header format' });
+  if (!access_token) {
+    const req_cookies = req.headers.cookie;
+    
+    if (!req_cookies) {
+      return res.status(400).json({ success: false, error: 'Access Token not found' });
+    }
+    
+    const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+      const [name, value] = cookie.trim().split('=');
+      cookiesObj[name] = value;
+      return cookiesObj;
+    }, {});
+
+    access_token = cookies['access_token'];
   }
 
-  const access_token = tokenParts[1];
+  if (!access_token) {
+    return res.status(400).json({ success: false, error: 'Access Token not provided' });
+  }
 
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
     const userId = decoded.userId;
     const oauthSid = decoded.oauthSid;
-    
+
     const userData = await userDB.findOne({ userId: userId, oauthSid: oauthSid });
     if (!userData) {
       res.clearCookie('access_token');
       return res.redirect('/login');
     }
 
-    res.status(200).json({ userId: userId, username: userData.username, email: userData.email, roles: userData.roles, mfaEnabled: userData.mfaEnabled, });
+    res.status(200).json({
+      userId: userId,
+      username: userData.username,
+      email: userData.email,
+      roles: userData.roles,
+      mfaEnabled: userData.mfaEnabled
+    });
   } catch (error) {
-    notifyError(error)
+    notifyError(error);
     return res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
 
 
+
 // Added check_token endpoint
 app.post('/api/oauth/check_token', async (req, res) => {
+  let access_token;
+
   const authorizationHeader = req.headers['authorization'];
-
-  if (!authorizationHeader) {
-    return res.status(400).json({ error: 'Authorization header is missing' });
+  if (authorizationHeader && authorizationHeader.startsWith('Bearer ')) {
+    access_token = authorizationHeader.split(' ')[1];
   }
 
-  const tokenParts = authorizationHeader.split(' ');
-  if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-    return res.status(400).json({ error: 'Invalid authorization header format' });
+  if (!access_token) {
+    const req_cookies = req.headers.cookie;
+    
+    if (!req_cookies) {
+      return res.status(400).json({ success: false, error: 'Access Token not found' });
+    }
+    
+    const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+      const [name, value] = cookie.trim().split('=');
+      cookiesObj[name] = value;
+      return cookiesObj;
+    }, {});
+
+    access_token = cookies['access_token'];
   }
 
-  const access_token = tokenParts[1];
+  if (!access_token) {
+    return res.status(400).json({ success: false, error: 'Access Token not provided' });
+  }
 
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
     const userId = decoded.userId;
     const oauthSid = decoded.oauthSid;
-    
+
     const userData = await userDB.findOne({ userId: userId, oauthSid: oauthSid });
     if (!userData) {
-      res.status(401).json({ success: false, description: 'Access Token is invalid' });
+      return res.status(401).json({ success: false, description: 'Access Token is invalid' });
     }
 
     res.status(200).json({ success: true, description: 'Access Token is valid' });
   } catch (error) {
-    notifyError(error)
+    notifyError(error);
     return res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
+
 
 
 

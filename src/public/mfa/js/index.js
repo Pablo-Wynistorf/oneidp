@@ -4,22 +4,9 @@ const successBox = document.createElement('div');
 errorBox.className = 'error-box';
 successBox.className = 'success-box';
 
-function getCookie(name) {
-  const cookieArray = document.cookie.split(';');
-  for (const cookie of cookieArray) {
-    const [cookieName, cookieValue] = cookie.trim().split('=');
-    if (cookieName === name) {
-      return cookieValue;
-    }
-  }
-  return null;
-}
-
 
 const inputs = document.querySelectorAll('.mfa-code-input');
 var collectedInputs = '';
-
-const mfa_token = getCookie('mfa_token');
 
 function verifyCode() {
   let code = '';
@@ -27,13 +14,12 @@ function verifyCode() {
     code += input.value;
   });
 
-  if (code.length === 6 && mfa_token) {
+  if (code.length === 6) {
     const redirectUri = getRedirectUri();
     fetch(`/api/mfa/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${mfa_token}`
       },
       body: JSON.stringify({ mfaVerifyCode: code, redirectUri })
     })
@@ -45,9 +31,7 @@ function verifyCode() {
 
 function handleResponse(response, data) {
   const redirectUri = data.redirectUri;
-  console.log(redirectUri)
   if (response.status === 200) {
-    document.cookie = "mfa_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     if (redirectUri === 'null') {
       window.location.href = '/home';
     } else if (!redirectUri) {
@@ -57,6 +41,8 @@ function handleResponse(response, data) {
     }
   } else if (response.status === 460) {
     return handle460Error();
+  } else if (response.status === 461) {
+    return handle461Error();
   } else {
     handleError();
   }
@@ -71,6 +57,14 @@ function handle460Error() {
   setTimeout(() => {
     window.location.replace('/home');
   }, 5000);
+}
+
+function handle461Error() {
+  displayError('MFA code is incorrect');
+  inputs.forEach(input => {
+    input.value = '';
+  }); 
+  inputs[0].focus();
 }
 
 function displaySuccess(successMessage) {
