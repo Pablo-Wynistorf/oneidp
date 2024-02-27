@@ -866,7 +866,7 @@ app.post('/api/mfa/verify', async (req, res) => {
   const req_cookies = req.headers.cookie;
 
   if (!req_cookies) {
-    return res.status(400).json({ success: false, error: 'Access Token not found' });
+    return res.status(462).json({ success: false, error: 'Access Token not found' });
   }
 
   const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {

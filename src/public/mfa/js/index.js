@@ -43,6 +43,8 @@ function handleResponse(response, data) {
     return handle460Error();
   } else if (response.status === 461) {
     return handle461Error();
+  } else if (response.status === 462) {
+    return handle462Error();
   } else {
     handleError();
   }
@@ -65,6 +67,13 @@ function handle461Error() {
     input.value = '';
   }); 
   inputs[0].focus();
+}
+
+function handle462Error() {
+  displayError('MFA session expired. Please login again start a new session');
+  setTimeout(() => {
+    window.location.replace('/login');
+  }, 5000);
 }
 
 function displaySuccess(successMessage) {
