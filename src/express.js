@@ -1131,28 +1131,13 @@ app.post('/api/oauth/settings/delete', async (req, res) => {
 });
 
 
-  
 // Oauth2 authorize endpoint
 app.get('/api/oauth/authorize', async (req, res) => {
   const { client_id } = req.query;
-  const req_cookies = req.headers.cookie;
-
-  if (!req_cookies) {
-    return res.status(400).json({ success: false, error: 'Access Token not found' });
-  }
-
-  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
-    const [name, value] = cookie.trim().split('=');
-    cookiesObj[name] = value;
-    return cookiesObj;
-  }, {});
-
-  const access_token = cookies['access_token'];
-
+  const access_token = req.cookies.access_token;
   const clientId = client_id;
   try {
     const oauth_client = await oAuthClientAppDB.findOne({ clientId });
-
     const redirect_uri = oauth_client.redirectUri;
     if (!oauth_client) {
       return res.status(401).json({ error: 'invalid_client', error_description: 'Invalid client' });
@@ -1166,7 +1151,6 @@ app.get('/api/oauth/authorize', async (req, res) => {
       if (!user) {
         return res.redirect(`/login?redirect_uri=${redirect_uri}`);
       }
-
       
       let authorizationCode;
       let existingAuthorizationCode;
@@ -1183,7 +1167,6 @@ app.get('/api/oauth/authorize', async (req, res) => {
     res.status(500).json({ error: 'server_error', error_description: 'Server error' });
   }
 });
-
 
 
 // Oauth Token endpoint
