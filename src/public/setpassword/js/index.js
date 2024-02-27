@@ -49,26 +49,27 @@ function passwordCheck() {
 
 function setNewPassword() {
   const passwordInput = document.getElementById('password-field');
-  const password_reset_codeImput = document.getElementById('reset-code-field');
+  const resetCodeInput = document.getElementById('reset-code-field');
   const password = passwordInput.value;
-  const password_reset_code = password_reset_codeImput.value;
-  const password_reset_token = getCookie('password_reset_token');
-  if (password_reset_token) {
+  const password_reset_code = resetCodeInput.value;
+
+  try {
     fetch(`/api/sso/data/setpassword`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${password_reset_token}`
       },
-      body: JSON.stringify({ password, password_reset_token, password_reset_code})
+      body: JSON.stringify({ password, password_reset_code })
     })
     .then(handleResponse)
+    .catch(handleError);
+  } catch (error) {
+    handleError();
   }
 }
 
-function removeResetToken() {
+function removeResetCode() {
   var pastDate = new Date(0);
-  document.cookie = "password_reset_token=; expires=" + pastDate.toUTCString() + "; path=/";
   document.cookie = "password_reset_code=; expires=" + pastDate.toUTCString() + "; path=/";
   return null;
 }
@@ -77,7 +78,7 @@ function removeResetToken() {
 function handleResponse(response) {
   if (response.status === 200) {
     return response.json().then(data => {
-      removeResetToken();
+      removeResetCode();
       window.location.href = '/home'
     })
   } else if (response.status === 460) {
