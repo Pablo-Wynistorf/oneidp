@@ -1198,9 +1198,15 @@ app.post('/api/oauth/token', async (req, res) => {
         return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid user credentials' });
       }
 
+      const username = oauth_user.username;
+      const email = oauth_user.email;
+      const roles = oauth_user.roles;
+      const mfaEnabled = oauth_user.mfaEnabled;
+
       const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+      const oauth_id_token = jwt.sign({ userId: userId, username: username, email: email, roles: roles, mfaEnabled: mfaEnabled }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
       const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
-      return res.json({ access_token: oauth_access_token, refresh_token: oauth_refresh_token });
+      return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
 
 
     } else if (code) {
@@ -1222,10 +1228,15 @@ app.post('/api/oauth/token', async (req, res) => {
       return res.status(400).json({ error: 'invalid_grant', error_description: 'Invalid authorization code' });
     }
 
+    const username = oauth_user.username;
+    const email = oauth_user.email;
+    const roles = oauth_user.roles;
+    const mfaEnabled = oauth_user.mfaEnabled;
 
     const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+    const oauth_id_token = jwt.sign({ userId: userId, username: username, email: email, roles: roles, mfaEnabled: mfaEnabled }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
     const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
-    res.json({ access_token: oauth_access_token, refresh_token: oauth_refresh_token });
+    return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
 
   } catch (error) {
     res.status(500).json({ error: 'server_error', error_description: 'Server error' });
@@ -1336,6 +1347,22 @@ app.post('/api/oauth/check_token', async (req, res) => {
   }
 });
 
+
+
+// OIDC Discovery endpoint
+app.get('/.well-known/openid-configuration', (req, res) => {
+  const metadata = {
+    issuer: `${URL}/api/oauth/token`,
+    authorization_endpoint: `${URL}/api/oauth/authorize`,
+    token_endpoint: `${URL}/api/oauth/token`,
+    userinfo_endpoint: `${URL}/api/oauth/userinfo`,
+    response_types_supported: ['code'],
+    subject_types_supported: ['public'],
+    id_token_signing_alg_values_supported: ['HS256'],
+    scopes_supported: ["openid"],
+  };
+  res.json(metadata);
+});
 
 
 
