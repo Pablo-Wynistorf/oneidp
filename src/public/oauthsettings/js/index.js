@@ -41,7 +41,7 @@ function create_app() {
           <p>Client ID: ${data.clientId}</p>
           <p>Client Secret: ${data.clientSecret}</p>
           <p>Redirect URI: ${data.redirectUri}</p>
-          <p>Access Token Validity: ${data.access_token_validity}</p>
+          <p>Access Token Validity: ${data.accessTokenValidity}</p>
         `;
 
         newAppBox.innerHTML = appBoxHTML;
@@ -151,7 +151,7 @@ function displayOAuthApps(data) {
           <p>Client ID: ${app.clientId}</p>
           <p>Client Secret: ${app.clientSecret}</p>
           <p>Redirect URI: ${app.redirectUri}</p>
-          <p>Access Token Validity: ${app.access_token_validity}</p>
+          <p>Access Token Validity: ${app.accessTokenValidity}</p>
        </div>
       `;
     container.appendChild(appBox);

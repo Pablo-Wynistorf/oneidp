@@ -99,7 +99,7 @@
               />
             </div>
             <button
-              type="button" onclick="closeModal()"
+              type="button" onclick="closeAddModal()"
               class="ml-4 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Cancel
@@ -114,6 +114,51 @@
         </div>
       </div>
     </dialog>
+    <dialog data-modal id="edit-role" class="rounded-lg">
+      <div class="bg-white rounded-lg shadow-lg">
+        <button
+          id="delete-role"
+          type="button"
+          class="absolute top-0 right-0 mt-2 mr-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-sm"
+        >
+          Delete Role
+        </button>
+        <div class="px-6 py-8">
+          <h3 class="text-lg font-semibold leading-6 text-gray-900">
+            Update your role
+          </h3>
+          <div class="mt-4 text-sm text-gray-600">
+            <p>Add or delete userids. Separate them with a comma</p>
+            <p>If you want to add this role to every user use: *</p>
+          </div>
+          <form class="mt-6 flex items-center">
+            <div class="w-full max-w-md">
+              <label for="role-userids" class="sr-only">Role Userids</label>
+              <input
+                type="role-userids"
+                name="role-userids"
+                id="role-userids"
+                class="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent sm:text-sm"
+              />
+            </div>
+            <button
+              type="button" onclick="closeEditModal()"
+              class="ml-4 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              id="edit-role-button"
+              class="ml-4 inline-flex items-center justify-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap"
+            >
+              Update Role
+            </button>
+          </form>
+        </div>
+      </div>
+    </dialog>
+    
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="./js/tailwind.config.js"></script>

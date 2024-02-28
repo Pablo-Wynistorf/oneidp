@@ -44,7 +44,7 @@ async function addRole() {
       return handleResponse(response);
     }
     await fetchData();
-    closeModal();
+    closeAddModal();
     displaySuccess("Role added successfully");
   } catch (error) {
     displayError("Something went wrong");
@@ -80,26 +80,103 @@ function displayOAuthRoles(data) {
     // Edit Link
     const editCell = document.createElement('td');
     const editLink = document.createElement('a');
-    editLink.href = '#';
     editLink.textContent = 'Edit';
     editLink.classList.add('text-indigo-600', 'hover:text-indigo-900');
+    editLink.addEventListener('click', () => openEditModal(role.oauthRoleId)); // Add event listener
     editCell.appendChild(editLink);
-    editCell.classList.add('relative', 'whitespace-nowrap', 'py-4', 'pl-3', 'pr-4', 'text-right', 'text-sm', 'font-medium', 'sm:pr-6');
+    editCell.classList.add('relative', 'whitespace-nowrap', 'py-4', 'pl-3', 'pr-4', 'text-right', 'text-sm', 'font-medium', 'sm:pr-6', 'cursor-pointer');
     row.appendChild(editCell);
     
     tableBody.appendChild(row);
   });
 }
 
-const modal = document.getElementById("add-role");
+function openEditModal(roleId) {
+  populateEditModal(roleId);
+  edit_role.showModal();
+  const deleteRoleButton = document.getElementById('delete-role');
+  deleteRoleButton.addEventListener('click', () => deleteRole(roleId));
+  const editRoleButton = document.getElementById('edit-role-button');
+  editRoleButton.addEventListener('click', () => editRole(roleId));
+}
+
+function populateEditModal(roleId) {
+  document.getElementById('edit-role').value = roleId;
+}
+
+function closeEditModal() {
+  edit_role.close();
+}
+
+
+async function editRole(roleId) {
+  const oauthRoleId = roleId;
+  const oauthClientAppId = window.location.search.split("=")[1];
+  const oauthRoleUserIds = document.getElementById('role-userids').value;
+  console.log(oauthRoleUserIds)
+  try {
+    if (!oauthRoleId) {
+      return displayError("Role id is required to delete the role");
+    }
+    const response = await fetch("/api/oauth/settings/roles/update", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ oauthClientAppId, oauthRoleId, oauthRoleUserIds }),
+    });
+    if (!response.ok) {
+      return handleResponse(response);
+    }
+    await fetchData();
+    closeEditModal();
+  } catch (error) {
+    displayError("Something went wrong");
+  }
+}
+
+
+
+
+async function deleteRole(roleId) {
+  const oauthRoleId = roleId;
+  const oauthClientAppId = window.location.search.split("=")[1];
+  try {
+    if (!oauthRoleId) {
+      return displayError("Role id is required to delete the role");
+    }
+    const response = await fetch("/api/oauth/settings/roles/delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ oauthClientAppId, oauthRoleId }),
+    });
+    if (!response.ok) {
+      return handleResponse(response);
+    }
+    await fetchData();
+    closeEditModal();
+    displaySuccess("Role deleted successfully");
+  } catch (error) {
+    displayError("Something went wrong");
+  }
+}
+
+
+
+
+const add_role = document.getElementById("add-role");
 
 function openModal() {
-    modal.showModal();
+  add_role.showModal();
 };
 
-function closeModal() {
-    modal.close();
+function closeAddModal() {
+  add_role.close();
 };
+
+const edit_role = document.getElementById("edit-role");
 
 
 
@@ -123,7 +200,6 @@ function handleResponse(response) {
 }
 
 function handle404Error() {
-  displayError("Error: No oauth apps found for this user");
 }
 
 function handle460Error() {
@@ -146,15 +222,6 @@ function handleError() {
   displayError("Something went wrong");
 }
 
-var currentURL = window.location.origin;
-document.getElementById("authorization-url").textContent =
-  currentURL + "/api/oauth/authorize";
-document.getElementById("token-url").textContent =
-  currentURL + "/api/oauth/token";
-document.getElementById("token-check-url").textContent =
-  currentURL + "/api/oauth/check_token";
-document.getElementById("userinfo-uri").textContent =
-  currentURL + "/api/oauth/userinfo";
 
 function displaySuccess(successMessage) {
   successBox.textContent = successMessage;
