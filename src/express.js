@@ -213,8 +213,8 @@ app.use('/verify', existingToken, express.static(path.join(__dirname, 'public/ve
 app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
 app.use('/home/mfa/settings', existingToken, express.static(path.join(__dirname, 'public/mfasettings')));
 app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
-app.use('/home/oauth/settings', express.static(path.join(__dirname, 'public/oauthsettings')));
-app.use('/home/oauth/settings/roles', express.static(path.join(__dirname, 'public/oauthRoleSettings')));
+app.use('/home/oauth/settings', verifyToken, express.static(path.join(__dirname, 'public/oauthsettings')));
+app.use('/home/oauth/settings/roles', verifyToken, express.static(path.join(__dirname, 'public/oauthrolesettings')));
 
 
 // Login to the account, if account not verified, resend verification email.
