@@ -1286,7 +1286,7 @@ app.post('/api/oauth/settings/roles/add', async (req, res) => {
       existingOauthRoleId = await oAuthRolesDB.findOne({ oauthRoleId: oauthRoleId });
     } while (existingOauthRoleId);
 
-    const existingOauthRoleName = await oAuthRolesDB.findOne({ oauthClientAppId: oauthClientAppId, oauthRoleName: oauthRoleName });
+    const existingOauthRoleName = await oAuthRolesDB.findOne({ oauthRoleName: oauthRoleName });
     if (existingOauthRoleName) {
       return res.status(463).json({ error: 'Role name already exists' });
     }
