@@ -9,17 +9,18 @@ function create_app() {
   const container = document.querySelector(".container");
   const oauthAppName = document.getElementById("appname-field").value;
   const redirectUri = document.getElementById("redirecturl-field").value;
+  const access_token_validity = document.getElementById("access-token-validity-field").value;
   try {
     fetch(`/api/oauth/settings/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ redirectUri, oauthAppName }),
+      body: JSON.stringify({ redirectUri, oauthAppName, access_token_validity }),
     })
       .then((response) => {
         if (!response.ok) {
-          return displayError("Error: Failed to create app, the redirect URI or the appname may be invalid");
+          return displayError("Error: Failed to create app, the redirect URI, the appname or the access token validity may be invalid");
         }
         return response.json();
       })
@@ -29,14 +30,18 @@ function create_app() {
         newAppBox.id = data.oauthClientAppId;
 
         const appBoxHTML = `
-          <a class="icon-button" id="${data.oauthClientAppId}">
-            <img src="./images/trash.svg" alt="Trash Icon">
+          <a class="edit-button" id="app-${data.oauthClientAppId}">
+           <img src="./images/edit.svg" alt="Edit Icon">
+          </a>
+          <a class="delete-button" id="${data.oauthClientAppId}">
+            <img src="./images/trash.svg" alt="Delete Icon">
           </a>
           <h4>APP NAME: ${data.oauthAppName}</h4>
           <p>OAuth App ID: ${data.oauthClientAppId}</p>
           <p>Client ID: ${data.clientId}</p>
           <p>Client Secret: ${data.clientSecret}</p>
           <p>Redirect URI: ${data.redirectUri}</p>
+          <p>Access Token Validity: ${data.access_token_validity}</p>
         `;
 
         newAppBox.innerHTML = appBoxHTML;
@@ -63,11 +68,11 @@ const modal = document.querySelector("[data-modal]");
 const closeButton = document.querySelector("[data-close-modal]");
 
 document.addEventListener("click", function (event) {
-  const iconButton = event.target.closest(".icon-button");
-  if (iconButton) {
+  const deleteButton = event.target.closest(".delete-button");
+  if (deleteButton) {
     modal.showModal();
     document.getElementById("delete-button").onclick = function () {
-      const appId = iconButton.id;
+      const appId = deleteButton.id;
       delete_app(appId);
       modal.close();
     };
@@ -77,6 +82,15 @@ document.addEventListener("click", function (event) {
 closeButton.addEventListener("click", function () {
   modal.close();
 });
+
+document.addEventListener("click", function (event) {
+  const editButton = event.target.closest(".edit-button");
+  if (editButton) {
+    const appId = editButton.id.split("-")[1];
+    window.location.href = `/home/oauth/settings/roles/?oauthClientAppId=${appId}`;
+  }
+});
+
 
 
 function delete_app(appId) {
@@ -126,14 +140,18 @@ function displayOAuthApps(data) {
     const appBox = document.createElement("div");
     appBox.innerHTML = `
        <div class="oauth-app-box" id="${app.oauthClientAppId}">
-          <a class="icon-button" id="${app.oauthClientAppId}">
-          <img src="./images/trash.svg" alt="Trash Icon">
+          <a class="edit-button" id="app-${app.oauthClientAppId}">
+           <img src="./images/edit.svg" alt="Edit Icon">
+          </a>
+          <a class="delete-button" id="${app.oauthClientAppId}">
+           <img src="./images/trash.svg" alt="Trash Icon">
           </a>
           <h4>APP NAME: ${app.oauthAppName}</h4>
           <p>OAuth App ID: ${app.oauthClientAppId}</p>
           <p>Client ID: ${app.clientId}</p>
           <p>Client Secret: ${app.clientSecret}</p>
           <p>Redirect URI: ${app.redirectUri}</p>
+          <p>Access Token Validity: ${app.access_token_validity}</p>
        </div>
       `;
     container.appendChild(appBox);

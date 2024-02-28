@@ -63,7 +63,7 @@ const userSchema = new Schema({
   mfaSecret: String,
   mfaLoginSecret: String,
   mfaEnabled: Boolean,
-  roles: Array,
+  providerRoles: Array,
   oauthClientAppIds: Array,
   oauthAuthorizationCode: String,
 }, {
@@ -76,6 +76,17 @@ const oAuthClientSchema = new mongoose.Schema({
   clientId: String,
   clientSecret: String,
   redirectUri: String,
+  accessTokenValidity: Number,
+  oauthRoleIds: Array,
+}, {
+  timestamps: true
+});
+
+const oAuthRolesSchema = new mongoose.Schema({
+  oauthRoleId: String,
+  oauthClientAppId: String,
+  oauthRoleName: String,
+  oauthUserIds: Array,
 }, {
   timestamps: true
 });
@@ -83,6 +94,7 @@ const oAuthClientSchema = new mongoose.Schema({
 
 const userDB = mongoose.model('users', userSchema);
 const oAuthClientAppDB = mongoose.model('oauthClientApps', oAuthClientSchema);
+const oAuthRolesDB = mongoose.model('oauthRoles', oAuthRolesSchema);
 
 app.use((req, res, next) => {
   if (mongoose.connection.readyState !== 1) {
@@ -202,6 +214,7 @@ app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/r
 app.use('/home/mfa/settings', existingToken, express.static(path.join(__dirname, 'public/mfasettings')));
 app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
 app.use('/home/oauth/settings', express.static(path.join(__dirname, 'public/oauthsettings')));
+app.use('/home/oauth/settings/roles', express.static(path.join(__dirname, 'public/oauthRoleSettings')));
 
 
 // Login to the account, if account not verified, resend verification email.
@@ -380,7 +393,7 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
       email: email,
       verifyCode: email_verification_code,
       mfaEnabled: false,
-      roles: ['standardUser', 'oauthUser'],
+      providerRoles: ['standardUser', 'oauthUser'],
     });
 
     await newUser.save();
@@ -955,7 +968,7 @@ app.get('/api/oauth/settings/get', async (req, res) => {
       return res.redirect('/login');
     }
 
-    const userAccess = await userDB.findOne({ userId: userId, sid: sid, roles: 'oauthUser'});
+    const userAccess = await userDB.findOne({ userId: userId, sid: sid, providerRoles: 'oauthUser'});
 
     if (!userAccess) {
       return res.status(465).json({ error: 'User does not have access to create oauth apps' });
@@ -983,6 +996,7 @@ app.get('/api/oauth/settings/get', async (req, res) => {
       clientSecret: app.clientSecret,
       redirectUri: app.redirectUri,
       oauthClientAppId: app.oauthClientAppId,
+      accessTokenValidity: app.accessTokenValidity,
     }));
 
     res.json({ oauthApps: organizedData });
@@ -997,6 +1011,7 @@ app.get('/api/oauth/settings/get', async (req, res) => {
 app.post('/api/oauth/settings/add', async (req, res) => {
   const oauthAppName = req.body.oauthAppName;
   const redirectUri = req.body.redirectUri;
+  const access_token_validity = req.body.access_token_validity;
   const req_cookies = req.headers.cookie;
 
   if (!req_cookies) {
@@ -1023,6 +1038,11 @@ app.post('/api/oauth/settings/add', async (req, res) => {
     return res.status(460).json({ success: false, error: 'Invalid oauthRedirectUrl' }); 
 }
 
+if (isNaN(access_token_validity) || access_token_validity < 0 || access_token_validity > 604800) {
+  return res.status(460).json({ success: false, error: 'Invalid access token validity' });
+}
+
+
 
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
@@ -1035,7 +1055,7 @@ app.post('/api/oauth/settings/add', async (req, res) => {
       return res.redirect('/login');
     }
 
-    const userAccess = await userDB.findOne({ userId: userId, sid: sid, roles: 'oauthUser'});
+    const userAccess = await userDB.findOne({ userId: userId, sid: sid, providerRoles: 'oauthUser'});
 
     if (!userAccess) {
       return res.status(465).json({ error: 'User does not have access to create oauth apps' });
@@ -1064,13 +1084,14 @@ app.post('/api/oauth/settings/add', async (req, res) => {
       clientId: clientId,
       clientSecret: clientSecret,
       redirectUri: redirectUri,
+      accessTokenValidity: access_token_validity,
     });
 
     
     await newoauthClientApp.save();
     await userDB.updateOne({ userId }, { $push: { oauthClientAppIds: oauthClientAppId } });
 
-    res.status(200).json({ success: true, clientId, clientSecret, redirectUri, oauthClientAppId, oauthAppName});
+    res.status(200).json({ success: true, clientId, clientSecret, redirectUri, oauthClientAppId, oauthAppName, access_token_validity});
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }
@@ -1106,7 +1127,7 @@ app.post('/api/oauth/settings/delete', async (req, res) => {
       return res.redirect('/login');
     }
 
-    const userAccess = await userDB.findOne({ userId: userId, sid: sid, roles: 'oauthUser'});
+    const userAccess = await userDB.findOne({ userId: userId, sid: sid, providerRoles: 'oauthUser'});
 
     if (!userAccess) {
       return res.status(465).json({ error: 'User does not have access to create oauth apps' });
@@ -1129,6 +1150,163 @@ app.post('/api/oauth/settings/delete', async (req, res) => {
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
+
+
+
+// Get oauth app roles
+app.post('/api/oauth/settings/roles/get', async (req, res) => {
+  const req_cookies = req.headers.cookie;
+  const oauthClientAppId = req.body.oauthClientAppId;
+
+  if (!req_cookies) {
+    return res.status(400).json({ success: false, error: 'Access Token not found' });
+  }
+
+  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookiesObj[name] = value;
+    return cookiesObj;
+  }, {});
+
+  const access_token = cookies['access_token'];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    
+    const userData = await userDB.findOne({ userId, sid });
+    if (!userData) {
+      res.clearCookie('access_token');
+      return res.redirect('/login');
+    }
+
+    const userAccess = await userDB.findOne({ userId: userId, sid: sid, providerRoles: 'oauthUser'});
+
+    if (!userAccess) {
+      return res.status(465).json({ error: 'User does not have access to manage oauth apps' });
+    }
+
+    let oauthApps = userData.oauthClientAppIds || [];
+
+    if (!Array.isArray(oauthApps)) {
+      return res.status(400).json({ error: 'Invalid format for oauthApps' });
+    }
+
+    if (oauthApps.length === 0) {
+      return res.status(404).json({ error: 'No oAuth apps found for this user' });
+    }
+
+    if (oauthApps.indexOf(oauthClientAppId) === -1) {
+      return res.status(466).json({ error: 'User does not have access to this oauth app' });
+    }
+
+    const oauthRolesData = await oAuthRolesDB.find({ oauthRoleId: { $regex: `${oauthClientAppId}-*` } });
+
+
+    if (!oauthRolesData || oauthRolesData.length === 0) {
+      return res.status(404).json({ error: 'No OAuth roles found for this app' });
+    }
+
+    const organizedData = oauthRolesData.map(app => ({
+      oauthRoleId: app.oauthRoleId,
+      oauthRoleName: app.oauthRoleName,
+      oauthUserIds: app.oauthUserIds,
+    }));
+
+    res.json({ oauthRoles: organizedData });
+  } catch (error) {
+    res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
+});
+
+
+
+// Add oauth app role
+app.post('/api/oauth/settings/roles/add', async (req, res) => {
+  const req_cookies = req.headers.cookie;
+  const oauthClientAppId = req.body.oauthClientAppId;
+  const oauthRoleName = req.body.oauthRoleName;
+
+  if (!req_cookies) {
+    return res.status(400).json({ success: false, error: 'Access Token not found' });
+  }
+
+  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    cookiesObj[name] = value;
+    return cookiesObj;
+  }, {});
+
+  const access_token = cookies['access_token'];
+
+  try {
+    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    
+    const userData = await userDB.findOne({ userId, sid });
+    if (!userData) {
+      res.clearCookie('access_token');
+      return res.redirect('/login');
+    }
+
+    const userAccess = await userDB.findOne({ userId: userId, sid: sid, providerRoles: 'oauthUser'});
+
+    if (!userAccess) {
+      return res.status(460).json({ error: 'User has no permissions to manage oauth apps' });
+    }
+
+    let oauthApps = userData.oauthClientAppIds || [];
+
+    if (!Array.isArray(oauthApps)) {
+      return res.status(400).json({ error: 'Invalid format for oauthApps' });
+    }
+
+    if (oauthApps.length === 0) {
+      return res.status(404).json({ error: 'No oAuth apps found for this user' });
+    }
+
+    if (oauthApps.indexOf(oauthClientAppId) === -1) {
+      return res.status(461).json({ error: 'User does not have access to this oauth app' });
+    }
+
+    const validRoleName = /^[a-zA-Z0-9\-_\.]{1,20}$/;
+
+    if (!validRoleName.test(oauthRoleName)) {
+      return res.status(462).json({ error: 'Invalid role name' });
+    }
+
+    let oauthRoleId;
+    let existingOauthRoleId;
+    
+    do {
+      oauthRoleId = `${oauthClientAppId}-${[...Array(4)].map(() => Math.random().toString(36).charAt(2)).join('')}`;
+      existingOauthRoleId = await oAuthRolesDB.findOne({ oauthRoleId: oauthRoleId });
+    } while (existingOauthRoleId);
+
+    const existingOauthRoleName = await oAuthRolesDB.findOne({ oauthClientAppId: oauthClientAppId, oauthRoleName: oauthRoleName });
+    if (existingOauthRoleName) {
+      return res.status(463).json({ error: 'Role name already exists' });
+    }
+    
+    const newOauthRole = new oAuthRolesDB({
+      oauthRoleId: oauthRoleId,
+      oauthClientAppId: oauthClientAppId,
+      oauthRoleName: oauthRoleName,
+      oauthUserIds: [],
+    });
+
+    await newOauthRole.save();
+
+    await oAuthClientAppDB.updateOne({ oauthClientAppId }, { $push: { oauthRoleIds: oauthRoleId } });
+
+    res.status(200).json({ success: true, message: 'OAuth role has been successfully added'});
+  } catch (error) {
+    res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
+});
+
 
 
 // Oauth2 authorize endpoint
@@ -1202,8 +1380,9 @@ app.post('/api/oauth/token', async (req, res) => {
       const email = oauth_user.email;
       const roles = oauth_user.roles;
       const mfaEnabled = oauth_user.mfaEnabled;
+      const accessTokenValidity = oauth_client.accessTokenValidity;
 
-      const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+      const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: accessTokenValidity });
       const oauth_id_token = jwt.sign({ userId: userId, username: username, email: email, roles: roles, mfaEnabled: mfaEnabled }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
       const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
       return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
@@ -1232,8 +1411,9 @@ app.post('/api/oauth/token', async (req, res) => {
     const email = oauth_user.email;
     const roles = oauth_user.roles;
     const mfaEnabled = oauth_user.mfaEnabled;
+    const accessTokenValidity = oauth_client.accessTokenValidity;
 
-    const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+    const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: accessTokenValidity });
     const oauth_id_token = jwt.sign({ userId: userId, username: username, email: email, roles: roles, mfaEnabled: mfaEnabled }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
     const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
     return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
