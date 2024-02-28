@@ -148,7 +148,7 @@ const verifyToken = (req, res, next) => {
           res.clearCookie('access_token');
           return res.redirect('/login');
         }
-        if (requestedPath !== '/home' && requestedPath !== '/home/mfa/settings') {
+        if (requestedPath !== '/home' && requestedPath !== '/home/mfa/settings' && requestedPath !== '/home/oauth/settings' && requestedPath !== '/home/oauth/settings/roles') {
           return res.redirect('/home');
         }
 
