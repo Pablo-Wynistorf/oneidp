@@ -1352,12 +1352,11 @@ app.post('/api/oauth/check_token', async (req, res) => {
 // OIDC Discovery endpoint
 app.get('/.well-known/openid-configuration', (req, res) => {
   const metadata = {
-    issuer: `${URL}/api/oauth/token`,
+    issuer: `${URL}`,
     authorization_endpoint: `${URL}/api/oauth/authorize`,
     token_endpoint: `${URL}/api/oauth/token`,
     userinfo_endpoint: `${URL}/api/oauth/userinfo`,
-    response_types_supported: ['code'],
-    subject_types_supported: ['public'],
+    response_types_supported: ['code, token, id_token,'],
     id_token_signing_alg_values_supported: ['HS256'],
     scopes_supported: ["openid"],
   };
