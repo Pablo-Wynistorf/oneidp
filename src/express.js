@@ -1011,7 +1011,7 @@ app.get('/api/oauth/settings/get', async (req, res) => {
 app.post('/api/oauth/settings/add', async (req, res) => {
   const oauthAppName = req.body.oauthAppName;
   const redirectUri = req.body.redirectUri;
-  const access_token_validity = req.body.access_token_validity;
+  const accessTokenValidity = req.body.accessTokenValidity;
   const req_cookies = req.headers.cookie;
 
   if (!req_cookies) {
@@ -1038,7 +1038,7 @@ app.post('/api/oauth/settings/add', async (req, res) => {
     return res.status(460).json({ success: false, error: 'Invalid oauthRedirectUrl' }); 
 }
 
-if (isNaN(access_token_validity) || access_token_validity < 0 || access_token_validity > 604800) {
+if (isNaN(accessTokenValidity) || accessTokenValidity < 0 || accessTokenValidity > 604800) {
   return res.status(460).json({ success: false, error: 'Invalid access token validity' });
 }
 
@@ -1084,14 +1084,14 @@ if (isNaN(access_token_validity) || access_token_validity < 0 || access_token_va
       clientId: clientId,
       clientSecret: clientSecret,
       redirectUri: redirectUri,
-      accessTokenValidity: access_token_validity,
+      accessTokenValidity: accessTokenValidity,
     });
 
     
     await newoauthClientApp.save();
     await userDB.updateOne({ userId }, { $push: { oauthClientAppIds: oauthClientAppId } });
 
-    res.status(200).json({ success: true, clientId, clientSecret, redirectUri, oauthClientAppId, oauthAppName, access_token_validity});
+    res.status(200).json({ success: true, clientId, clientSecret, redirectUri, oauthClientAppId, oauthAppName, accessTokenValidity});
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }

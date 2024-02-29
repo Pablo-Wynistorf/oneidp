@@ -9,14 +9,14 @@ function create_app() {
   const container = document.querySelector(".container");
   const oauthAppName = document.getElementById("appname-field").value;
   const redirectUri = document.getElementById("redirecturl-field").value;
-  const access_token_validity = document.getElementById("access-token-validity-field").value;
+  const accessTokenValidity = document.getElementById("access-token-validity-field").value;
   try {
     fetch(`/api/oauth/settings/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ redirectUri, oauthAppName, access_token_validity }),
+      body: JSON.stringify({ redirectUri, oauthAppName, accessTokenValidity }),
     })
       .then((response) => {
         if (!response.ok) {
