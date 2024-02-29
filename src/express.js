@@ -85,6 +85,7 @@ const oAuthClientSchema = new mongoose.Schema({
 const oAuthRolesSchema = new mongoose.Schema({
   oauthRoleId: String,
   oauthClientAppId: String,
+  oauthClientId: String,
   oauthRoleName: String,
   oauthUserIds: Array,
 }, {
@@ -1071,11 +1072,16 @@ if (isNaN(accessTokenValidity) || accessTokenValidity < 0 || accessTokenValidity
     let clientId;
     let existingClientId;
     do {
-      clientId = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
-      existingClientId = await oAuthClientAppDB.findOne({ existingClientId });
+      clientId = [...Array(45)].map(() => Math.random().toString(36)[2]).join('');
+      existingClientId = await oAuthClientAppDB.findOne({ clientId });
     } while (existingClientId);
 
-    const clientSecret = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
+    let clientSecret;
+    let existingclientSecret;
+    do {
+      clientSecret = [...Array(45)].map(() => Math.random().toString(36)[2]).join('');
+      existingclientSecret = await oAuthClientAppDB.findOne({ clientSecret });
+    } while (existingclientSecret);
 
 
     const newoauthClientApp = new oAuthClientAppDB({
@@ -1278,6 +1284,9 @@ app.post('/api/oauth/settings/roles/add', async (req, res) => {
       return res.status(462).json({ error: 'Invalid role name' });
     }
 
+    const oauthClientAppData = await oAuthClientAppDB.findOne({ oauthClientAppId });
+    const oauthClientId = oauthClientAppData.clientId;
+
     let oauthRoleId;
     let existingOauthRoleId;
     
@@ -1286,7 +1295,7 @@ app.post('/api/oauth/settings/roles/add', async (req, res) => {
       existingOauthRoleId = await oAuthRolesDB.findOne({ oauthRoleId: oauthRoleId });
     } while (existingOauthRoleId);
 
-    const existingOauthRoleName = await oAuthRolesDB.findOne({ oauthRoleName: oauthRoleName });
+    const existingOauthRoleName = await oAuthRolesDB.findOne({ oauthRoleName: oauthRoleName, oauthClientId: oauthClientId });
     if (existingOauthRoleName) {
       return res.status(463).json({ error: 'Role name already exists' });
     }
@@ -1295,6 +1304,7 @@ app.post('/api/oauth/settings/roles/add', async (req, res) => {
       oauthRoleId: oauthRoleId,
       oauthClientAppId: oauthClientAppId,
       oauthRoleName: oauthRoleName,
+      oauthClientId: oauthClientId,
     });
 
     await newOauthRole.save();
@@ -1507,8 +1517,8 @@ app.post('/api/oauth/token', async (req, res) => {
       userId = decodedRefreshToken.userId;
       oauthSid = decodedRefreshToken.oauthSid;
 
-
       const refresh_token_clientId = decodedRefreshToken.clientId;
+
       oauth_client = await oAuthClientAppDB.findOne({ clientId: refresh_token_clientId, clientSecret: clientSecret });
       oauth_user = await userDB.findOne({ userId, oauthSid});
 
@@ -1526,14 +1536,14 @@ app.post('/api/oauth/token', async (req, res) => {
 
       const roleData = await oAuthRolesDB.find({
         $or: [
-          { oauthUserIds: userId },
-          { oauthUserIds: "*" },
+          { oauthClientId: clientId, oauthUserIds: userId },
+          { oauthClientId: clientId, oauthUserIds: "*" },
         ],
       }).exec();
       
       const roleNames = roleData.map(role => role.oauthRoleName);
       
-      const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: accessTokenValidity });
+      const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: accessTokenValidity });
       const oauth_id_token = jwt.sign({ userId: userId, username: username, email: email, roles: roleNames, mfaEnabled: mfaEnabled }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
       const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
       return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
@@ -1565,14 +1575,14 @@ app.post('/api/oauth/token', async (req, res) => {
 
     const roleData = await oAuthRolesDB.find({
       $or: [
-        { oauthUserIds: userId },
-        { oauthUserIds: "*" },
+        { oauthClientId: clientId, oauthUserIds: userId },
+        { oauthClientId: clientId, oauthUserIds: "*" },
       ],
     }).exec();
 
     const roleNames = roleData.map(role => role.oauthRoleName);
 
-    const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: accessTokenValidity });
+    const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: accessTokenValidity });
     const oauth_id_token = jwt.sign({ userId: userId, username: username, email: email, roles: roleNames, mfaEnabled: mfaEnabled }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
     const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
     return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
@@ -1618,6 +1628,7 @@ app.post('/api/oauth/userinfo', async (req, res) => {
     const decoded = jwt.verify(access_token, JWT_SECRET);
     const userId = decoded.userId;
     const oauthSid = decoded.oauthSid;
+    const clientId = decoded.clientId;
 
     const userData = await userDB.findOne({ userId: userId, oauthSid: oauthSid });
     if (!userData) {
@@ -1627,8 +1638,8 @@ app.post('/api/oauth/userinfo', async (req, res) => {
 
     const roleData = await oAuthRolesDB.find({
       $or: [
-        { oauthUserIds: userId },
-        { oauthUserIds: "*" },
+        { oauthClientId: clientId, oauthUserIds: userId },
+        { oauthClientId: clientId, oauthUserIds: "*" },
       ],
     }).exec();
 

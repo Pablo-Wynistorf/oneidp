@@ -113,7 +113,6 @@ async function editRole(roleId) {
   const oauthRoleId = roleId;
   const oauthClientAppId = window.location.search.split("=")[1];
   const oauthRoleUserIds = document.getElementById('role-userids').value;
-  console.log(oauthRoleUserIds)
   try {
     if (!oauthRoleId) {
       return displayError("Role id is required to delete the role");
