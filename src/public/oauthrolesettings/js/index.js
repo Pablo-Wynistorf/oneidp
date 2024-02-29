@@ -4,7 +4,6 @@ const successBox = document.createElement("div");
 errorBox.className = "error-box";
 successBox.className = "success-box";
 
-
 async function fetchData() {
   try {
     const oauthClientAppId = window.location.search.split("=")[1];
@@ -23,7 +22,8 @@ async function fetchData() {
     }
     const data = await response.json();
     displayOAuthRoles(data);
-  } catch (error) {}
+  } catch (error) {
+  }
 }
 
 async function addRole() {
@@ -54,7 +54,7 @@ async function addRole() {
 
 function displayOAuthRoles(data) {
   const tableBody = document.querySelector('tbody');
-  tableBody.innerHTML = ''; // Clear existing rows
+  tableBody.innerHTML = '';
   
   data.oauthRoles.forEach(role => {
     const row = document.createElement('tr');
@@ -82,7 +82,7 @@ function displayOAuthRoles(data) {
     const editLink = document.createElement('a');
     editLink.textContent = 'Edit';
     editLink.classList.add('text-indigo-600', 'hover:text-indigo-900');
-    editLink.addEventListener('click', () => openEditModal(role.oauthRoleId)); // Add event listener
+    editLink.onclick = function() { openEditModal(role.oauthRoleId); };
     editCell.appendChild(editLink);
     editCell.classList.add('relative', 'whitespace-nowrap', 'py-4', 'pl-3', 'pr-4', 'text-right', 'text-sm', 'font-medium', 'sm:pr-6', 'cursor-pointer');
     row.appendChild(editCell);
@@ -91,33 +91,32 @@ function displayOAuthRoles(data) {
   });
 }
 
+
+const add_role = document.getElementById("add-role");
+const edit_role = document.getElementById("edit-role");
+
+function openAddModal() {
+  add_role.showModal();
+};
+
 function openEditModal(roleId) {
-  populateEditModal(roleId);
+  const roleUserIdsInput = document.getElementById("role-userids");
+  roleUserIdsInput.value = '';
+  edit_role.dataset.roleId = roleId;
   edit_role.showModal();
-  
-  const deleteRoleButton = document.getElementById('delete-role');
-  const deleteRoleHandler = () => {
-    deleteRole(roleId);
-    deleteRoleButton.removeEventListener('click', deleteRoleHandler);
-  };
-  deleteRoleButton.addEventListener('click', deleteRoleHandler);
-
-  const editRoleButton = document.getElementById('edit-role-button');
-  editRoleButton.addEventListener('click', () => editRole(roleId));
 }
 
-
-function populateEditModal(roleId) {
-  document.getElementById('edit-role').value = roleId;
-}
+function closeAddModal() {
+  add_role.close();
+};
 
 function closeEditModal() {
-  return edit_role.close();
+  edit_role.close();
 }
 
 
-async function editRole(roleId) {
-  const oauthRoleId = roleId;
+async function editRole() {
+  const oauthRoleId = edit_role.dataset.roleId;
   const oauthClientAppId = window.location.search.split("=")[1];
   const oauthRoleUserIds = document.getElementById('role-userids').value;
   try {
@@ -143,9 +142,8 @@ async function editRole(roleId) {
 
 
 
-
-async function deleteRole(roleId) {
-  const oauthRoleId = roleId;
+async function deleteRole() {
+  const oauthRoleId = edit_role.dataset.roleId;
   const oauthClientAppId = window.location.search.split("=")[1];
   try {
     if (!oauthRoleId) {
@@ -163,26 +161,12 @@ async function deleteRole(roleId) {
     }
     await fetchData();
     closeEditModal();
-    return displaySuccess("Role deleted successfully");
+    displaySuccess("Role deleted successfully");
   } catch (error) {
     displayError("Something went wrong");
   }
 }
 
-
-
-
-const add_role = document.getElementById("add-role");
-
-function openModal() {
-  add_role.showModal();
-};
-
-function closeAddModal() {
-  add_role.close();
-};
-
-const edit_role = document.getElementById("edit-role");
 
 document.addEventListener("DOMContentLoaded", function () {
   var roleUseridsInput = document.getElementById("role-userids");
@@ -198,7 +182,7 @@ document.addEventListener("DOMContentLoaded", function () {
 function handleResponse(response) {
   if (response.status === 200) {
   } else if (response.status === 404) {
-    return handle404Error();
+    return 
   } else if (response.status === 460) {
     return handle460Error();
   } else if (response.status === 461) {

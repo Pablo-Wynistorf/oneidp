@@ -33,13 +33,13 @@
         <div class="sm:flex sm:items-center">
           <div class="sm:flex-auto">
             <h1 class="text-base font-semibold text-white">Roles</h1>
-            <p class="mt-2 text-sm text-white">A list of roles for your app</p>
+            <p class="mt-2 text-sm text-white">Add roles to your oauth app and add users to each individual role</p>
           </div>
           <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
             <button
               type="button"
               class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              onclick="openModal()"
+              onclick="openAddModal()"
             >
               Add Role
             </button>
@@ -119,7 +119,8 @@
     <dialog data-modal id="edit-role" class="rounded-lg">
       <div class="bg-white rounded-lg shadow-lg">
         <button
-          id="delete-role"
+          id="delete-role-button"
+          onclick="deleteRole()"
           type="button"
           class="absolute top-0 right-0 mt-2 mr-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-sm"
         >
@@ -146,6 +147,7 @@
             <button
               type="button"
               onclick="closeEditModal()"
+              id="cancel-edit-role-button"
               class="ml-4 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Cancel
@@ -153,6 +155,7 @@
             <button
               type="button"
               id="edit-role-button"
+              onclick="editRole()"
               class="ml-4 inline-flex items-center justify-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap"
             >
               Update Role

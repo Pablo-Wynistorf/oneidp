@@ -1387,6 +1387,7 @@ app.post('/api/oauth/settings/roles/update', async (req, res) => {
     }
 
     await oAuthRolesDB.findOneAndUpdate(
+      { oauthRoleId, oauthClientAppId },
       { oauthRoleId, oauthClientAppId, oauthUserIds: updatedUserIds },
     );
 
