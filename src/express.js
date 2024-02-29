@@ -1491,8 +1491,8 @@ app.get('/api/oauth/authorize', async (req, res) => {
       
       await userDB.updateOne({ userId }, { $set: { oauthAuthorizationCode: authorizationCode } });
       
-      const redirectUriWithState = `${redirect_uri}?code=${authorizationCode}&state=${state}`; // Include state parameter in redirect URI
-      res.redirect(redirectUriWithState);
+      const redirectUri = `${redirect_uri}?code=${authorizationCode}&state=${state}`;
+      res.redirect(redirectUri);
     });
   } catch (error) {
     res.status(500).json({ error: 'server_error', error_description: 'Server error' });
