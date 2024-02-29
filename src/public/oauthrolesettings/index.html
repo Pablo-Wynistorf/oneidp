@@ -99,13 +99,15 @@
               />
             </div>
             <button
-              type="button" onclick="closeAddModal()"
+              type="button"
+              onclick="closeAddModal()"
               class="ml-4 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Cancel
             </button>
             <button
-              type="button" onclick="addRole()"
+              type="button"
+              onclick="addRole()"
               class="ml-4 inline-flex items-center justify-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap"
             >
               Add Role
@@ -142,7 +144,8 @@
               />
             </div>
             <button
-              type="button" onclick="closeEditModal()"
+              type="button"
+              onclick="closeEditModal()"
               class="ml-4 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Cancel
@@ -158,13 +161,26 @@
         </div>
       </div>
     </dialog>
-    
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="./js/tailwind.config.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         fetchData();
+        const roleNameInput = document.getElementById("role-name");
+        const roleUserIdsInput = document.getElementById("role-userids");
+
+        roleNameInput.addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+          }
+        });
+
+        roleUserIdsInput.addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+          }
+        });
       });
     </script>
     <script src="js/index.js"></script>

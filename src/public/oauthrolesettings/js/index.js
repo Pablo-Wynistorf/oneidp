@@ -73,7 +73,7 @@ function displayOAuthRoles(data) {
     
     // User Ids
     const userIdsCell = document.createElement('td');
-    userIdsCell.textContent = role.oauthUserIds.join(', ');
+    userIdsCell.textContent = role.oauthUserIds.join(',');
     userIdsCell.classList.add('whitespace-nowrap', 'px-3', 'py-4', 'text-sm', 'text-gray-500');
     row.appendChild(userIdsCell);
     
@@ -94,18 +94,25 @@ function displayOAuthRoles(data) {
 function openEditModal(roleId) {
   populateEditModal(roleId);
   edit_role.showModal();
+  
   const deleteRoleButton = document.getElementById('delete-role');
-  deleteRoleButton.addEventListener('click', () => deleteRole(roleId));
+  const deleteRoleHandler = () => {
+    deleteRole(roleId);
+    deleteRoleButton.removeEventListener('click', deleteRoleHandler);
+  };
+  deleteRoleButton.addEventListener('click', deleteRoleHandler);
+
   const editRoleButton = document.getElementById('edit-role-button');
   editRoleButton.addEventListener('click', () => editRole(roleId));
 }
+
 
 function populateEditModal(roleId) {
   document.getElementById('edit-role').value = roleId;
 }
 
 function closeEditModal() {
-  edit_role.close();
+  return edit_role.close();
 }
 
 
@@ -115,7 +122,7 @@ async function editRole(roleId) {
   const oauthRoleUserIds = document.getElementById('role-userids').value;
   try {
     if (!oauthRoleId) {
-      return displayError("Role id is required to delete the role");
+      return displayError("Role id is required to edit this role");
     }
     const response = await fetch("/api/oauth/settings/roles/update", {
       method: "POST",
@@ -156,7 +163,7 @@ async function deleteRole(roleId) {
     }
     await fetchData();
     closeEditModal();
-    displaySuccess("Role deleted successfully");
+    return displaySuccess("Role deleted successfully");
   } catch (error) {
     displayError("Something went wrong");
   }
@@ -177,8 +184,15 @@ function closeAddModal() {
 
 const edit_role = document.getElementById("edit-role");
 
+document.addEventListener("DOMContentLoaded", function () {
+  var roleUseridsInput = document.getElementById("role-userids");
 
-
+  roleUseridsInput.addEventListener("input", function (event) {
+    var inputValue = event.target.value;
+    var sanitizedValue = inputValue.replace(/[^0-9,*]/g, "");
+    event.target.value = sanitizedValue;
+  });
+});
 
 
 function handleResponse(response) {

@@ -1387,7 +1387,6 @@ app.post('/api/oauth/settings/roles/update', async (req, res) => {
     }
 
     await oAuthRolesDB.findOneAndUpdate(
-      { oauthRoleId, oauthClientAppId },
       { oauthRoleId, oauthClientAppId, oauthUserIds: updatedUserIds },
     );
 
@@ -1464,7 +1463,7 @@ app.post('/api/oauth/settings/roles/delete', async (req, res) => {
 
 // Oauth2 authorize endpoint
 app.get('/api/oauth/authorize', async (req, res) => {
-  const { client_id } = req.query;
+  const { client_id, state } = req.query;
   const access_token = req.cookies.access_token;
   const clientId = client_id;
   try {
@@ -1492,12 +1491,14 @@ app.get('/api/oauth/authorize', async (req, res) => {
       
       await userDB.updateOne({ userId }, { $set: { oauthAuthorizationCode: authorizationCode } });
       
-      res.redirect(`${redirect_uri}?code=${authorizationCode}`);
+      const redirectUriWithState = `${redirect_uri}?code=${authorizationCode}&state=${state}`; // Include state parameter in redirect URI
+      res.redirect(redirectUriWithState);
     });
   } catch (error) {
     res.status(500).json({ error: 'server_error', error_description: 'Server error' });
   }
 });
+
 
 
 // Oauth Token endpoint
