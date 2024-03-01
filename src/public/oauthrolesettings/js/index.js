@@ -59,25 +59,21 @@ function displayOAuthRoles(data) {
   data.oauthRoles.forEach(role => {
     const row = document.createElement('tr');
     
-    // Role Id
     const roleIdCell = document.createElement('td');
     roleIdCell.textContent = role.oauthRoleId;
     roleIdCell.classList.add('whitespace-nowrap', 'py-4', 'pl-4', 'pr-3', 'text-sm', 'font-medium', 'text-gray-900', 'sm:pl-6');
     row.appendChild(roleIdCell);
     
-    // Role Name
     const roleNameCell = document.createElement('td');
     roleNameCell.textContent = role.oauthRoleName;
     roleNameCell.classList.add('whitespace-nowrap', 'px-3', 'py-4', 'text-sm', 'text-gray-500');
     row.appendChild(roleNameCell);
     
-    // User Ids
     const userIdsCell = document.createElement('td');
     userIdsCell.textContent = role.oauthUserIds.join(',');
     userIdsCell.classList.add('whitespace-nowrap', 'px-3', 'py-4', 'text-sm', 'text-gray-500');
     row.appendChild(userIdsCell);
     
-    // Edit Link
     const editCell = document.createElement('td');
     const editLink = document.createElement('a');
     editLink.textContent = 'Edit';
