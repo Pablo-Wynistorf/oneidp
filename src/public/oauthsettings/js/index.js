@@ -20,7 +20,7 @@ function create_app() {
     })
       .then((response) => {
         if (!response.ok) {
-          return displayError("Error: Failed to create app, the redirect URI, the appname or the access token validity may be invalid");
+          return displayError("Error: Failed to create app, the redirect URI, the appname, or the access token validity may be invalid");
         }
         return response.json();
       })
@@ -38,8 +38,8 @@ function create_app() {
           </a>
           <h4>APP NAME: ${data.oauthAppName}</h4>
           <p>OAuth App ID: ${data.oauthClientAppId}</p>
-          <p>Client ID: ${data.clientId}</p>
-          <p>Client Secret: ${data.clientSecret}</p>
+          <p>Client ID: <span id="client-id-${data.clientId}">${data.clientId}</span><img id="clipboard-client-id-${data.clientId}" src="./images/clipboard.svg" alt="Clipboard Icon"></p>
+          <p>Client Secret: <span id="client-secret-${data.clientSecret}">${data.clientSecret}</span><img id="clipboard-client-secret-${data.clientSecret}" src="./images/clipboard.svg" alt="Clipboard Icon"></p>
           <p>Redirect URI: ${data.redirectUri}</p>
           <p>Access Token Validity: ${data.accessTokenValidity}</p>
         `;
@@ -53,15 +53,27 @@ function create_app() {
           container.appendChild(newAppBox);
         }
         displaySuccess("App created successfully");
+
+        const clientIdCopyBtn = document.getElementById(`clipboard-client-id-${data.clientId}`);
+        const clientSecretCopyBtn = document.getElementById(`clipboard-client-secret-${data.clientSecret}`);
+
+        clientIdCopyBtn.addEventListener("click", function() {
+          copyTextToClipboard(`client-id-${data.clientId}`);
+        });
+
+        clientSecretCopyBtn.addEventListener("click", function() {
+          copyTextToClipboard(`client-secret-${data.clientSecret}`);
+        });
       })
       .catch((error) => {
-        return displayError("Error: Failed to create app, the redirect URI or the appname may be invalid");
+        return displayError("Error: Failed to create app, the redirect URI, or the appname may be invalid");
       });
   } catch (error) {
     console.error("Error:", error);
     displayError("Failed to create app");
   }
 }
+
 
 
 const modal = document.querySelector("[data-modal]");
@@ -148,15 +160,30 @@ function displayOAuthApps(data) {
           </a>
           <h4>APP NAME: ${app.oauthAppName}</h4>
           <p>OAuth App ID: ${app.oauthClientAppId}</p>
-          <p>Client ID: ${app.clientId}</p>
-          <p>Client Secret: ${app.clientSecret}</p>
+          <p id="client-id-${app.clientId}">Client ID: <span id="client-id-value-${app.clientId}">${app.clientId}</span><img id="clipboard-client-id-${app.clientId}" src="./images/clipboard.svg" alt="Clipboard Icon"></p>
+          <p id="client-secret-${app.clientSecret}">Client Secret: <span id="client-secret-value-${app.clientSecret}">${app.clientSecret}</span><img id="clipboard-client-secret-${app.clientSecret}" src="./images/clipboard.svg" alt="Clipboard Icon"></p>
           <p>Redirect URI: ${app.redirectUri}</p>
           <p>Access Token Validity: ${app.accessTokenValidity}</p>
        </div>
       `;
     container.appendChild(appBox);
+
+    const clientIdCopyBtn = document.getElementById(`clipboard-client-id-${app.clientId}`);
+    const clientSecretCopyBtn = document.getElementById(`clipboard-client-secret-${app.clientSecret}`);
+
+    clientIdCopyBtn.addEventListener("click", function() {
+      copyTextToClipboard(`client-id-value-${app.clientId}`);
+    });
+
+    clientSecretCopyBtn.addEventListener("click", function() {
+      copyTextToClipboard(`client-secret-value-${app.clientSecret}`);
+    });
   });
 }
+
+
+
+
 
 
 function handleResponse(response) {
@@ -185,13 +212,13 @@ function handleError() {
 
 var currentURL = window.location.origin;
 document.getElementById("authorization-url").textContent =
-  currentURL + "/api/oauth/authorize";
+  currentURL + "/api/oauth/authorize ";
 document.getElementById("token-url").textContent =
-  currentURL + "/api/oauth/token";
+  currentURL + "/api/oauth/token ";
 document.getElementById("token-check-url").textContent =
-  currentURL + "/api/oauth/check_token";
+  currentURL + "/api/oauth/check_token ";
 document.getElementById("userinfo-url").textContent =
-  currentURL + "/api/oauth/userinfo";
+  currentURL + "/api/oauth/userinfo ";
 
 function displaySuccess(successMessage) {
   successBox.textContent = successMessage;
@@ -224,6 +251,7 @@ document.getElementById("token-check-url-copy").addEventListener("click", functi
 document.getElementById("userinfo-url-copy").addEventListener("click", function() {
   copyTextToClipboard("userinfo-url");
 });
+
 
 async function copyTextToClipboard(elementId) {
   const content = document.getElementById(elementId).textContent;

@@ -666,11 +666,25 @@ h2, h3 {
   border-radius: 12px;
 }
 
-#userinfo-url-copy
-#authorization-url-copy
-#token-url-copy
-
-#token-check-url-copy {
-cursor: pointer;
+#userinfo-url-copy:hover {
+  cursor: pointer;
+}
+#authorization-url-copy:hover {
+  cursor: pointer;
 }
 
+#token-url-copy:hover {
+  cursor: pointer;
+}
+
+#token-check-url-copy:hover {
+  cursor: pointer;
+}
+
+[id^="clipboard-client-id-"]:hover {
+  cursor: pointer;
+}
+
+[id^="clipboard-client-secret-"]:hover {
+  cursor: pointer;
+}
