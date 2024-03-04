@@ -131,9 +131,9 @@ h3 {
   font-size: 1.75rem; }
 
 .container {
-  max-width: 40rem;
+  max-width: 50rem;
   min-height: 42rem;
-  max-height: 40rem;
+  max-height: 50rem;
   margin: 2rem;
   padding: 2rem;
   backdrop-filter: blur(18px);
@@ -570,6 +570,12 @@ h2, h3 {
       background: rgb(245, 203, 15) !important;
       color: #000 !important;
      }
+
+#copyToClipboard {
+  cursor: pointer;
+}
+
+
 .error-box {
   font-size: 20px;
   position: fixed;

@@ -158,6 +158,7 @@ function displayOAuthApps(data) {
   });
 }
 
+
 function handleResponse(response) {
   if (response.status === 200) {
   } else if (response.status === 404) {
@@ -189,7 +190,7 @@ document.getElementById("token-url").textContent =
   currentURL + "/api/oauth/token";
 document.getElementById("token-check-url").textContent =
   currentURL + "/api/oauth/check_token";
-document.getElementById("userinfo-uri").textContent =
+document.getElementById("userinfo-url").textContent =
   currentURL + "/api/oauth/userinfo";
 
 function displaySuccess(successMessage) {
@@ -206,4 +207,26 @@ function displayError(errorMessage) {
   setTimeout(() => {
     errorBox.remove();
   }, 4000);
+}
+
+document.getElementById("authorization-url-copy").addEventListener("click", function() {
+  copyTextToClipboard("authorization-url");
+});
+
+document.getElementById("token-url-copy").addEventListener("click", function() {
+  copyTextToClipboard("token-url");
+});
+
+document.getElementById("token-check-url-copy").addEventListener("click", function() {
+  copyTextToClipboard("token-check-url");
+});
+
+document.getElementById("userinfo-url-copy").addEventListener("click", function() {
+  copyTextToClipboard("userinfo-url");
+});
+
+async function copyTextToClipboard(elementId) {
+  const content = document.getElementById(elementId).textContent;
+  await navigator.clipboard.writeText(content);
+  displaySuccess('Copied to clipboard');
 }

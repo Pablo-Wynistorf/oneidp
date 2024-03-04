@@ -665,3 +665,12 @@ h2, h3 {
   color: black;
   border-radius: 12px;
 }
+
+#userinfo-url-copy
+#authorization-url-copy
+#token-url-copy
+
+#token-check-url-copy {
+cursor: pointer;
+}
+

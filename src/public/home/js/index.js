@@ -5,34 +5,50 @@ errorBox.className = 'error-box';
 successBox.className = 'success-box';
 
 
-function get_username() {
-  try {
-    fetch(`/api/oauth/userinfo`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    })
-    .then(response => {
-      if (response.ok) {
-        return response.json();
-      } else {
+document.addEventListener('DOMContentLoaded', function() {
+  fetchUserData();
+  function fetchUserData() {
+    try {
+      fetch(`/api/oauth/userinfo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          handleError();
+        }
+      })
+      .then(data => {
+        document.getElementById('username').textContent = data.username;
+        document.getElementById('userid').textContent = data.userId;
+      })
+      .catch(error => {
         handleError();
-      }
-    })
-    .then(username => {
-      const usernameData = username.username;
-      const usernameElement = document.getElementById('get-username');
-      usernameElement.innerHTML = usernameData;
-    })
-    .catch(error => {
+        window.location.href = '/login';
+      });
+    } catch (error) {
       handleError();
-      window.location.href = '/login';
-    });
-  } catch (error) {
-    handleError();
+    }
   }
-}
+});
+
+
+document.getElementById("copyToClipboard").addEventListener("click", async function() {
+  var copyText = document.getElementById("userid").textContent;
+  try {
+    await navigator.clipboard.writeText(copyText);
+    displaySuccess('Copied to clipboard!');
+  } catch (err) {
+    console.error('Failed to copy text: ', err);
+  }
+});
+
+
+
 
 
 

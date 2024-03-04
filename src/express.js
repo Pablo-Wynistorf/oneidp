@@ -1629,13 +1629,24 @@ app.post('/api/oauth/userinfo', async (req, res) => {
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
     const userId = decoded.userId;
+    const sid = decoded.sid;
     const oauthSid = decoded.oauthSid;
     const clientId = decoded.clientId;
 
-    const userData = await userDB.findOne({ userId: userId, oauthSid: oauthSid });
+    const userData = await userDB.findOne({ userId: userId, $or: [{ oauthSid: oauthSid }, { sid: sid }] });
     if (!userData) {
       res.clearCookie('access_token');
       return res.redirect('/login');
+    }
+
+    if (!clientId || clientId === 'undefined') {
+      return res.status(200).json({
+        userId: userId,
+        username: userData.username,
+        email: userData.email,
+        providerRoles: userData.providerRoles,
+        mfaEnabled: userData.mfaEnabled
+      });
     }
 
     const roleData = await oAuthRolesDB.find({
