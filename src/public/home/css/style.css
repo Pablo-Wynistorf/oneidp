@@ -134,8 +134,7 @@ h3 {
   max-width: 50rem;
   min-height: 42rem;
   max-height: 50rem;
-  margin: 2rem;
-  padding: 2rem;
+  margin: 1rem;
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   box-shadow: rgba(50, 50, 93, 0.5) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.5) 0px 18px 36px -18px inset;

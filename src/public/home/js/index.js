@@ -49,9 +49,6 @@ document.getElementById("copyToClipboard").addEventListener("click", async funct
 
 
 
-
-
-
 function logout() {
   try {
     fetch(`/api/sso/auth/logout`, {
