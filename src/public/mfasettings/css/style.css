@@ -134,7 +134,7 @@ h3 {
   max-width: 40rem;
   min-height: 20rem;
   top: 25.5rem;
-  position: fixed;
+  position: absolute;
   transform: translate(-50%, -50%);
   padding: 1rem;
   backdrop-filter: blur(18px);
