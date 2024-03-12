@@ -132,8 +132,8 @@ h3 {
 
 .container {
   max-width: 50rem;
-  min-height: 42rem;
-  max-height: 50rem;
+  min-height: 45rem;
+  max-height: 60rem;
   margin: 1rem;
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
