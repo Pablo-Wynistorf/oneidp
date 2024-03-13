@@ -1731,6 +1731,7 @@ app.get('/.well-known/openid-configuration', (req, res) => {
     response_types_supported: ['code, token, id_token,'],
     id_token_signing_alg_values_supported: ['HS256'],
     scopes_supported: ["openid"],
+    grant_types_supported: ["authorization_code"],
   };
   res.json(metadata);
 });
