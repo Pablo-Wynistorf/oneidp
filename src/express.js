@@ -377,12 +377,12 @@ app.post('/api/sso/auth/register', authRegisterLimiter, async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     let userId;
-    let existingUser;
+    let existingUserId;
 
     do {
-      userId = Math.floor(Math.random() * 900000) + 100000;
-      existingUser = await userDB.findOne({ userId });
-    } while (existingUser);
+      userId = Math.floor(Math.random() * 900000000000) + 100000000000;
+      existingUserId = await userDB.findOne({ userId });
+    } while (existingUserId);
 
     const email_verification_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' });
     const email_verification_code = Math.floor(100000 + Math.random() * 900000).toString();
