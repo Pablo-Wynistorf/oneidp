@@ -137,6 +137,31 @@ async function editRole() {
 }
 
 
+async function deleteUids() {
+  const oauthRoleId = edit_role.dataset.roleId;
+  const oauthClientAppId = window.location.search.split("=")[1];
+  try {
+    if (!oauthRoleId) {
+      return displayError("Role id is required to edit this role");
+    }
+    const response = await fetch("/api/oauth/settings/roles/update/uid", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ oauthClientAppId, oauthRoleId }),
+    });
+    if (!response.ok) {
+      return handleResponse(response);
+    }
+    await fetchData();
+    closeEditModal();
+  } catch (error) {
+    displayError("Something went wrong");
+  }
+}
+
+
 
 async function deleteRole() {
   const oauthRoleId = edit_role.dataset.roleId;

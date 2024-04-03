@@ -119,6 +119,14 @@
     <dialog data-modal id="edit-role" class="rounded-lg">
       <div class="bg-white rounded-lg shadow-lg">
         <button
+        id="delete-userids-button"
+        onclick="deleteUids()"
+        type="button"
+        class="absolute top-0 left-5 mt-2 mr-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-sm"
+      >
+        Remove Userids
+      </button>
+        <button
           id="delete-role-button"
           onclick="deleteRole()"
           type="button"
