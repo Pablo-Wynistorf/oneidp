@@ -1524,23 +1524,41 @@ app.post('/api/oauth/settings/roles/delete', async (req, res) => {
 
 // Oauth2 authorize endpoint
 app.get('/api/oauth/authorize', async (req, res) => {
-  const { client_id, state } = req.query;
+  const { client_id, redirect_uri, state } = req.query;
   const access_token = req.cookies.access_token;
-  const clientId = client_id;
   try {
-    const oauth_client = await oAuthClientAppDB.findOne({ clientId });
-    const redirect_uri = oauth_client.redirectUri;
-    if (!oauth_client) {
-      return res.status(401).json({ error: 'invalid_client', error_description: 'Invalid client' });
+
+    if (!access_token || access_token === 'undefined') {
+      return res.redirect(`/login?redirect_uri=${redirect_uri}`);
     }
+
+    if (!client_id || !redirect_uri || client_id === 'undefined' || redirect_uri === 'undefined') {
+      return res.status(400).json({ error: 'Invalid Request', error_description: 'No client_id or redirect_uri provided' });
+    }
+
     jwt.verify(access_token, JWT_SECRET, async (error, decoded) => {
+
       if (error) {
         return res.redirect(`/login?redirect_uri=${redirect_uri}`);
       }
+
       const { userId, sid } = decoded;
       const user = await userDB.findOne({ userId, sid });
+
       if (!user) {
         return res.redirect(`/login?redirect_uri=${redirect_uri}`);
+      }
+
+      const oauth_client = await oAuthClientAppDB.findOne({ clientId: client_id });
+  
+      if (!oauth_client) {
+        return res.status(401).json({ error: 'Invalid Request', error_description: 'Invalid client_id provided' });
+      }
+
+      const allowed_redirect_uri = oauth_client.redirectUri;
+  
+      if (redirect_uri !== allowed_redirect_uri) {
+        return res.status(405).json({ error: 'Invalid Request', error_description: 'Provided redirect_uri not allowed' });
       }
       
       let authorizationCode;
@@ -1556,7 +1574,7 @@ app.get('/api/oauth/authorize', async (req, res) => {
       res.redirect(redirectUri);
     });
   } catch (error) {
-    res.status(500).json({ error: 'server_error', error_description: 'Server error' });
+    res.status(500).json({ error: 'Server Error', error_description: 'Something went wrong on our site. Please try again later' });
   }
 });
 
@@ -1565,6 +1583,10 @@ app.get('/api/oauth/authorize', async (req, res) => {
 // Oauth Token endpoint
 app.post('/api/oauth/token', async (req, res) => {
   const { code, client_id, client_secret, refresh_token } = req.body;
+
+  console.log(code, client_id, client_secret, refresh_token);
+
+  const oauthAuthorizationCode = code;
   const clientId = client_id;
   const clientSecret = client_secret;
   const refreshToken = refresh_token;
@@ -1575,20 +1597,27 @@ app.post('/api/oauth/token', async (req, res) => {
     let oauthSid;
 
     if (refreshToken) {
-      const decodedRefreshToken = jwt.verify(refreshToken, JWT_SECRET);
+      const decodedRefreshToken = await jwt.verify(refreshToken, JWT_SECRET, async (error) => {
+        if (error) {
+          return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid refresh token provided' });
+        }
+      });
+
       userId = decodedRefreshToken.userId;
       oauthSid = decodedRefreshToken.oauthSid;
 
       const refresh_token_clientId = decodedRefreshToken.clientId;
 
       oauth_client = await oAuthClientAppDB.findOne({ clientId: refresh_token_clientId, clientSecret: clientSecret });
-      oauth_user = await userDB.findOne({ userId, oauthSid});
 
       if (!oauth_client) {
-        return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client or invalid refresh token' });
+        return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or invalid refresh_token provided' });
       }
+
+      oauth_user = await userDB.findOne({ userId, oauthSid});
+
       if (!oauth_user) {
-        return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid user credentials' });
+        return res.status(401).json({ error: 'Unauthorized', error_description: 'User not found or session has expired' });
       }
 
       const username = oauth_user.username;
@@ -1611,23 +1640,27 @@ app.post('/api/oauth/token', async (req, res) => {
       return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
 
 
-    } else if (code) {
+    } else if (oauthAuthorizationCode) {
+      if (!clientId || !clientSecret || clientId === 'undefined' || clientSecret === 'undefined') {
+        return res.status(400).json({ error: 'Invalid Request', error_description: 'No client_id or client_secret provieded' });
+      }
+
       oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
-      oauth_user = await userDB.findOne({ oauthAuthorizationCode: code });
-      const oauthAuthorizationCode = code;
-      await userDB.updateOne({ oauthAuthorizationCode }, { $unset: { oauthAuthorizationCode: 1 } });
 
       if (!oauth_client) {
-        return res.status(401).json({ error: 'invalid_client', error_description: 'Invalid client' });
+        return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or client_secret provided' });
       }
 
+      oauth_user = await userDB.findOneAndUpdate({ oauthAuthorizationCode }, { $unset: { oauthAuthorizationCode: 1 } });
+
       if (!oauth_user) {
-        return res.status(400).json({ error: 'invalid_grant', error_description: 'Invalid authorization code' });
+        return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid authorization code provided' });
       }
+
       userId = oauth_user.userId;
       oauthSid = oauth_user.oauthSid;
     } else {
-      return res.status(400).json({ error: 'invalid_grant', error_description: 'Invalid authorization code' });
+      return res.status(400).json({ error: 'Invalid Grant', error_description: 'Only authorization_code and refresh_token grant types are supported' });
     }
 
     const username = oauth_user.username;
@@ -1650,7 +1683,7 @@ app.post('/api/oauth/token', async (req, res) => {
     return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
 
   } catch (error) {
-    res.status(500).json({ error: 'server_error', error_description: 'Server error' });
+    res.status(500).json({ error: 'Server Error', error_description: 'Something went wrong on our site. Please try again later' });
   }
 });
 
