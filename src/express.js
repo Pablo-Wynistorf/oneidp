@@ -1278,7 +1278,7 @@ app.post('/api/oauth/settings/roles/add', async (req, res) => {
       return res.status(461).json({ error: 'User does not have access to this oauth app' });
     }
 
-    const validRoleName = /^[a-zA-Z0-9\-_\.]{1,40}$/;
+    const validRoleName = /^[a-zA-Z0-9\-_\. ]{1,40}$/;
 
     if (!validRoleName.test(oauthRoleName)) {
       return res.status(462).json({ error: 'Invalid role name' });
