@@ -1584,8 +1584,6 @@ app.get('/api/oauth/authorize', async (req, res) => {
 app.post('/api/oauth/token', async (req, res) => {
   const { code, client_id, client_secret, refresh_token } = req.body;
 
-  console.log(code, client_id, client_secret, refresh_token);
-
   const oauthAuthorizationCode = code;
   const clientId = client_id;
   const clientSecret = client_secret;
