@@ -15,13 +15,15 @@ For alerting and log we use discord webhook. Create a channel in a discord serve
 1.) Clone the github repo
 
 ```yaml
-git clone https://github.com/Pablo-Wynistorf/login-app.git && cd login-app
+git clone https://github.com/Pablo-Wynistorf/loginapp.git && cd loginapp
 ```
 2.) Add the values to the secrets.yaml file
 
 ```bash
 URL= # Add the url of your application. Format: http://login.example.com, https://login.example.com
 DATABASE_URI= # Add the MongoDB database uri. Format: mongodb+srv://username:password@db-host.example.com, mongodb://username:password@db-host.example.com
+MONGO_INITDB_USERNAME_PASSWORD=  # Add the MongoDB database initdb username
+MONGO_INITDB_ROOT_PASSWORD= # Add the MongoDB database initdb password
 API_PORT= # Enter the api port you want to use. 
 JWT_SECRET= # Define a jason webtoken secret to create secure access tokens.
 MJ_APIKEY_PUBLIC= # Enter the mailjet public api key
@@ -42,7 +44,6 @@ kubectl apply -f database-deployment.yaml
 I used a nginx ingress controller. Also dont forget to change the values to your demand in ingress-deployment.yaml
 
 ```yaml
-kubectl create ns loginapp
 kubectl apply -f ingress-deployment.yaml
 kubectl apply -f app-deployment.yaml
 ```
