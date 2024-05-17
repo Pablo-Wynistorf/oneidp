@@ -15,7 +15,7 @@ For alerting and log we use discord webhook. Create a channel in a discord serve
 1.) Clone the github repo
 
 ```yaml
-git clone https://github.com/Pablo-Wynistorf/login-app.git && cd login-app
+git clone https://github.com/Pablo-Wynistorf/loginapp.git && cd loginapp
 ```
 2.) Add the values to the secrets.yaml file
 
