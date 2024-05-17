@@ -1318,6 +1318,7 @@ app.post('/api/oauth/settings/roles/add', async (req, res) => {
 });
 
 
+
 // Delete userid from oauth app role
 app.post('/api/oauth/settings/roles/update/uid', async (req, res) => {
   const req_cookies = req.headers.cookie;
@@ -1377,6 +1378,8 @@ app.post('/api/oauth/settings/roles/update/uid', async (req, res) => {
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
+
+
 
 // Update oauth app role
 app.post('/api/oauth/settings/roles/update', async (req, res) => {
@@ -1456,8 +1459,6 @@ app.post('/api/oauth/settings/roles/update', async (req, res) => {
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
-
-
 
 
 
@@ -1686,7 +1687,6 @@ app.post('/api/oauth/token', async (req, res) => {
     res.status(500).json({ error: 'Server Error', error_description: 'Something went wrong on our site. Please try again later' });
   }
 });
-
 
 
 
