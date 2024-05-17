@@ -1587,24 +1587,24 @@ app.post('/api/oauth/token', async (req, res) => {
   const oauthAuthorizationCode = code;
   const clientId = client_id;
   const clientSecret = client_secret;
-  const refreshToken = refresh_token;
   try {
     let oauth_client;
     let oauth_user;
     let userId;
     let oauthSid;
+    let refresh_token_clientId;
 
-    if (refreshToken) {
-      const decodedRefreshToken = await jwt.verify(refreshToken, JWT_SECRET, async (error) => {
-        if (error) {
-          return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid refresh token provided' });
-        }
-      });
+    if (refresh_token) {
+      let decodedRefreshToken;
+      try {
+        decodedRefreshToken = jwt.verify(refresh_token, JWT_SECRET);
+      } catch (error) {
+        return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid refresh token provided' });
+      }
 
       userId = decodedRefreshToken.userId;
-      oauthSid = decodedRefreshToken.oauthSid;
-
-      const refresh_token_clientId = decodedRefreshToken.clientId;
+      oauthSid = decodedRefreshToken.oauthSid
+      refresh_token_clientId = decodedRefreshToken.clientId;
 
       oauth_client = await oAuthClientAppDB.findOne({ clientId: refresh_token_clientId, clientSecret: clientSecret });
 
@@ -1612,7 +1612,7 @@ app.post('/api/oauth/token', async (req, res) => {
         return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or invalid refresh_token provided' });
       }
 
-      oauth_user = await userDB.findOne({ userId, oauthSid});
+      oauth_user = await userDB.findOne({ userId, oauthSid });
 
       if (!oauth_user) {
         return res.status(401).json({ error: 'Unauthorized', error_description: 'User not found or session has expired' });
@@ -1635,12 +1635,12 @@ app.post('/api/oauth/token', async (req, res) => {
       const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: accessTokenValidity });
       const oauth_id_token = jwt.sign({ userId: userId, username: username, email: email, roles: roleNames, mfaEnabled: mfaEnabled }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
       const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
-      return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
 
+      return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
 
     } else if (oauthAuthorizationCode) {
       if (!clientId || !clientSecret || clientId === 'undefined' || clientSecret === 'undefined') {
-        return res.status(400).json({ error: 'Invalid Request', error_description: 'No client_id or client_secret provieded' });
+        return res.status(400).json({ error: 'Invalid Request', error_description: 'No client_id or client_secret provided' });
       }
 
       oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
@@ -1678,9 +1678,11 @@ app.post('/api/oauth/token', async (req, res) => {
     const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: accessTokenValidity });
     const oauth_id_token = jwt.sign({ userId: userId, username: username, email: email, roles: roleNames, mfaEnabled: mfaEnabled }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
     const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
+
     return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Server Error', error_description: 'Something went wrong on our site. Please try again later' });
   }
 });
