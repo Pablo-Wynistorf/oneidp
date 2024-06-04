@@ -1623,6 +1623,7 @@ app.post('/api/oauth/token', async (req, res) => {
       const email = oauth_user.email;
       const mfaEnabled = oauth_user.mfaEnabled;
       const accessTokenValidity = oauth_client.accessTokenValidity;
+      const clientId = oauth_client.clientId;
 
       const roleData = await oAuthRolesDB.find({
         $or: [
@@ -1633,9 +1634,9 @@ app.post('/api/oauth/token', async (req, res) => {
       
       const roleNames = roleData.map(role => role.oauthRoleName);
       
-      const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: refresh_token_clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: accessTokenValidity });
+      const oauth_access_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: accessTokenValidity });
       const oauth_id_token = jwt.sign({ userId: userId, username: username, email: email, roles: roleNames, mfaEnabled: mfaEnabled }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
-      const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: refresh_token_clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
+      const oauth_refresh_token = jwt.sign({ userId: userId, oauthSid: oauthSid, clientId: clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
 
       return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
 
