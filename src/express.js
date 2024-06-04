@@ -28,25 +28,24 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 function connectToDatabase() {
-  mongoose.connect(DATABASE_URI);
+  mongoose.connect(DATABASE_URI)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => {
+      console.error('MongoDB connection error:', err);
+      setTimeout(connectToDatabase, 5000);
+    });
 }
+
 const db = mongoose.connection;
 
-connectToDatabase();
-
-db.on('error', () => {
-  console.log('MongoDB connection error. Reconnecting...');
+db.on('error', err => {
+  console.error('MongoDB connection error:', err);
   setTimeout(connectToDatabase, 5000);
 });
 
 db.on('disconnected', () => {
   console.log('MongoDB disconnected. Reconnecting...');
   setTimeout(connectToDatabase, 5000);
-  return;
-});
-
-db.on('connected', () => {
-  console.log('Connected to MongoDB');
 });
 
 const { Schema } = mongoose;
@@ -70,7 +69,7 @@ const userSchema = new Schema({
   timestamps: true
 });
 
-const oAuthClientSchema = new mongoose.Schema({
+const oAuthClientSchema = new Schema({
   oauthAppName: String,
   oauthClientAppId: String,
   clientId: String,
@@ -82,7 +81,7 @@ const oAuthClientSchema = new mongoose.Schema({
   timestamps: true
 });
 
-const oAuthRolesSchema = new mongoose.Schema({
+const oAuthRolesSchema = new Schema({
   oauthRoleId: String,
   oauthClientAppId: String,
   oauthClientId: String,
@@ -91,7 +90,6 @@ const oAuthRolesSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
 
 const userDB = mongoose.model('users', userSchema);
 const oAuthClientAppDB = mongoose.model('oauthClientApps', oAuthClientSchema);
@@ -103,6 +101,8 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+connectToDatabase();
 
 const authLoginLimiter = rateLimit({
   windowMs: 60 * 1000,
