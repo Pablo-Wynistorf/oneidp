@@ -62,18 +62,12 @@ router.post('/', async (req, res) => {
     const oauthClientAppData = await oAuthClientAppDB.findOne({ oauthClientAppId });
     const oauthClientId = oauthClientAppData.clientId;
 
-    let oauthRoleId;
-    let existingOauthRoleId;
-    
-    do {
-      oauthRoleId = `${oauthClientAppId}-${[...Array(4)].map(() => Math.random().toString(36).charAt(2)).join('')}`;
-      existingOauthRoleId = await oAuthRolesDB.findOne({ oauthRoleId: oauthRoleId });
-    } while (existingOauthRoleId);
-
     const existingOauthRoleName = await oAuthRolesDB.findOne({ oauthRoleName: oauthRoleName, oauthClientId: oauthClientId });
     if (existingOauthRoleName) {
       return res.status(463).json({ error: 'Role name already exists' });
     }
+
+    const oauthRoleId = `arn:loginapp:oauth::${oauthClientAppId}:role/${oauthRoleName}`;
     
     const newOauthRole = new oAuthRolesDB({
       oauthRoleId: oauthRoleId,
