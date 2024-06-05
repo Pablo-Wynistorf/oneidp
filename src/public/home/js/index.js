@@ -72,7 +72,7 @@ function logout() {
 
 function logoutAll() {
   try {
-    fetch(`/api/sso/auth/logout/all`, {
+    fetch(`/api/sso/auth/logoutall`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
