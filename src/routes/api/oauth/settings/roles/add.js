@@ -69,7 +69,7 @@ router.post('/', async (req, res) => {
       return res.status(463).json({ error: 'Role name already exists' });
     }
 
-    const oauthRoleId = `uri:loginapp:oauth::${oauthClientAppId}:role/${oauthRoleName}`;
+    const oauthRoleId = `uri:loginapp:oauth::${oauthClientAppId}:role/${smallLettersRoleName}`;
     
     const newOauthRole = new oAuthRolesDB({
       oauthRoleId: oauthRoleId,
