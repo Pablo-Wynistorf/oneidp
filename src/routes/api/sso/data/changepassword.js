@@ -8,7 +8,7 @@ const { userDB } = require('../../../../database/database.js');
 
 const router = express.Router();
 
-router.post('/changepassword', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { password } = req.body;
     const req_cookies = req.headers.cookie;

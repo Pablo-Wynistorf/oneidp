@@ -7,7 +7,7 @@ const { userDB } = require('../../../database/database.js');
 
 const router = express.Router();
 
-router.post('/disable', async (req, res) => {
+router.post('/', async (req, res) => {
   const req_cookies = req.headers.cookie;
 
   if (!req_cookies) {
