@@ -1,7 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const rateLimit = require('express-rate-limit');
 const { JWT_SECRET } = process.env;
 const mailjet = require('node-mailjet');
 const { MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE, MJ_SENDER_EMAIL } = process.env;
@@ -11,15 +10,9 @@ const { notifyError, notifyRegister } = require('../../../../notify/notification
 
 const { userDB } = require('../../../../database/database.js');
 
-const authRegisterLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  max: 3,
-  message: 'Too many requests. Please try again later.',
-});
-
 const router = express.Router();
 
-router.post('/', authRegisterLimiter, async (req, res) => {
+router.post('/', async (req, res) => {
   const { username, password, email } = req.body;
   const usernameRegex = /^[a-zA-Z0-9-]{3,20}$/;
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
