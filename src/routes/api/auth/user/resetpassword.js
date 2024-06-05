@@ -114,7 +114,7 @@ function sendRecoveryEmail(username, email, password_reset_token, password_reset
                                   <td style="word-break: break-word; font-size: 0px; padding: 0px;" align="left">
                                     <div style="cursor: auto; color: #737F8D; font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif; font-size: 16px; line-height: 24px; text-align: left;">
                                       <h2 style="font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif; font-weight: 500; font-size: 20px; color: #4F545C; letter-spacing: 0.27px;">Hey ${username},</h2>
-                                      <p>You requested to reset your password. Please enter the following code or click on this <a href=${URL}/api/sso/setresettokens/${password_reset_token}/${password_reset_code}>Link</a> to reset your password:</p>
+                                      <p>You requested to reset your password. Please enter the following code or click on this <a href=${URL}/api/auth/user/setresettokens/${password_reset_token}/${password_reset_code}>Link</a> to reset your password:</p>
                                     </div>
                                   </td>
                                 </tr>
