@@ -119,7 +119,7 @@ async function editRole() {
     if (!oauthRoleId) {
       return displayError("Role id is required to edit this role");
     }
-    const response = await fetch("/api/oauth/settings/roles/update", {
+    const response = await fetch("/api/oauth/settings/roles/update/adduid", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -144,7 +144,7 @@ async function deleteUids() {
     if (!oauthRoleId) {
       return displayError("Role id is required to edit this role");
     }
-    const response = await fetch("/api/oauth/settings/roles/update/uid", {
+    const response = await fetch("/api/oauth/settings/roles/update/removeuid", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

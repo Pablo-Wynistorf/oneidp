@@ -2,7 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = process.env;
 
-const { userDB, oAuthClientAppDB } = require('../../../../database/database.js');
+const { userDB, oAuthClientAppDB } = require('../../../../../database/database.js');
 
 const router = express.Router();
 

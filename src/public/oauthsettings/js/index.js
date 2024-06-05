@@ -11,7 +11,7 @@ function create_app() {
   const redirectUri = document.getElementById("redirecturl-field").value;
   const accessTokenValidity = document.getElementById("access-token-validity-field").value;
   try {
-    fetch(`/api/oauth/settings/add`, {
+    fetch(`/api/oauth/settings/apps/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -108,7 +108,7 @@ document.addEventListener("click", function (event) {
 function delete_app(appId) {
   const oauthClientAppId = appId;
   try {
-    fetch(`/api/oauth/settings/delete`, {
+    fetch(`/api/oauth/settings/apps/delete`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -136,7 +136,7 @@ function delete_app(appId) {
 
 async function fetchData() {
   try {
-    const response = await fetch("/api/oauth/settings/get", {
+    const response = await fetch("/api/oauth/settings/apps/get", {
     });
     if (!response.ok) {
       handleResponse(response);

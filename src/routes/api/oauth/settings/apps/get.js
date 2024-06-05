@@ -2,12 +2,11 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = process.env;
 
-const { userDB, oAuthClientAppDB, oAuthRolesDB } = require('../../../../database/database.js');
+const { userDB, oAuthClientAppDB } = require('../../../../../database/database.js');
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
-  const oauthClientAppId = req.body.oauthClientAppId;
+router.get('/', async (req, res) => {
   const req_cookies = req.headers.cookie;
 
   if (!req_cookies) {
@@ -27,7 +26,7 @@ router.post('/', async (req, res) => {
     const userId = decoded.userId;
     const sid = decoded.sid;
 
-    const userData = await userDB.findOne({ userId: userId, sid: sid });
+    const userData = await userDB.findOne({ userId, sid });
     if (!userData) {
       res.clearCookie('access_token');
       return res.redirect('/login');
@@ -39,20 +38,32 @@ router.post('/', async (req, res) => {
       return res.status(465).json({ error: 'User does not have access to create oauth apps' });
     }
 
-    const testOauthClientAppId = userData.oauthClientAppIds.includes(oauthClientAppId);
+    let oauthApps = userData.oauthClientAppIds || [];
 
-    if (!testOauthClientAppId) {
-      return res.status(460).json({ error: 'User does not own this oauth app' });
+    if (!Array.isArray(oauthApps)) {
+      return res.status(400).json({ error: 'Invalid format for oauthApps' });
     }
 
-    await oAuthClientAppDB.deleteOne({ oauthClientAppId });
-    await oAuthRolesDB.deleteMany({ oauthRoleId: { $regex: `${oauthClientAppId}-*` } });
-    await userDB.updateOne(
-      { userId },
-      { $pull: { oauthClientAppIds: parseInt(oauthClientAppId) } }
-    );
+    if (oauthApps.length === 0) {
+      return res.status(404).json({ error: 'No OAuth apps found for this user' });
+    }
 
-    res.status(200).json({ success: true, message: 'OAuth app has been successfully deleted' });
+    const oauthAppsData = await oAuthClientAppDB.find({ oauthClientAppId: { $in: oauthApps } }).exec();
+
+    if (!oauthAppsData || oauthAppsData.length === 0) {
+      return res.status(404).json({ error: 'No OAuth apps found' });
+    }
+
+    const organizedData = oauthAppsData.map(app => ({
+      oauthAppName: app.oauthAppName,
+      clientId: app.clientId,
+      clientSecret: app.clientSecret,
+      redirectUri: app.redirectUri,
+      oauthClientAppId: app.oauthClientAppId,
+      accessTokenValidity: app.accessTokenValidity,
+    }));
+
+    res.json({ oauthApps: organizedData });
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }
