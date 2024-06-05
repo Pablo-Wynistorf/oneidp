@@ -26,7 +26,7 @@ function login() {
   const username_or_email = usernameInput.value;
   const password = passwordInput.value;
   const redirectUri = getRedirectUri();
-  fetch(`/api/sso/auth/login`, {
+  fetch(`/api/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

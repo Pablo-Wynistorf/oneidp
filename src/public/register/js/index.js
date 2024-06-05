@@ -62,7 +62,7 @@ function register() {
   const password = document.getElementById('password-field').value;
   const email = document.getElementById('email-field').value;
   document.getElementById('register-button').disabled = true;
-  fetch(`/api/sso/auth/register`, {
+  fetch(`/api/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

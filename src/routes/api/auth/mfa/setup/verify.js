@@ -2,9 +2,9 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const speakeasy = require('speakeasy');
 const { JWT_SECRET } = process.env;
-const { notifyError } = require('../../../../notify/notifications');
+const { notifyError } = require('../../../../../notify/notifications.js');
 
-const { userDB } = require('../../../../database/database.js');
+const { userDB } = require('../../../../../database/database.js');
 
 const router = express.Router();
 

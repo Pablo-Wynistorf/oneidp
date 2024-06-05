@@ -3,9 +3,9 @@ const jwt = require('jsonwebtoken');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const { JWT_SECRET, URL } = process.env;
-const { notifyError } = require('../../../notify/notifications');
+const { notifyError } = require('../../../..//notify/notifications');
 
-const { userDB } = require('../../../database/database.js');
+const { userDB } = require('../../../../database/database.js');
 
 const router = express.Router();
 

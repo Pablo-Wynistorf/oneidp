@@ -54,7 +54,7 @@ function setNewPassword() {
   const password_reset_code = resetCodeInput.value;
 
   try {
-    fetch(`/api/sso/data/setpassword`, {
+    fetch(`/api/auth/user/setpassword`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

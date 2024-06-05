@@ -1,40 +1,77 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = process.env;
 const mailjet = require('node-mailjet');
 const { MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE, MJ_SENDER_EMAIL } = process.env;
 const { URL } = process.env;
-const { notifyError } = require('../../../../notify/notifications');
+const { notifyError, notifyRegister } = require('../../../notify/notifications');
 
 
-const { userDB } = require('../../../../database/database.js');
+const { userDB } = require('../../../database/database.js');
 
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-  const { email } = req.body;
+  const { username, password, email } = req.body;
+  const usernameRegex = /^[a-zA-Z0-9-]{3,20}$/;
+  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
+
+  if (!usernameRegex.test(username)) {
+    return res.status(462).json({ success: false, error: 'Username must only contain letters, numbers, and dashes and be between 3 and 20 characters' });
+  }
+
+  if (!emailRegex.test(email)) {
+    return res.status(466).json({ success: false, error: 'Invalid email address' });
+  }
+
+  if (typeof password !== 'string' || password.length < 8 || password.length > 300 || !passwordPattern.test(password)) {
+    return res.status(465).json({ success: false, error: 'Password must be between 8 and 300 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
+  }
 
   try {
-    const userData = await userDB.findOne({ email });
-    if (!userData) {
-      return res.status(404).json({ success: false, error: 'No account with this email' });
+    let existingUsername = await userDB.findOne({ username });
+    let existingEmail = await userDB.findOne({ email });
+
+    if (existingEmail) {
+      return res.status(460).json({ success: false, error: 'Email already used, try login' });
     }
 
-    const userId = userData.userId;
-    const username = userData.username;
-    const password_reset_token = jwt.sign({ userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
-    const password_reset_code = Math.floor(100000 + Math.random() * 900000).toString();
-
-    await userDB.updateOne({ userId }, { $set: { resetCode: password_reset_code } });
-
-    try {
-      sendRecoveryEmail(username, email, password_reset_token, password_reset_code, res);
-      res.cookie('password_reset_token', password_reset_token, { maxAge: 1 * 60 * 60 * 1000, httpOnly: true, path: '/' });
-      res.status(200).json({ success: true });
-    } catch (error) {
-      console.error('Mailjet error:', error);
-      res.status(500).json({ error: 'Failed to send password reset email' });
+    if (existingUsername) {
+      return res.status(461).json({ success: false, error: 'Username already taken' });
     }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    let userId;
+    let existingUserId;
+
+    do {
+      userId = Math.floor(Math.random() * 900000000000) + 100000000000;
+      existingUserId = await userDB.findOne({ userId });
+    } while (existingUserId);
+
+    const email_verification_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' });
+    const email_verification_code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const newUser = new userDB({
+      userId: userId,
+      username: username,
+      password: hashedPassword,
+      email: email,
+      verifyCode: email_verification_code,
+      mfaEnabled: false,
+      providerRoles: ['standardUser', 'oauthUser'],
+    });
+
+    await newUser.save();
+
+    sendVerificationEmail(username, email, email_verification_token, email_verification_code);
+
+    res.cookie('email_verification_token', email_verification_token, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
+    res.status(200).json({ success: true });
+    return notifyRegister(username);
   } catch (error) {
     notifyError(error);
     res.status(500).json({ error: 'Something went wrong, try again later' });
@@ -44,8 +81,8 @@ router.post('/', async (req, res) => {
 module.exports = router;
 
 
-// Send the password recovery email
-function sendRecoveryEmail(username, email, password_reset_token, password_reset_code, res) {
+// Send the email verification email
+function sendVerificationEmail(username, email, email_verification_token, new_email_verification_code, res) {
   const mailjetConnect = mailjet.apiConnect(MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE);
   const request = mailjetConnect
     .post('send', { version: 'v3.1' })
@@ -114,7 +151,7 @@ function sendRecoveryEmail(username, email, password_reset_token, password_reset
                                   <td style="word-break: break-word; font-size: 0px; padding: 0px;" align="left">
                                     <div style="cursor: auto; color: #737F8D; font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif; font-size: 16px; line-height: 24px; text-align: left;">
                                       <h2 style="font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif; font-weight: 500; font-size: 20px; color: #4F545C; letter-spacing: 0.27px;">Hey ${username},</h2>
-                                      <p>You requested to reset your password. Please enter the following code or click on this <a href=${URL}/api/sso/setresettokens/${password_reset_token}/${password_reset_code}>Link</a> to reset your password:</p>
+                                      <p>Your account email needs to get verified before you can use your account. Don't share this code with anyone! Please enter the following code or click on this <a href=${URL}/api/sso/confirmationlink/${email_verification_token}/${new_email_verification_code}>Link</a> to verify your email:</p>
                                     </div>
                                   </td>
                                 </tr>
@@ -124,7 +161,7 @@ function sendRecoveryEmail(username, email, password_reset_token, password_reset
                                       <tbody>
                                         <tr>
                                           <td style="border: none; border-radius: 8px; cursor: auto; padding: 15px 105px;" align="center" valign="middle" bgcolor="#5865f2">
-                                            <p style="font-size: 30px; font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif;">${password_reset_code}</p>
+                                            <p style="font-size: 30px; font-family: Helvetica Neue, Helvetica, Arial, Lucida Grande, sans-serif;">${new_email_verification_code}</p>
                                           </td>
                                         </tr>
                                       </tbody>

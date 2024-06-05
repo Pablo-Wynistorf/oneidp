@@ -1,28 +1,15 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = process.env;
-const { notifyError } = require('../../../notify/notifications');
+const { notifyError } = require('../../../../notify/notifications.js');
 
-const { userDB } = require('../../../database/database.js');
+const { userDB } = require('../../../../database/database.js');
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.all('/:email_verification_token/:email_verification_code', async (req, res) => {
   try {
-    const { email_verification_code } = req.body;
-    const req_cookies = req.headers.cookie;
-
-    if (!req_cookies) {
-      return res.status(400).json({ success: false, error: 'Email verification token not found' });
-    }
-
-    const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
-      const [name, value] = cookie.trim().split('=');
-      cookiesObj[name] = value;
-      return cookiesObj;
-    }, {});
-
-    const email_verification_token = cookies['email_verification_token'];
+    const { email_verification_token, email_verification_code } = req.params;
 
     const decoded = await jwt.verify(email_verification_token, JWT_SECRET);
 
@@ -45,10 +32,10 @@ router.post('/', async (req, res) => {
 
     const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
     res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
-    return res.status(200).json({ success: true });
+    return res.redirect('/home');
   } catch (error) {
     notifyError(error);
-    return res.status(500).json({ success: false, error: 'Something went wrong, try again later' });
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
 

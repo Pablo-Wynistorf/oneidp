@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = process.env;
-const { notifyError } = require('../../../../notify/notifications');
+const { notifyError } = require('../../../../notify/notifications.js');
 
 const { userDB } = require('../../../../database/database.js');
 

@@ -7,7 +7,7 @@ successBox.className = 'success-box';
 
 if (true) {
   document.getElementById('scan-info').style.display = 'block';
-  fetch(`/api/mfa/setup`, {
+  fetch(`/api/auth/mfa/setup`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -40,7 +40,7 @@ inputs.forEach(function(input, index) {
           collectedInputs += input.value;
       });
       if (collectedInputs.length === inputs.length) {
-          fetch(`/api/mfa/setup/verify`, {
+          fetch(`/api/auth/mfa/setup/verify`, {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ backHome.addEventListener('click', () => {
 
 
 function activate_mfa() {
-  fetch(`/api/mfa/setup`, {
+  fetch(`/api/auth/mfa/setup`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ function activate_mfa() {
 }
 
 function disable_mfa() {
-  fetch(`/api/mfa/disable`, {
+  fetch(`/api/auth/mfa/disable`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

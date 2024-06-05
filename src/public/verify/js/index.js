@@ -11,7 +11,7 @@ function verifyCode() {
     code += input.value;
   });
   if (code.length === 6) {
-    fetch(`/api/sso/verify`, {
+    fetch(`/api/auth/user/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

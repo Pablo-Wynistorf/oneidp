@@ -8,7 +8,7 @@ function sendResetCode() {
   const resetEmailImput = document.getElementById('email-field');
   const email = resetEmailImput.value;
 
-  fetch(`/api/sso/data/resetpassword`, {
+  fetch(`/api/auth/user/resetpassword`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

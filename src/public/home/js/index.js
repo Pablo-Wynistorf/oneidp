@@ -51,7 +51,7 @@ document.getElementById("copyToClipboard").addEventListener("click", async funct
 
 function logout() {
   try {
-    fetch(`/api/sso/auth/logout`, {
+    fetch(`/api/auth/logout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ function logout() {
 
 function logoutAll() {
   try {
-    fetch(`/api/sso/auth/logoutall`, {
+    fetch(`/api/auth/logoutall`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -150,7 +150,7 @@ function changePassword() {
   const passwordInput = document.getElementById('password-field');
   const password = passwordInput.value;
   try {
-    fetch(`/api/sso/data/changepassword`, {
+    fetch(`/api/auth/user/changepassword`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -124,49 +124,53 @@ app.use('/home/oauth/settings/roles', verifyToken, express.static(path.join(__di
 
 
 // Login to the account, if account not verified, resend verification email.
-app.use('/api/sso/token/check', require('./routes/api/sso/token/check'));
+app.use('/api/auth/token/check', require('./routes/api/auth/token/check'));
 
 // Login to the account, if account not verified, resend verification email.
-app.use('/api/sso/auth/login', require('./routes/api/sso/auth/login'));
+app.use('/api/auth/login', require('./routes/api/auth/login'));
 
 // Register as new user, store userdata in the database and send verification email
-app.use('/api/sso/auth/register', require('./routes/api/sso/auth/register'));
-
-// Verify user with verification code and token, and later generate access tokens
-app.use('/api/sso/verfy', require('./routes/api/sso/verify'));
-
-// Verify user with verification code and token with the verificationlink, and later generate access tokens
-app.use('/api/sso/confirmationlink', require('./routes/api/sso/confirmationlink'));
-
-// Convert link into usable password_reset_code and password_reset_token cookies
-app.use('/api/sso/setresettokens', require('./routes/api/sso/setresettokens.js'));
-
-// Handle password change, define new session id, store passwordhash in database and issue new access token. 
-app.use('/api/sso/data/changepassword', require('./routes/api/sso/data/changepassword.js'));
+app.use('/api/auth/register', require('./routes/api/auth/register'));
 
 // Handle logout
-app.use('/api/sso/auth/logout', require('./routes/api/sso/auth/logout.js'));
+app.use('/api/auth/logout', require('./routes/api/auth/logout.js'));
 
 // Handle logout and change session id. (Invalidate access token)
-app.use('/api/sso/auth/logoutall', require('./routes/api/sso/auth/logoutall.js'));
-
-// Make a password reset request and send recovery code. 
-app.use('/api/sso/data/resetpassword', require('./routes/api/sso/data/resetpassword.js'));
-
-// Set new password with recoverycode and recoverytoken. 
-app.use('/api/sso/data/setpassword', require('./routes/api/sso/data/setpassword.js'));
-
-// Get the mfa qr code
-app.use('/api/mfa/setup', require('./routes/api/mfa/setup.js'));
-
-// Disable MFA
-app.use('/api/mfa/disable', require('./routes/api/mfa/disable.js'));
-
-// Mfa setup verify
-app.use('/api/mfa/setup/verify', require('./routes/api/mfa/setup/verify.js'));
+app.use('/api/auth/logoutall', require('./routes/api/auth/logoutall.js'));
 
 // Verify the mfa code
-app.use('/api/mfa/verify', require('./routes/api/mfa/verify.js'));
+app.use('/api/auth/mfa/verify', require('./routes/api/auth/mfa/verify.js'));
+
+// Get the mfa qr code
+app.use('/api/auth/mfa/setup', require('./routes/api/auth/mfa/setup.js'));
+
+// Mfa setup verify
+app.use('/api/auth/mfa/setup/verify', require('./routes/api/auth/mfa/setup/verify.js'));
+
+// Disable MFA
+app.use('/api/auth/mfa/disable', require('./routes/api/auth/mfa/disable.js'));
+
+
+
+// Verify user with verification code and token, and later generate access tokens
+app.use('/api/auth/user/verfy', require('./routes/api/auth/user/verify'));
+
+// Verify user with verification code and token with the verificationlink, and later generate access tokens
+app.use('/api/auth/user/confirmationlink', require('./routes/api/auth/user/confirmationlink'));
+
+// Convert link into usable password_reset_code and password_reset_token cookies
+app.use('/api/auth/user/setresettokens', require('./routes/api/auth/user/setresettokens.js'));
+
+// Handle password change, define new session id, store passwordhash in database and issue new access token. 
+app.use('/api/auth/user/changepassword', require('./routes/api/auth/user/changepassword.js'));
+
+// Make a password reset request and send recovery code. 
+app.use('/api/auth/user/resetpassword', require('./routes/api/auth/user/resetpassword.js'));
+
+// Set new password with recoverycode and recoverytoken. 
+app.use('/api/auth/user/setpassword', require('./routes/api/auth/user/setpassword.js'));
+
+
 
 // Get oauth apps
 app.use('/api/oauth/settings/get', require('./routes/api/oauth/settings/get.js'));

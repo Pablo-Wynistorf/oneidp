@@ -32,19 +32,13 @@ router.post('/', async (req, res) => {
       res.clearCookie('access_token');
       return res.redirect('/login');
     }
-    const mfaEnabled = userData.mfaEnabled;
 
-    if (mfaEnabled === false) {
-      return res.status(462).json({ success: false, error: 'MFA is not enabled' });
-    }
+    await userDB.updateOne({ userId }, { $unset: { sid: 1, oauthSid: 1 } });
 
-    await userDB.updateOne({ userId }, { $unset: { mfaSecret: 1, mfaLoginSecret: 1 } });
-    await userDB.updateOne({ userId }, { $set: { mfaEnabled: false } });
-
-    return res.status(200).json({ success: true, message: 'MFA has been successfully disabled' });
+    res.status(200).json({ success: true });
   } catch (error) {
     notifyError(error);
-    return res.status(500).json({ error: 'Something went wrong, try again later' });
+    return res.status(401).json({ error: 'Invalid access token' });
   }
 });
 

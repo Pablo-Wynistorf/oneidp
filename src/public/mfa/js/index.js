@@ -16,7 +16,7 @@ function verifyCode() {
 
   if (code.length === 6) {
     const redirectUri = getRedirectUri();
-    fetch(`/api/mfa/verify`, {
+    fetch(`/api/auth/mfa/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
