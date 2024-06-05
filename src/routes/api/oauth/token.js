@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { userDB, oAuthClientAppDB, oAuthRolesDB } = require('../../../database/database.js');
 const { JWT_SECRET } = process.env;
+const { notifyError }  = require('../../../notify/notifications.js');
 
 const router = express.Router();
 
@@ -104,9 +105,9 @@ router.post('/', async (req, res) => {
     const oauth_refresh_token = jwt.sign({ userId, oauthSid, clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
 
     return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
-
+    
   } catch (error) {
-    console.error(error);
+    notifyError(error);
     res.status(500).json({ error: 'Server Error', error_description: 'Something went wrong on our site. Please try again later' });
   }
 });
