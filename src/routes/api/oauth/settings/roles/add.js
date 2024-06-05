@@ -62,7 +62,9 @@ router.post('/', async (req, res) => {
     const oauthClientAppData = await oAuthClientAppDB.findOne({ oauthClientAppId });
     const oauthClientId = oauthClientAppData.clientId;
 
-    const existingOauthRoleName = await oAuthRolesDB.findOne({ oauthRoleName: oauthRoleName, oauthClientId: oauthClientId });
+    const smallLettersRoleName = oauthRoleName.toLowerCase();
+
+    const existingOauthRoleName = await oAuthRolesDB.findOne({ oauthRoleName: smallLettersRoleName, oauthClientId: oauthClientId });
     if (existingOauthRoleName) {
       return res.status(463).json({ error: 'Role name already exists' });
     }
