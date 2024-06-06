@@ -10,6 +10,7 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   const { password, password_reset_code } = req.body;
+
   const req_cookies = req.headers.cookie;
 
   if (!req_cookies) {
@@ -24,12 +25,11 @@ router.post('/', async (req, res) => {
 
   const password_reset_token = cookies['password_reset_token'];
 
-  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
-
   try {
 
+    const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\[\]{}|;:,.<>?])([A-Za-z\d!@#$%^&*()_+\[\]{}|;:,.<>?]{8,})$/;
     if (typeof password !== 'string' || password.length < 8 || password.length > 10000 || !passwordPattern.test(password)) {
-      return res.status(465).json({ success: false, error: 'Password must be between 8 and 10000 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
+      return res.status(460).json({ success: false, error: 'Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
     }
 
     try {
@@ -39,7 +39,7 @@ router.post('/', async (req, res) => {
 
       const userReset = await userDB.findOne({ userId: userId, resetCode: password_reset_code });
       if (!userReset) {
-        return res.status(460).json({ error: 'Wrong recovery code entered' });
+        return res.status(461).json({ error: 'Wrong recovery code entered' });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);

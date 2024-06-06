@@ -9,7 +9,7 @@ password.addEventListener('input', passwordRequirements);
 
 
 function isStrongPassword(password) {
-  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
+  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\[\]{}|;:,.<>?])([A-Za-z\d!@#$%^&*()_+\[\]{}|;:,.<>?]{8,})$/;
   return passwordPattern.test(password);
 }
 
@@ -94,12 +94,6 @@ function handleResponse(response) {
     handle463Error();
   } else if (response.status === 464) {
     handle464Error()
-  } else if (response.status === 465) {
-    handle465Error();
-  } else if (response.status === 466) {
-    handle466Error();
-  } else if (response.status === 467) {
-    handle467Error();
   }else {
     handleError();
   }
@@ -111,57 +105,35 @@ function handle429Error() {
 
 
 function handle460Error() {
-  const emailInput = document.getElementById('email-field');
-  emailInput.value = '';
-  displayError('Error: Email already registered')
-}
-
-
-function handle461Error() {
-  const usernameInput = document.getElementById('username-field');
-  usernameInput.value = '';
-  displayError('Error: Username already used')
-}
-
-function handle462Error() {
   const usernameInput = document.getElementById('username-field');
   usernameInput.value = '';
   displayError('Username must only contain letters, numbers, and dashes and be between 3 and 20 characters')
 }
 
-
-function handle463Error() {
-  const usernameInput = document.getElementById('username-field');
-  usernameInput.value = '';
-  displayError('Error: Username cannot have more than 20 characters')
-}
-
-function handle464Error() {
-  const passwordInput = document.getElementById('password-field');
-  passwordInput.value = '';
-  document.getElementById('passwordRequirementComponents').style.color = "red";
-  document.getElementById('register-button').disabled = true;
-  displayError('Error: Pasword cannot have more than 23 characters')
-}
-
-function handle465Error() {
-  const passwordInput = document.getElementById('password-field');
-  passwordInput.value = '';
-  document.getElementById('passwordRequirementComponents').style.color = "red";
-  document.getElementById('register-button').disabled = true;
-  displayError('Error: Pasword must have at least 8 characters')
-}
-
-function handle466Error() {
+function handle461Error() {
   const emailInput = document.getElementById('email-field');
   emailInput.value = '';
   displayError('Error: Invalid email address')
 }
 
-function handle467Error() {
+function handle462Error() {
+  const passwordInput = document.getElementById('password-field');
+  passwordInput.value = '';
   document.getElementById('passwordRequirementComponents').style.color = "red";
   document.getElementById('register-button').disabled = true;
-  displayError('Error: Password doesnt meet our requirements')
+  displayError('Error: Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character')
+}
+
+function handle463Error() {
+  const emailInput = document.getElementById('email-field');
+  emailInput.value = '';
+  displayError('Error: Email already registered')
+}
+
+function handle464Error() {
+  const usernameInput = document.getElementById('username-field');
+  usernameInput.value = '';
+  displayError('Error: Username already taken')
 }
 
 function handleError() {

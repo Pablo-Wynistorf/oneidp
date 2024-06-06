@@ -117,7 +117,7 @@ password.addEventListener('input', passwordRequirements);
 password.addEventListener('blur', checkPasswordOnBlur);
 
 function isStrongPassword(password) {
-  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
+  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\[\]{}|;:,.<>?])([A-Za-z\d!@#$%^&*()_+\[\]{}|;:,.<>?]{8,})$/;
   return passwordPattern.test(password);
 }
 
@@ -195,20 +195,7 @@ function handle200() {
 function handle460Error() {
   document.getElementById('password-field').value = '';
   document.getElementById('password-retype-field').value = '';
-  displayError('Error: Password must be at least 5 characters');
-}
-
-function handle461Error() {
-  document.getElementById('password-field').value = '';
-  document.getElementById('password-retype-field').value = '';
-  displayError('Error: Password must not have more than 23 characters');
-  document.getElementById('passwordRequirementComponents').style.color = "red";
-}
-
-function handle462Error() {
-  document.getElementById('password-field').value = '';
-  document.getElementById('password-retype-field').value = '';
-  displayError('Error: Password doesnt meet our requirements');
+  displayError('Error: Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character');
 }
 
 function handleError() {

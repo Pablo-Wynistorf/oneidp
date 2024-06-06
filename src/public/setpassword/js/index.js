@@ -46,7 +46,6 @@ function passwordCheck() {
   }
 }
 
-
 function setNewPassword() {
   const passwordInput = document.getElementById('password-field');
   const resetCodeInput = document.getElementById('reset-code-field');
@@ -85,37 +84,21 @@ function handleResponse(response) {
     handle460Error();
   } else if (response.status === 461) {
     handle461Error();
-  } else if (response.status === 463) {
-    handle463Error();
-  } else if (response.status === 464) {
-    handle464Error();
   } else {
     handleError();
   }
 }
 
+
 function handle460Error() {
-  document.getElementById('reset-code').value = '';
-  displayError('Error: Wrong recovery code entered')
-}
-
-function handle463Error() {
   document.getElementById('password').value = '';
   document.getElementById('password-retype').value = '';
-  displayError('Password must have at least 8 characters')
+  displayError('Error: Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character')
 }
-
-function handle464Error() {
-  document.getElementById('password').value = '';
-  document.getElementById('password-retype').value = '';
-  displayError('Password cannot have more than 23 characters')
-}
-
 
 function handle461Error() {
-  document.getElementById('password').value = '';
-  document.getElementById('password-retype').value = '';
-  displayError('Password must have at least 5 characters')
+  document.getElementById('reset-code').value = '';
+  displayError('Error: Wrong recovery code entered')
 }
 
 function handleError() {
@@ -130,7 +113,7 @@ password.addEventListener('input', passwordRequirements);
 password.addEventListener('blur', checkPasswordOnBlur);
 
 function isStrongPassword(password) {
-  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
+  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\[\]{}|;:,.<>?])([A-Za-z\d!@#$%^&*()_+\[\]{}|;:,.<>?]{8,})$/;
   return passwordPattern.test(password);
 }
 

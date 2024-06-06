@@ -16,18 +16,18 @@ router.post('/', async (req, res) => {
   const { username, password, email } = req.body;
   const usernameRegex = /^[a-zA-Z0-9-]{3,20}$/;
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
 
   if (!usernameRegex.test(username)) {
-    return res.status(462).json({ success: false, error: 'Username must only contain letters, numbers, and dashes and be between 3 and 20 characters' });
+    return res.status(460).json({ success: false, error: 'Username must only contain letters, numbers, and dashes and be between 3 and 20 characters' });
   }
 
   if (!emailRegex.test(email)) {
-    return res.status(466).json({ success: false, error: 'Invalid email address' });
+    return res.status(461).json({ success: false, error: 'Invalid email address' });
   }
 
+  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\[\]{}|;:,.<>?])([A-Za-z\d!@#$%^&*()_+\[\]{}|;:,.<>?]{8,})$/;
   if (typeof password !== 'string' || password.length < 8 || password.length > 10000 || !passwordPattern.test(password)) {
-    return res.status(465).json({ success: false, error: 'Password must be between 8 and 10000 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
+    return res.status(462).json({ success: false, error: 'Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
   }
 
   try {
@@ -35,11 +35,11 @@ router.post('/', async (req, res) => {
     let existingEmail = await userDB.findOne({ email });
 
     if (existingEmail) {
-      return res.status(460).json({ success: false, error: 'Email already used, try login' });
+      return res.status(463).json({ success: false, error: 'Email already used, try login' });
     }
 
     if (existingUsername) {
-      return res.status(461).json({ success: false, error: 'Username already taken' });
+      return res.status(464).json({ success: false, error: 'Username already taken' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
