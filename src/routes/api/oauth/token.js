@@ -61,7 +61,7 @@ router.post('/', async (req, res) => {
       const oauth_id_token = jwt.sign({ userId, username, email, roles: roleNames, mfaEnabled }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
       const oauth_refresh_token = jwt.sign({ userId, oauthSid, clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
 
-      return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
+      return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token, expiresIn: accessTokenValidity});
 
     } else if (oauthAuthorizationCode) {
       if (!clientId || !clientSecret || clientId === 'undefined' || clientSecret === 'undefined') {
@@ -104,7 +104,7 @@ router.post('/', async (req, res) => {
     const oauth_id_token = jwt.sign({ userId, username, email, roles: roleNames, mfaEnabled }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
     const oauth_refresh_token = jwt.sign({ userId, oauthSid, clientId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '20d' });
 
-    return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token });
+    return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token, expiresIn: accessTokenValidity });
     
   } catch (error) {
     notifyError(error);
