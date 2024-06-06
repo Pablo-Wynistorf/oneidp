@@ -35,8 +35,15 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const decoded = jwt.verify(access_token, JWT_SECRET);
-    const { userId, sid, oauthSid, clientId } = decoded;
+    let tokenData;
+    
+    try {
+      tokenData = jwt.verify(access_token, JWT_SECRET);
+    } catch (error) {
+      return res.status(401).json({ success: false, error: 'Access Token is invalid' });
+    }
+
+    const { userId, sid, oauthSid, clientId } = tokenData;
 
     const userData = await userDB.findOne({ userId, $or: [{ oauthSid }, { sid }] });
     if (!userData) {
