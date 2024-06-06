@@ -26,8 +26,8 @@ router.post('/', async (req, res) => {
     return res.status(466).json({ success: false, error: 'Invalid email address' });
   }
 
-  if (typeof password !== 'string' || password.length < 8 || password.length > 300 || !passwordPattern.test(password)) {
-    return res.status(465).json({ success: false, error: 'Password must be between 8 and 300 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
+  if (typeof password !== 'string' || password.length < 8 || password.length > 10000 || !passwordPattern.test(password)) {
+    return res.status(465).json({ success: false, error: 'Password must be between 8 and 10000 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
   }
 
   try {

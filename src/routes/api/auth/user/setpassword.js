@@ -10,7 +10,6 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   const { password, password_reset_code } = req.body;
-  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
   const req_cookies = req.headers.cookie;
 
   if (!req_cookies) {
@@ -25,17 +24,12 @@ router.post('/', async (req, res) => {
 
   const password_reset_token = cookies['password_reset_token'];
 
+  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
+
   try {
-    if (!passwordPattern.test(password)) {
-      return res.status(462).json({ success: false, error: 'Password doesn\'t meet our requirements' });
-    }
 
-    if (typeof password !== 'string' || password.length < 8) {
-      return res.status(463).json({ success: false, error: 'Password must have at least 8 characters' });
-    }
-
-    if (typeof password !== 'string' || password.length > 23) {
-      return res.status(464).json({ success: false, error: 'Password must not have more than 23 characters' });
+    if (typeof password !== 'string' || password.length < 8 || password.length > 10000 || !passwordPattern.test(password)) {
+      return res.status(465).json({ success: false, error: 'Password must be between 8 and 10000 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
     }
 
     try {

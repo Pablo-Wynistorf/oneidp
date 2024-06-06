@@ -27,16 +27,8 @@ router.post('/', async (req, res) => {
 
     const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&.()/^])([A-Za-z\d@$!%*?&.]{8,})$/;
 
-    if (!passwordPattern.test(password)) {
-      return res.status(462).json({ success: false, error: 'Password doesn\'t meet our requirements' });
-    }
-
-    if (typeof password !== 'string' || password.length < 5) {
-      return res.status(460).json({ success: false, error: 'Password must have at least 5 characters' });
-    }
-
-    if (typeof password !== 'string' || password.length > 23) {
-      return res.status(461).json({ success: false, error: 'Password must not have more than 23 characters' });
+    if (typeof password !== 'string' || password.length < 8 || password.length > 10000 || !passwordPattern.test(password)) {
+      return res.status(465).json({ success: false, error: 'Password must be between 8 and 10000 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
     }
 
     const decoded = jwt.verify(access_token, JWT_SECRET);
