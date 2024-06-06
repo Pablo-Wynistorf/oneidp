@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { userDB, oAuthClientAppDB } = require('../../../database/database.js');
 const { JWT_SECRET } = process.env;
+const { notifyError } = require('../../../notify/notifications.js');
 
 const router = express.Router();
 
@@ -56,6 +57,7 @@ router.get('/', async (req, res) => {
       res.redirect(redirectUri);
     });
   } catch (error) {
+    notifyError(error);
     res.status(500).json({ error: 'Server Error', error_description: 'Something went wrong on our site. Please try again later' });
   }
 });
