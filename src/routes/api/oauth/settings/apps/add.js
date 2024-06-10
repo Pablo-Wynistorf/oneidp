@@ -65,14 +65,14 @@ router.post('/', async (req, res) => {
     let clientId;
     let existingClientId;
     do {
-      clientId = [...Array(45)].map(() => Math.random().toString(36)[2]).join('');
+      clientId = [...Array(64)].map(() => Math.random().toString(36)[2]).join('');
       existingClientId = await oAuthClientAppDB.findOne({ clientId });
     } while (existingClientId);
 
     let clientSecret;
     let existingclientSecret;
     do {
-      clientSecret = [...Array(45)].map(() => Math.random().toString(36)[2]).join('');
+      clientSecret = [...Array(64)].map(() => Math.random().toString(36)[2]).join('');
       existingclientSecret = await oAuthClientAppDB.findOne({ clientSecret });
     } while (existingclientSecret);
 
