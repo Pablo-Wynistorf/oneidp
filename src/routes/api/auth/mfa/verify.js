@@ -11,19 +11,11 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   const { mfaVerifyCode, redirectUri } = req.body;
 
-  const req_cookies = req.headers.cookie;
+  const mfa_token = req.cookies.mfa_token;
 
-  if (!req_cookies) {
+  if (!mfa_token) {
     return res.status(462).json({ success: false, error: 'Access Token not found' });
   }
-
-  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
-    const [name, value] = cookie.trim().split('=');
-    cookiesObj[name] = value;
-    return cookiesObj;
-  }, {});
-
-  const mfa_token = cookies['mfa_token'];
 
   try {
     const decoded = jwt.verify(mfa_token, JWT_SECRET);

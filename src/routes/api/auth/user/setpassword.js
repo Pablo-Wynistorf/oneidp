@@ -11,19 +11,11 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   const { password, password_reset_code } = req.body;
 
-  const req_cookies = req.headers.cookie;
+  const password_reset_token = req.cookies.password_reset_token;
 
-  if (!req_cookies) {
-    return res.status(400).json({ success: false, error: 'Access Token not found' });
+  if (!password_reset_token) {
+    return res.status(400).json({ success: false, error: 'Reset Token not found' });
   }
-
-  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
-    const [name, value] = cookie.trim().split('=');
-    cookiesObj[name] = value;
-    return cookiesObj;
-  }, {});
-
-  const password_reset_token = cookies['password_reset_token'];
 
   try {
 

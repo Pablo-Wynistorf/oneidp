@@ -214,6 +214,9 @@ app.use('/.well-known/openid-configuration', require('./routes/api/oauth/openid-
 // Check the health of the application
 app.use('/api/health', require('./routes/api/health/health.js'));
 
+// Check details of the application
+app.use('/api/health/details', require('./routes/api/health/details.js'));
+
 // Start the api
 app.listen(API_PORT, () => {
   console.log('Login API started on port', API_PORT);

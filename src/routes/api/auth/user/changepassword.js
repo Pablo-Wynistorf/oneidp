@@ -11,19 +11,11 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   try {
     const { password } = req.body;
-    const req_cookies = req.headers.cookie;
+    const access_token = req.cookies.access_token;
 
-    if (!req_cookies) {
+    if (!access_token) {
       return res.status(400).json({ success: false, error: 'Access Token not found' });
     }
-
-    const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
-      const [name, value] = cookie.trim().split('=');
-      cookiesObj[name] = value;
-      return cookiesObj;
-    }, {});
-
-    const access_token = cookies['access_token'];
 
     const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\[\]{}|;:,.<>?])([A-Za-z\d!@#$%^&*()_+\[\]{}|;:,.<>?]{8,})$/;
     if (typeof password !== 'string' || password.length < 8 || password.length > 10000 || !passwordPattern.test(password)) {

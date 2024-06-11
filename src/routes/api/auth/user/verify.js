@@ -10,19 +10,11 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   try {
     const { email_verification_code } = req.body;
-    const req_cookies = req.headers.cookie;
+    const email_verification_token = req.cookies.email_verification_token;
 
-    if (!req_cookies) {
+    if (!email_verification_token) {
       return res.status(400).json({ success: false, error: 'Email verification token not found' });
     }
-
-    const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
-      const [name, value] = cookie.trim().split('=');
-      cookiesObj[name] = value;
-      return cookiesObj;
-    }, {});
-
-    const email_verification_token = cookies['email_verification_token'];
 
     const decoded = await jwt.verify(email_verification_token, JWT_SECRET);
 

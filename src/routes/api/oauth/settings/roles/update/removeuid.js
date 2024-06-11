@@ -7,20 +7,12 @@ const { userDB, oAuthRolesDB } = require('../../../../../../database/database.js
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-  const req_cookies = req.headers.cookie;
+  const access_token = req.cookies.access_token
   const { oauthClientAppId, oauthRoleId } = req.body;
 
-  if (!req_cookies) {
+  if (!access_token) {
     return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
-
-  const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
-    const [name, value] = cookie.trim().split('=');
-    cookiesObj[name] = value;
-    return cookiesObj;
-  }, {});
-
-  const access_token = cookies['access_token'];
 
   try {
     const decoded = jwt.verify(access_token, JWT_SECRET);
