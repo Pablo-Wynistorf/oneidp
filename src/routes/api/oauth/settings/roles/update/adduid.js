@@ -39,6 +39,10 @@ router.post('/', async (req, res) => {
       }
 
       const basicAuth_oauthClientAppId = client.oauthClientAppId;
+
+      if (basicAuth_oauthClientAppId !== oauthClientAppId) {
+        return res.status(461).json({ error: 'User does not have access to this oauth app' });
+      }
   
       const existingRole = await oAuthRolesDB.findOne({ oauthRoleId, oauthClientAppId: basicAuth_oauthClientAppId });
 
