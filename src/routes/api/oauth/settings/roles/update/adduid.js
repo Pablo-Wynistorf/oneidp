@@ -64,7 +64,7 @@ router.post('/', async (req, res) => {
   
         if (existingRole && existingRole.oauthUserIds === '*') {
           await oAuthRolesDB.updateOne(
-            { oauthRoleId, oauthClientAppId },
+            { oauthRoleId, oauthClientAppId: basicAuth_oauthClientAppId },
             { $unset: { oauthUserIds: '' } }
           );
         }
@@ -77,8 +77,8 @@ router.post('/', async (req, res) => {
       }
   
       await oAuthRolesDB.findOneAndUpdate(
-        { oauthRoleId, oauthClientAppId },
-        { oauthRoleId, oauthClientAppId, oauthUserIds: oauthRoleUserIds },
+        { oauthRoleId, oauthClientAppId: basicAuth_oauthClientAppId },
+        { oauthRoleId, oauthClientAppId: basicAuth_oauthClientAppId, oauthUserIds: oauthRoleUserIds },
         { upsert: true }
       );
   
