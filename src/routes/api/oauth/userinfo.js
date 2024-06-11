@@ -18,7 +18,7 @@ router.post('/', async (req, res) => {
     access_token = req.cookies.access_token;
 
     if (!access_token) {
-      return res.status(400).json({ success: false, error: 'Access Token not found' });
+      return res.status(400).json({ success: false, error: 'Access Token not provided' });
     }
   }
 

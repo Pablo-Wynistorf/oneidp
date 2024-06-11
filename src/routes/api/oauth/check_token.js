@@ -15,19 +15,11 @@ router.post('/', async (req, res) => {
   }
 
   if (!access_token) {
-    const req_cookies = req.headers.cookie;
+    access_token = req.cookies.access_token;  
 
-    if (!req_cookies) {
-      return res.status(400).json({ success: false, error: 'Access Token not found' });
+    if (!access_token) {
+      return res.status(400).json({ success: false, error: 'Access Token not provided' });
     }
-
-    const cookies = req_cookies.split(';').reduce((cookiesObj, cookie) => {
-      const [name, value] = cookie.trim().split('=');
-      cookiesObj[name] = value;
-      return cookiesObj;
-    }, {});
-
-    access_token = cookies['access_token'];
   }
 
   if (!access_token) {

@@ -7,7 +7,7 @@ const { userDB, oAuthRolesDB } = require('../../../../../../database/database.js
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-  const access_token = req.cookies.access_token
+  const access_token = req.cookies.access_token;
   const { oauthClientAppId, oauthRoleId } = req.body;
   let { oauthRoleUserIds } = req.body;
 
@@ -50,23 +50,38 @@ router.post('/', async (req, res) => {
       return res.status(461).json({ error: 'User does not have access to this oauth app' });
     }
 
+    const existingRole = await oAuthRolesDB.findOne({ oauthRoleId, oauthClientAppId });
+
     if (oauthRoleUserIds === '*') {
       oauthRoleUserIds = '*';
     } else {
-      const sortedUserIds = oauthRoleUserIds.split(',').map(id => id.trim()).sort();
-      oauthRoleUserIds = sortedUserIds;
-    }
+      let userIdsArray = oauthRoleUserIds.split(',').map(id => id.trim());
 
-    const existingRole = await oAuthRolesDB.findOne({ oauthRoleId, oauthClientAppId });
-    let updatedUserIds = oauthRoleUserIds;
+      const validUserIds = await userDB.find({ userId: { $in: userIdsArray } }).distinct('userId');
 
-    if (existingRole && existingRole.oauthUserIds) {
-      updatedUserIds = [...existingRole.oauthUserIds, ...oauthRoleUserIds];
+      const nonExistingUsers = userIdsArray.filter(id => !validUserIds.includes(id));
+      if (nonExistingUsers.length > 0) {
+        return res.status(464).json({ error: `The following users do not exist: ${nonExistingUsers.join(', ')}` });
+      }
+
+      if (existingRole && existingRole.oauthUserIds === '*') {
+        await oAuthRolesDB.updateOne(
+          { oauthRoleId, oauthClientAppId },
+          { $unset: { oauthUserIds: '' } }
+        );
+      }
+
+      if (existingRole && Array.isArray(existingRole.oauthUserIds)) {
+        userIdsArray = [...new Set([...existingRole.oauthUserIds, ...userIdsArray])];
+      }
+
+      oauthRoleUserIds = userIdsArray.sort();
     }
 
     await oAuthRolesDB.findOneAndUpdate(
       { oauthRoleId, oauthClientAppId },
-      { oauthRoleId, oauthClientAppId, oauthUserIds: updatedUserIds }
+      { oauthRoleId, oauthClientAppId, oauthUserIds: oauthRoleUserIds },
+      { upsert: true }
     );
 
     res.status(200).json({ success: true, message: 'OAuth role has been successfully updated' });

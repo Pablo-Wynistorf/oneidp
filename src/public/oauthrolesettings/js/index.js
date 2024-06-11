@@ -212,6 +212,10 @@ function handleResponse(response) {
     return handle462Error();
   } else if (response.status === 463) {
     return handle463Error();
+  } else if (response.status === 464) {
+    return handle464Error();
+  } else if (response.status === 465) {
+    return handle465Error();
   } else {
     handleError();
   }
@@ -234,6 +238,14 @@ function handle462Error() {
 
 function handle463Error() {
   displayError("Error: Role already exists")
+}
+
+function handle464Error() {
+  displayError("Error: User does not exist")
+}
+
+function handle465Error() {
+  displayError("Error: User has role already assigned")
 }
 
 function handleError() {
