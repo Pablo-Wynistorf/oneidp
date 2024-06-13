@@ -39,7 +39,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'unsupported_grant_type' });
     }
 
-    if (refresh_token) {
+    if (grant_type === 'refresh_token') {
       let decodedRefreshToken;
       try {
         decodedRefreshToken = jwt.verify(refresh_token, JWT_PRIVATE_KEY, { algorithms: ['RS256'] });
@@ -83,7 +83,7 @@ router.post('/', async (req, res) => {
 
       return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token, expires_in: accessTokenValidity });
 
-    } else if (oauthAuthorizationCode) {
+    } else if (grant_type === 'authorization_code') {
       if (!clientId || clientId === 'undefined') {
         return res.status(400).json({ error: 'Invalid Request', error_description: 'No client_id provided' });
       }
