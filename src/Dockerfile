@@ -9,6 +9,7 @@ COPY public /usr/src/app/api/public
 COPY routes /usr/src/app/api/routes
 COPY notify /usr/src/app/api/notify
 COPY database /usr/src/app/api/database
+COPY utils /usr/src/app/api/utils
 
 RUN npm install
 
