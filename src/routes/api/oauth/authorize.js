@@ -12,17 +12,27 @@ ${process.env.JWT_PRIVATE_KEY}
 `.trim();
 
 router.get('/', async (req, res) => {
-  const { client_id, redirect_uri, state, nonce } = req.query;
+  const { client_id, redirect_uri, state, nonce, response_type, code_challenge_method, code_challenge } = req.query;
   const access_token = req.cookies.access_token;
+
   try {
 
     if (!access_token || access_token === 'undefined') {
       return res.redirect(`/login?redirect_uri=${redirect_uri}`);
     }
 
-    if (!client_id || !redirect_uri || client_id === 'undefined' || redirect_uri === 'undefined') {
-      return res.status(400).json({ error: 'Invalid Request', error_description: 'No client_id or redirect_uri provided' });
+    if (!client_id || client_id === 'undefined') {
+      return res.status(400).json({ error: 'Invalid Request', error_description: 'No client_id provided' });
     }
+
+    if (!redirect_uri || redirect_uri === 'undefined') {
+      return res.status(400).json({ error: 'Invalid Request', error_description: 'No redirect_uri provided' });
+    }
+
+    // if ((response_type ?? '') !== 'code') {
+    //   return res.status(400).json({ error: 'Invalid Request', error_description: 'Only response_type "code" is supported' });
+    // }
+    
 
     jwt.verify(access_token, JWT_PRIVATE_KEY, async (error, decoded) => {
 
@@ -56,7 +66,7 @@ router.get('/', async (req, res) => {
         existingAuthorizationCode = await userDB.findOne({ oauthAuthorizationCode: authorizationCode });
       } while (existingAuthorizationCode);
       
-      await userDB.updateOne({ userId }, { $set: { oauthAuthorizationCode: authorizationCode, nonce: nonce } });
+      await userDB.updateOne({ userId }, { $set: { oauthAuthorizationCode: authorizationCode, nonce: nonce, codeChallenge: code_challenge, codeChallengeMethod: code_challenge_method, oauthClientId: client_id } });
 
       if (!state || state === 'undefined') {
         const redirectUri = `${redirect_uri}?code=${authorizationCode}`;

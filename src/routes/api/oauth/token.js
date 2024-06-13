@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { userDB, oAuthClientAppDB, oAuthRolesDB } = require('../../../database/database.js');
 const { notifyError } = require('../../../notify/notifications.js');
 require('dotenv').config();
@@ -20,11 +21,7 @@ ${process.env.JWT_PRIVATE_KEY}
 const URL = process.env.URL;
 
 router.post('/', async (req, res) => {
-  const { grant_type, code, client_id, client_secret, refresh_token } = req.body;
-
-  const oauthAuthorizationCode = code;
-  const clientId = client_id;
-  const clientSecret = client_secret;
+  const { grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri } = req.body;
 
   const JWK_PUBLIC_KEY = getJWKPublicKey();
 
@@ -33,10 +30,10 @@ router.post('/', async (req, res) => {
     let oauth_user;
     let userId;
     let oauthSid;
-    let refresh_token_clientId;
+    let clientId = client_id;
 
     if (grant_type !== 'authorization_code' && grant_type !== 'refresh_token') {
-      return res.status(400).json({ error: 'unsupported_grant_type' });
+      return res.status(400).json({ error: 'Unsupported grant_type. Only authorization_code and refresh_token are supported' });
     }
 
     if (grant_type === 'refresh_token') {
@@ -49,9 +46,9 @@ router.post('/', async (req, res) => {
 
       userId = decodedRefreshToken.userId;
       oauthSid = decodedRefreshToken.oauthSid;
-      refresh_token_clientId = decodedRefreshToken.clientId;
+      clientId = decodedRefreshToken.clientId;
 
-      oauth_client = await oAuthClientAppDB.findOne({ clientId: refresh_token_clientId, clientSecret });
+      oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
 
       if (!oauth_client) {
         return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or invalid refresh_token provided' });
@@ -63,51 +60,53 @@ router.post('/', async (req, res) => {
         return res.status(401).json({ error: 'Unauthorized', error_description: 'User not found or session has expired' });
       }
 
-      const username = oauth_user.username;
-      const email = oauth_user.email;
-      const mfaEnabled = oauth_user.mfaEnabled;
-      const accessTokenValidity = oauth_client.accessTokenValidity;
-
-      const roleData = await oAuthRolesDB.find({
-        $or: [
-          { oauthClientId: refresh_token_clientId, oauthUserIds: userId },
-          { oauthClientId: refresh_token_clientId, oauthUserIds: "*" },
-        ],
-      }).exec();
-
-      const roleNames = roleData.map(role => role.oauthRoleName);
-
-      const oauth_access_token = jwt.sign({ userId, oauthSid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: accessTokenValidity, keyid: JWK_PUBLIC_KEY.kid })
-      const oauth_id_token = jwt.sign({ userId, username, email, roles: roleNames, mfaEnabled, iss: URL, sub: userId, aud: clientId, nonce }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h', keyid: JWK_PUBLIC_KEY.kid });
-      const oauth_refresh_token = jwt.sign({ userId, oauthSid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '20d', keyid: JWK_PUBLIC_KEY.kid });
-
-      return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token, expires_in: accessTokenValidity });
-
     } else if (grant_type === 'authorization_code') {
-      if (!clientId || clientId === 'undefined') {
-        return res.status(400).json({ error: 'Invalid Request', error_description: 'No client_id provided' });
-      }
+      if (code_verifier) {
+        oauth_user = await userDB.findOne({ oauthAuthorizationCode: code });
 
-      if (!clientSecret|| clientSecret === 'undefined') {
-        return res.status(400).json({ error: 'Invalid Request', error_description: 'No client_secret provided' });
-      }
+        if (!oauth_user) {
+          return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid authorization code provided' });
+        }
 
-      oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
+        const code_challenge_method = oauth_user.codeChallengeMethod;
+        const code_challenge = oauth_user.codeChallenge;
+        clientId = oauth_user.oauthClientId;
 
-      if (!oauth_client) {
-        return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or client_secret provided' });
-      }
+        if (code_challenge_method === 'S256') {
+          const generatedCodeChallenge = crypto.createHash('sha256').update(code_verifier).digest('base64url');
+          if (code_challenge !== generatedCodeChallenge) {
+            return res.status(401).json({ error: 'Unauthorized', error_description: 'Code verifier does not match code challenge' });
+          }
+        } else {
+          return res.status(400).json({ error: 'Invalid Request', error_description: 'Unsupported code_challenge_method' });
+        }
 
-      oauth_user = await userDB.findOneAndUpdate({ oauthAuthorizationCode }, { $unset: { oauthAuthorizationCode: 1 } });
+        oauth_client = await oAuthClientAppDB.findOne({ clientId });
 
-      if (!oauth_user) {
-        return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid authorization code provided' });
+        await userDB.findOneAndUpdate({ oauthAuthorizationCode: code }, { $unset: { nonce: 1, oauthAuthorizationCode: 1, codeChallenge: 1, codeChallengeMethod: 1, oauthClientId: 1 } });
+
+      } else {
+        if (!client_id || !client_secret) {
+          return res.status(400).json({ error: 'Invalid Request', error_description: 'client_id and client_secret are required for standard authorization code flow' });
+        }
+
+        oauth_client = await oAuthClientAppDB.findOne({ clientId: client_id, clientSecret: client_secret });
+
+        if (!oauth_client) {
+          return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or client_secret provided' });
+        }
+
+        oauth_user = await userDB.findOneAndUpdate({ oauthAuthorizationCode: code }, { $unset: { oauthAuthorizationCode: 1 } });
+
+        if (!oauth_user) {
+          return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid authorization code provided' });
+        }
+
+        clientId = client_id;
       }
 
       userId = oauth_user.userId;
       oauthSid = oauth_user.oauthSid;
-    } else {
-      return res.status(400).json({ error: 'Invalid Grant', error_description: 'Only authorization_code and refresh_token grant types are supported' });
     }
 
     const username = oauth_user.username;
@@ -125,7 +124,7 @@ router.post('/', async (req, res) => {
 
     const roleNames = roleData.map(role => role.oauthRoleName);
 
-    const oauth_access_token = jwt.sign({ userId, oauthSid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: accessTokenValidity, keyid: JWK_PUBLIC_KEY.kid })
+    const oauth_access_token = jwt.sign({ userId, oauthSid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: accessTokenValidity, keyid: JWK_PUBLIC_KEY.kid });
     const oauth_id_token = jwt.sign({ userId, username, email, roles: roleNames, mfaEnabled, iss: URL, sub: userId, aud: clientId, nonce }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h', keyid: JWK_PUBLIC_KEY.kid });
     const oauth_refresh_token = jwt.sign({ userId, oauthSid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '20d', keyid: JWK_PUBLIC_KEY.kid });
 
