@@ -20,7 +20,7 @@ ${process.env.JWT_PRIVATE_KEY}
 const URL = process.env.URL;
 
 router.post('/', async (req, res) => {
-  const { code, client_id, client_secret, refresh_token } = req.body;
+  const { grant_type, code, client_id, client_secret, refresh_token } = req.body;
 
   const oauthAuthorizationCode = code;
   const clientId = client_id;
@@ -34,6 +34,10 @@ router.post('/', async (req, res) => {
     let userId;
     let oauthSid;
     let refresh_token_clientId;
+
+    if (grant_type !== 'authorization_code' && grant_type !== 'refresh_token') {
+      return res.status(400).json({ error: 'unsupported_grant_type' });
+    }
 
     if (refresh_token) {
       let decodedRefreshToken;
@@ -128,6 +132,7 @@ router.post('/', async (req, res) => {
     return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token, expires_in: accessTokenValidity });
 
   } catch (error) {
+    console.log(error);
     notifyError(error);
     res.status(500).json({ error: 'Server Error', error_description: 'Something went wrong on our site. Please try again later' });
   }
