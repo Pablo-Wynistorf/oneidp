@@ -1,12 +1,17 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = process.env;
 const { notifyError } = require('../../../../notify/notifications.js');
 
 const { userDB } = require('../../../../database/database.js');
 
 const router = express.Router();
+
+const JWT_PRIVATE_KEY = `
+-----BEGIN PRIVATE KEY-----
+${process.env.JWT_PRIVATE_KEY}
+-----END PRIVATE KEY-----
+`.trim();
 
 router.post('/', async (req, res) => {
   try {
@@ -22,7 +27,7 @@ router.post('/', async (req, res) => {
       return res.status(460).json({ success: false, error: 'Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
     }
 
-    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const decoded = jwt.verify(access_token, JWT_PRIVATE_KEY);
     const userId = decoded.userId;
     const sid = decoded.sid;
 
@@ -38,7 +43,7 @@ router.post('/', async (req, res) => {
 
     await userDB.updateOne({ userId }, { $set: { password: hashedPassword, sid: newsid, oauthSid: newOauthSid } });
 
-    const newAccessToken = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+    const newAccessToken = jwt.sign({ userId: userId, sid: newsid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
 
     res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
     res.status(200).json({ success: true });

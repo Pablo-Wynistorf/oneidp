@@ -1,10 +1,15 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = process.env;
 const { notifyError, notifyLogin } = require('../../../notify/notifications');
 
 const { userDB } = require('../../../database/database.js');
+
+const JWT_PRIVATE_KEY = `
+-----BEGIN PRIVATE KEY-----
+${process.env.JWT_PRIVATE_KEY}
+-----END PRIVATE KEY-----
+`.trim();
 
 const router = express.Router();
 
@@ -40,7 +45,7 @@ router.post('/', async (req, res) => {
     }
 
     if (email_verification_code) {
-      const email_verification_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' });
+      const email_verification_token = jwt.sign({ userId: userId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
 
       const new_email_verification_code = Math.floor(100000 + Math.random() * 900000).toString();
       await userDB.updateOne({ userId }, { $set: { verifyCode: new_email_verification_code } });
@@ -67,13 +72,13 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri)
     if (mfaEnabled === true) {
       const newMfaLoginSecret = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
       await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
-      const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' });
+      const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
       res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
       return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri });
     }
 
     notifyLogin(username);
-    const token = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+    const token = jwt.sign({ userId: userId, sid: newsid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
     res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
     return res.status(200).json({ success: true, redirectUri  });
   }
@@ -81,12 +86,12 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri)
   if (mfaEnabled === true) {
     const newMfaLoginSecret = [...Array(30)].map(() => Math.random().toString(36)[2]).join('');
     await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
-    const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' });
+    const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
     res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
     return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri })
   }
 
-  const token = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+  const token = jwt.sign({ userId: userId, sid: sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
   notifyLogin(username);
   res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
 

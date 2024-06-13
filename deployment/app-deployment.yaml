@@ -46,11 +46,17 @@ spec:
               name: loginapp-secrets
               key: API_PORT
               optional: false
-        - name: JWT_SECRET
+        - name: JWT_PUBLIC_KEY
           valueFrom:
             secretKeyRef:
               name: loginapp-secrets
-              key: JWT_SECRET
+              key: JWT_PUBLIC_KEY
+              optional: false
+        - name: JWT_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: JWT_PRIVATE_KEY
               optional: false
         - name: MJ_APIKEY_PUBLIC
           valueFrom:

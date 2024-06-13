@@ -1,10 +1,15 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = process.env;
 
 const { userDB, oAuthClientAppDB, oAuthRolesDB } = require('../../../../../database/database.js');
 
 const router = express.Router();
+
+const JWT_PRIVATE_KEY = `
+-----BEGIN PRIVATE KEY-----
+${process.env.JWT_PRIVATE_KEY}
+-----END PRIVATE KEY-----
+`.trim();
 
 router.post('/', async (req, res) => {
   const oauthClientAppId = req.body.oauthClientAppId;
@@ -15,7 +20,7 @@ router.post('/', async (req, res) => {
   }
   
   try {
-    const decoded = jwt.verify(access_token, JWT_SECRET);
+    const decoded = jwt.verify(access_token, JWT_PRIVATE_KEY);
     const userId = decoded.userId;
     const sid = decoded.sid;
 

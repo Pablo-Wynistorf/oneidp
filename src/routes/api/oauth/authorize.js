@@ -1,13 +1,18 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const { userDB, oAuthClientAppDB } = require('../../../database/database.js');
-const { JWT_SECRET } = process.env;
 const { notifyError } = require('../../../notify/notifications.js');
 
 const router = express.Router();
 
+const JWT_PRIVATE_KEY = `
+-----BEGIN PRIVATE KEY-----
+${process.env.JWT_PRIVATE_KEY}
+-----END PRIVATE KEY-----
+`.trim();
+
 router.get('/', async (req, res) => {
-  const { client_id, redirect_uri, state } = req.query;
+  const { client_id, redirect_uri, state, nonce } = req.query;
   const access_token = req.cookies.access_token;
   try {
 
@@ -19,7 +24,7 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: 'Invalid Request', error_description: 'No client_id or redirect_uri provided' });
     }
 
-    jwt.verify(access_token, JWT_SECRET, async (error, decoded) => {
+    jwt.verify(access_token, JWT_PRIVATE_KEY, async (error, decoded) => {
 
       if (error) {
         return res.redirect(`/login?redirect_uri=${redirect_uri}`);
@@ -51,7 +56,7 @@ router.get('/', async (req, res) => {
         existingAuthorizationCode = await userDB.findOne({ oauthAuthorizationCode: authorizationCode });
       } while (existingAuthorizationCode);
       
-      await userDB.updateOne({ userId }, { $set: { oauthAuthorizationCode: authorizationCode } });
+      await userDB.updateOne({ userId }, { $set: { oauthAuthorizationCode: authorizationCode, nonce: nonce } });
 
       if (!state || state === 'undefined') {
         const redirectUri = `${redirect_uri}?code=${authorizationCode}`;

@@ -1,6 +1,5 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = process.env;
 const mailjet = require('node-mailjet');
 const { MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE, MJ_SENDER_EMAIL } = process.env;
 const { URL } = process.env;
@@ -10,6 +9,12 @@ const { notifyError } = require('../../../../notify/notifications.js');
 const { userDB } = require('../../../../database/database.js');
 
 const router = express.Router();
+
+const JWT_PRIVATE_KEY = `
+-----BEGIN PRIVATE KEY-----
+${process.env.JWT_PRIVATE_KEY}
+-----END PRIVATE KEY-----
+`.trim();
 
 router.post('/', async (req, res) => {
   const { email } = req.body;
@@ -22,7 +27,7 @@ router.post('/', async (req, res) => {
 
     const userId = userData.userId;
     const username = userData.username;
-    const password_reset_token = jwt.sign({ userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
+    const password_reset_token = jwt.sign({ userId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '1h' });
     const password_reset_code = Math.floor(100000 + Math.random() * 900000).toString();
 
     await userDB.updateOne({ userId }, { $set: { resetCode: password_reset_code } });

@@ -2,9 +2,16 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { userDB } = require('../../../database/database.js');
 const { notifyError } = require('../../../notify/notifications.js');
-const { JWT_SECRET } = process.env;
+require('dotenv').config();
 
 const router = express.Router();
+
+const JWT_PRIVATE_KEY = `
+-----BEGIN PRIVATE KEY-----
+${process.env.JWT_PRIVATE_KEY}
+-----END PRIVATE KEY-----
+`.trim();
+
 
 router.post('/', async (req, res) => {
   let access_token;
@@ -29,7 +36,7 @@ router.post('/', async (req, res) => {
   try {
     let decoded;
     try {
-      decoded = jwt.verify(access_token, JWT_SECRET);
+      decoded = jwt.verify(access_token, JWT_PRIVATE_KEY);
     } catch (error) {
       return res.status(401).json({ success: false, error: 'Access Token is invalid' });
     }

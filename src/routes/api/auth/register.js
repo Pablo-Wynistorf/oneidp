@@ -1,7 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = process.env;
 const mailjet = require('node-mailjet');
 const { MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE, MJ_SENDER_EMAIL } = process.env;
 const { URL } = process.env;
@@ -11,6 +10,12 @@ const { notifyError, notifyRegister } = require('../../../notify/notifications')
 const { userDB } = require('../../../database/database.js');
 
 const router = express.Router();
+
+const JWT_PRIVATE_KEY = `
+-----BEGIN PRIVATE KEY-----
+${process.env.JWT_PRIVATE_KEY}
+-----END PRIVATE KEY-----
+`.trim();
 
 router.post('/', async (req, res) => {
   const { username, password, email } = req.body;
@@ -52,7 +57,7 @@ router.post('/', async (req, res) => {
       existingUserId = await userDB.findOne({ userId });
     } while (existingUserId);
 
-    const email_verification_token = jwt.sign({ userId: userId }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '5m' });
+    const email_verification_token = jwt.sign({ userId: userId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
     const email_verification_code = Math.floor(100000 + Math.random() * 900000).toString();
 
     const newUser = new userDB({

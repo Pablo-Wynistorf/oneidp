@@ -3,9 +3,13 @@ const { userDB, oAuthClientAppDB, oAuthRolesDB } = require('../../../database/da
 const { notifyError } = require('../../../notify/notifications.js');
 const jwt = require('jsonwebtoken');
 
-const { JWT_SECRET } = process.env;
-
 const router = express.Router();
+
+const JWT_PRIVATE_KEY = `
+-----BEGIN PRIVATE KEY-----
+${process.env.JWT_PRIVATE_KEY}
+-----END PRIVATE KEY-----
+`.trim();
 
 router.get('/', async (req, res) => {
   try {
@@ -17,7 +21,7 @@ router.get('/', async (req, res) => {
 
     let userInfo;
     try {
-      const decoded = jwt.verify(access_token, JWT_SECRET);
+      const decoded = jwt.verify(access_token, JWT_PRIVATE_KEY);
       const userId = decoded.userId;
       const sid = decoded.sid;
 

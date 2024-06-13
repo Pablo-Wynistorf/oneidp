@@ -41,6 +41,7 @@ const userSchema = new Schema({
   providerRoles: Array,
   oauthClientAppIds: Array,
   oauthAuthorizationCode: String,
+  nonce: String,
 }, {
   timestamps: true
 });

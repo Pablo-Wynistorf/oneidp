@@ -1,12 +1,17 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = process.env;
 const { notifyError } = require('../../../../notify/notifications.js');
 
 const { userDB } = require('../../../../database/database.js');
 
 const router = express.Router();
+
+const JWT_PRIVATE_KEY = `
+-----BEGIN PRIVATE KEY-----
+${process.env.JWT_PRIVATE_KEY}
+-----END PRIVATE KEY-----
+`.trim();
 
 router.post('/', async (req, res) => {
   const { password, password_reset_code } = req.body;
@@ -25,7 +30,7 @@ router.post('/', async (req, res) => {
     }
 
     try {
-      const decoded = jwt.verify(password_reset_token, JWT_SECRET);
+      const decoded = jwt.verify(password_reset_token, JWT_PRIVATE_KEY);
 
       const userId = decoded.userId;
 
@@ -41,7 +46,7 @@ router.post('/', async (req, res) => {
       await userDB.updateOne({ userId }, { $set: { password: hashedPassword, sid: newsid } });
       await userDB.updateOne({ userId }, { $unset: { resetCode: 1 } });
 
-      const access_token = jwt.sign({ userId: userId, sid: newsid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+      const access_token = jwt.sign({ userId: userId, sid: newsid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
       res.clearCookie('password_reset_token');
       res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
       res.status(200).json({ success: true });

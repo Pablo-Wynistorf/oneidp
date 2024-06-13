@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const path = require('path');
+
 require('dotenv').config();
 
 const { 
@@ -12,7 +13,13 @@ const {
 } = require('./database/database.js');
 
 const API_PORT = process.env.API_PORT;
-const JWT_SECRET = process.env.JWT_SECRET;
+
+const JWT_PRIVATE_KEY = `
+-----BEGIN PRIVATE KEY-----
+${process.env.JWT_PRIVATE_KEY}
+-----END PRIVATE KEY-----
+`.trim();
+
 
 const app = express();
 app.use(cors());
@@ -36,7 +43,7 @@ const verifyToken = (req, res, next) => {
 
     const access_token = cookies['access_token'];
 
-    jwt.verify(access_token, JWT_SECRET, async (error, decoded) => {
+    jwt.verify(access_token, JWT_PRIVATE_KEY, async (error, decoded) => {
       if (error) {
         res.clearCookie('access_token');
         if (requestedPath !== '/login') {
@@ -61,7 +68,7 @@ const verifyToken = (req, res, next) => {
         const now = Math.floor(Date.now() / 1000);
         const tokenExpirationThreshold = now + (24 * 60 * 60);
         if (decoded.exp < tokenExpirationThreshold) {
-          const newAccessToken = jwt.sign({ userId: userId, sid: sid }, JWT_SECRET, { algorithm: 'HS256', expiresIn: '48h' });
+          const newAccessToken = jwt.sign({ userId: userId, sid: sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
           res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/'});
         }
 
@@ -210,6 +217,9 @@ app.use('/api/oauth/check_token', require('./routes/api/oauth/check_token.js'));
 
 // OIDC Discovery endpoint
 app.use('/.well-known/openid-configuration', require('./routes/api/oauth/openid-info.js'));
+
+// jwks Discovery endpoint
+app.use('/.well-known/jwks.json', require('./routes/api/oauth/jwks-info.js'));
 
 // Check the health of the application
 app.use('/api/health', require('./routes/api/health/health.js'));
