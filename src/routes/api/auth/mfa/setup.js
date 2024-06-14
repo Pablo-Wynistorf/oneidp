@@ -2,11 +2,12 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
-const { notifyError } = require('../../../..//notify/notifications');
 
 const { userDB } = require('../../../../database/database.js');
 
 const router = express.Router();
+
+const URL = process.env.URL;
 
 const JWT_PUBLIC_KEY = `
 -----BEGIN PUBLIC KEY-----
