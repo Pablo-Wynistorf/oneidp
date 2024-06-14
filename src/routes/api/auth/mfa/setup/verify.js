@@ -13,6 +13,12 @@ ${process.env.JWT_PRIVATE_KEY}
 -----END PRIVATE KEY-----
 `.trim();
 
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
+`.trim();
+
 router.post('/', async (req, res) => {
   const mfaVerifyCode = req.body.mfaVerifyCode;
 
@@ -21,9 +27,11 @@ router.post('/', async (req, res) => {
   if (!access_token) {
     return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
-
-  try {
-    const decoded = jwt.verify(access_token, JWT_PRIVATE_KEY);
+  jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+    if (error) {
+      return res.redirect('/login');
+    }
+      
     const userId = decoded.userId;
     const sid = decoded.sid;
 
@@ -59,10 +67,7 @@ router.post('/', async (req, res) => {
     } else {
       return res.status(461).json({ success: false, error: 'Invalid verification code' });
     }
-  } catch (error) {
-    notifyError(error);
-    return res.status(500).json({ error: 'Something went wrong, try again later' });
-  }
+  });
 });
 
 module.exports = router;

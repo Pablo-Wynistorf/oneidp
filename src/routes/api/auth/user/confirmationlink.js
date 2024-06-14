@@ -12,11 +12,19 @@ ${process.env.JWT_PRIVATE_KEY}
 -----END PRIVATE KEY-----
 `.trim();
 
-router.all('/:email_verification_token/:email_verification_code', async (req, res) => {
-  try {
-    const { email_verification_token, email_verification_code } = req.params;
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
+`.trim();
 
-    const decoded = await jwt.verify(email_verification_token, JWT_PRIVATE_KEY);
+router.all('/:email_verification_token/:email_verification_code', async (req, res) => {
+  const { email_verification_token, email_verification_code } = req.params;
+  
+  jwt.verify(email_verification_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+      if (error) {
+        return res.redirect('/login');
+      }
 
     const userId = decoded.userId;
     const verifyCode = email_verification_code;
@@ -38,10 +46,7 @@ router.all('/:email_verification_token/:email_verification_code', async (req, re
     const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
     res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
     return res.redirect('/home');
-  } catch (error) {
-    notifyError(error);
-    return res.status(500).json({ error: 'Something went wrong, try again later' });
-  }
+  });
 });
 
 module.exports = router;

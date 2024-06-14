@@ -5,14 +5,14 @@ const { userDB, oAuthClientAppDB, oAuthRolesDB } = require('../../../../../datab
 
 const router = express.Router();
 
-const JWT_PRIVATE_KEY = `
------BEGIN PRIVATE KEY-----
-${process.env.JWT_PRIVATE_KEY}
------END PRIVATE KEY-----
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
 `.trim();
 
 router.post('/', async (req, res) => {
-  const access_token = req.cookies.access_token
+  const access_token = req.cookies.access_token;
   const { oauthClientAppId, oauthRoleName } = req.body;
 
   if (!access_token) {
@@ -20,66 +20,75 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const decoded = jwt.verify(access_token, JWT_PRIVATE_KEY);
-    const userId = decoded.userId;
-    const sid = decoded.sid;
+    jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+      if (error) {
+        return res.redirect('/login');
+      }
 
-    const userData = await userDB.findOne({ userId, sid });
-    if (!userData) {
-      res.clearCookie('access_token');
-      return res.redirect('/login');
-    }
+      const userId = decoded.userId;
+      const sid = decoded.sid;
 
-    const userAccess = await userDB.findOne({ userId: userId, sid: sid, providerRoles: 'oauthUser' });
+      try {
+        const userData = await userDB.findOne({ userId, sid });
+        if (!userData) {
+          res.clearCookie('access_token');
+          return res.redirect('/login');
+        }
 
-    if (!userAccess) {
-      return res.status(460).json({ error: 'User has no permissions to manage oauth apps' });
-    }
+        const userAccess = await userDB.findOne({ userId, sid, providerRoles: 'oauthUser' });
 
-    let oauthApps = userData.oauthClientAppIds || [];
+        if (!userAccess) {
+          return res.status(460).json({ error: 'User has no permissions to manage oauth apps' });
+        }
 
-    if (!Array.isArray(oauthApps)) {
-      return res.status(400).json({ error: 'Invalid format for oauthApps' });
-    }
+        let oauthApps = userData.oauthClientAppIds || [];
 
-    if (oauthApps.length === 0) {
-      return res.status(404).json({ error: 'No OAuth apps found for this user' });
-    }
+        if (!Array.isArray(oauthApps)) {
+          return res.status(400).json({ error: 'Invalid format for oauthApps' });
+        }
 
-    if (oauthApps.indexOf(oauthClientAppId) === -1) {
-      return res.status(461).json({ error: 'User does not have access to this oauth app' });
-    }
+        if (oauthApps.length === 0) {
+          return res.status(404).json({ error: 'No OAuth apps found for this user' });
+        }
 
-    const validRoleName = /^[a-zA-Z0-9\-_\. ]{1,40}$/;
+        if (oauthApps.indexOf(oauthClientAppId) === -1) {
+          return res.status(461).json({ error: 'User does not have access to this oauth app' });
+        }
 
-    if (!validRoleName.test(oauthRoleName)) {
-      return res.status(462).json({ error: 'Invalid role name' });
-    }
+        const validRoleName = /^[a-zA-Z0-9\-_\. ]{1,40}$/;
 
-    const oauthClientAppData = await oAuthClientAppDB.findOne({ oauthClientAppId });
-    const oauthClientId = oauthClientAppData.clientId;
+        if (!validRoleName.test(oauthRoleName)) {
+          return res.status(462).json({ error: 'Invalid role name' });
+        }
 
-    const smallLettersRoleName = oauthRoleName.toLowerCase();
+        const oauthClientAppData = await oAuthClientAppDB.findOne({ oauthClientAppId });
+        const oauthClientId = oauthClientAppData.clientId;
 
-    const existingOauthRoleName = await oAuthRolesDB.findOne({ oauthRoleName: smallLettersRoleName, oauthClientId: oauthClientId });
-    if (existingOauthRoleName) {
-      return res.status(463).json({ error: 'Role name already exists' });
-    }
+        const smallLettersRoleName = oauthRoleName.toLowerCase();
 
-    const oauthRoleId = `uri:loginapp:oauth::${oauthClientAppId}:role/${smallLettersRoleName}`;
-    
-    const newOauthRole = new oAuthRolesDB({
-      oauthRoleId: oauthRoleId,
-      oauthClientAppId: oauthClientAppId,
-      oauthRoleName: oauthRoleName,
-      oauthClientId: oauthClientId,
+        const existingOauthRoleName = await oAuthRolesDB.findOne({ oauthRoleName: smallLettersRoleName, oauthClientId });
+        if (existingOauthRoleName) {
+          return res.status(463).json({ error: 'Role name already exists' });
+        }
+
+        const oauthRoleId = `uri:loginapp:oauth::${oauthClientAppId}:role/${smallLettersRoleName}`;
+
+        const newOauthRole = new oAuthRolesDB({
+          oauthRoleId,
+          oauthClientAppId,
+          oauthRoleName,
+          oauthClientId,
+        });
+
+        await newOauthRole.save();
+
+        await oAuthClientAppDB.updateOne({ oauthClientAppId }, { $push: { oauthRoleIds: oauthRoleId } });
+
+        res.status(200).json({ success: true, message: 'OAuth role has been successfully added' });
+      } catch (error) {
+        res.status(500).json({ error: 'Something went wrong, try again later' });
+      }
     });
-
-    await newOauthRole.save();
-
-    await oAuthClientAppDB.updateOne({ oauthClientAppId }, { $push: { oauthRoleIds: oauthRoleId } });
-
-    res.status(200).json({ success: true, message: 'OAuth role has been successfully added' });
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }

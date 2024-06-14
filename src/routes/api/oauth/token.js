@@ -18,6 +18,12 @@ ${process.env.JWT_PRIVATE_KEY}
 -----END PRIVATE KEY-----
 `.trim();
 
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
+`.trim();
+
 const URL = process.env.URL;
 
 router.post('/', async (req, res) => {
@@ -39,7 +45,7 @@ router.post('/', async (req, res) => {
     if (grant_type === 'refresh_token') {
       let decodedRefreshToken;
       try {
-        decodedRefreshToken = jwt.verify(refresh_token, JWT_PRIVATE_KEY, { algorithms: ['RS256'] });
+        decodedRefreshToken = jwt.verify(refresh_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] });
       } catch (error) {
         return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid refresh token provided' });
       }

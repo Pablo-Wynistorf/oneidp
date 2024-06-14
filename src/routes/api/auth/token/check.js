@@ -6,15 +6,15 @@ const { userDB } = require('../../../../database/database.js');
 
 const router = express.Router();
 
-const JWT_PRIVATE_KEY = `
------BEGIN PRIVATE KEY-----
-${process.env.JWT_PRIVATE_KEY}
------END PRIVATE KEY-----
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
 `.trim();
 
 router.post('/', async (req, res) => {
   const { access_token } = req.body;
-  jwt.verify(access_token, JWT_PRIVATE_KEY, async (error, decoded) => {
+  jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
     if (error) {
       res.clearCookie('access_token');
       return res.redirect(`${URL}/login`);

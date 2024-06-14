@@ -17,6 +17,12 @@ ${process.env.JWT_PRIVATE_KEY}
 -----END PRIVATE KEY-----
 `.trim();
 
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
+`.trim();
+
 router.post('/', async (req, res) => {
   const { username, password, email } = req.body;
   const usernameRegex = /^[a-zA-Z0-9-]{3,20}$/;

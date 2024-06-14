@@ -5,10 +5,10 @@ const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
-const JWT_PRIVATE_KEY = `
------BEGIN PRIVATE KEY-----
-${process.env.JWT_PRIVATE_KEY}
------END PRIVATE KEY-----
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
 `.trim();
 
 router.get('/', async (req, res) => {
@@ -20,53 +20,56 @@ router.get('/', async (req, res) => {
     }
 
     let userInfo;
-    try {
-      const decoded = jwt.verify(access_token, JWT_PRIVATE_KEY);
+    jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+      if (error) {
+        return res.redirect('/login');
+      }
+
       const userId = decoded.userId;
       const sid = decoded.sid;
 
-      userInfo = await userDB.findOne({ userId, sid });
+      try {
+        userInfo = await userDB.findOne({ userId, sid });
 
-      if (!userInfo) {
-        return res.status(401).json({ error: 'Invalid access token' });
-      }
-    }
-    catch (error) {
-      return res.status(401).json({ error: 'Access Token invalid' });
-    }
-
-    if (userInfo.username !== 'admin') { 
-      return res.status(401).json({ error: 'User has no access to this resource' });
-    }
-
-    const userCount = await userDB.countDocuments();
-    const oauthAppsCount = await oAuthClientAppDB.countDocuments();
-    const oauthRolesCount = await oAuthRolesDB.countDocuments();
-
-    
-    const error = "Database connection error, or not initialized."
-    if (!userCount) {
-      notifyError(error);
-      return res.status(500).json({ error: error });
-    }
-    const response = await fetch('https://google.com', { method: 'GET' });
-    if (!response.ok) {
-      notifyError('Application has no connection to the internet');
-      return res.status(500).json({ error: 'Application has no connection to the internet' });
-    }
-
-    const body = (
-        {
-            status: 'ok',
-            details: { 
-                    "Number of users":`${userCount}`,
-                    "Number of oauth Apps":`${oauthAppsCount}`,
-                    "Number of oauth Roles":`${oauthRolesCount}`,
-                }
+        if (!userInfo) {
+          return res.status(401).json({ error: 'Invalid access token' });
         }
-        );
 
-    res.status(200).json({ body });
+        if (userInfo.username !== 'admin') {
+          return res.status(401).json({ error: 'User has no access to this resource' });
+        }
+
+        const userCount = await userDB.countDocuments();
+        const oauthAppsCount = await oAuthClientAppDB.countDocuments();
+        const oauthRolesCount = await oAuthRolesDB.countDocuments();
+
+        const error = "Database connection error, or not initialized.";
+        if (!userCount) {
+          notifyError(error);
+          return res.status(500).json({ error: error });
+        }
+
+        const response = await fetch('https://google.com', { method: 'GET' });
+        if (!response.ok) {
+          notifyError('Application has no connection to the internet');
+          return res.status(500).json({ error: 'Application has no connection to the internet' });
+        }
+
+        const body = {
+          status: 'ok',
+          details: {
+            "Number of users": `${userCount}`,
+            "Number of oauth Apps": `${oauthAppsCount}`,
+            "Number of oauth Roles": `${oauthRolesCount}`,
+          }
+        };
+
+        res.status(200).json({ body });
+      } catch (error) {
+        notifyError(error);
+        res.status(500).json({ error: 'Application has encountered an error:', details: error.toString() });
+      }
+    });
   } catch (error) {
     notifyError(error);
     res.status(500).json({ error: 'Application has encountered an error:', details: error.toString() });

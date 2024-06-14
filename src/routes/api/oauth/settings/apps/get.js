@@ -5,10 +5,10 @@ const { userDB, oAuthClientAppDB } = require('../../../../../database/database.j
 
 const router = express.Router();
 
-const JWT_PRIVATE_KEY = `
------BEGIN PRIVATE KEY-----
-${process.env.JWT_PRIVATE_KEY}
------END PRIVATE KEY-----
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
 `.trim();
 
 router.get('/', async (req, res) => {
@@ -19,48 +19,57 @@ router.get('/', async (req, res) => {
   }
 
   try {
-    const decoded = jwt.verify(access_token, JWT_PRIVATE_KEY);
-    const userId = decoded.userId;
-    const sid = decoded.sid;
+    jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+      if (error) {
+        return res.redirect('/login');
+      }
 
-    const userData = await userDB.findOne({ userId, sid });
-    if (!userData) {
-      res.clearCookie('access_token');
-      return res.redirect('/login');
-    }
+      const userId = decoded.userId;
+      const sid = decoded.sid;
 
-    const userAccess = await userDB.findOne({ userId: userId, sid: sid, providerRoles: 'oauthUser' });
+      try {
+        const userData = await userDB.findOne({ userId, sid });
+        if (!userData) {
+          res.clearCookie('access_token');
+          return res.redirect('/login');
+        }
 
-    if (!userAccess) {
-      return res.status(465).json({ error: 'User does not have access to create oauth apps' });
-    }
+        const userAccess = await userDB.findOne({ userId, sid, providerRoles: 'oauthUser' });
 
-    let oauthApps = userData.oauthClientAppIds || [];
+        if (!userAccess) {
+          return res.status(465).json({ error: 'User does not have access to create oauth apps' });
+        }
 
-    if (!Array.isArray(oauthApps)) {
-      return res.status(400).json({ error: 'Invalid format for oauthApps' });
-    }
+        let oauthApps = userData.oauthClientAppIds || [];
 
-    if (oauthApps.length === 0) {
-      return res.status(404).json({ error: 'No OAuth apps found for this user' });
-    }
+        if (!Array.isArray(oauthApps)) {
+          return res.status(400).json({ error: 'Invalid format for oauthApps' });
+        }
 
-    const oauthAppsData = await oAuthClientAppDB.find({ oauthClientAppId: { $in: oauthApps } }).exec();
+        if (oauthApps.length === 0) {
+          return res.status(404).json({ error: 'No OAuth apps found for this user' });
+        }
 
-    if (!oauthAppsData || oauthAppsData.length === 0) {
-      return res.status(404).json({ error: 'No OAuth apps found' });
-    }
+        const oauthAppsData = await oAuthClientAppDB.find({ oauthClientAppId: { $in: oauthApps } }).exec();
 
-    const organizedData = oauthAppsData.map(app => ({
-      oauthAppName: app.oauthAppName,
-      clientId: app.clientId,
-      clientSecret: app.clientSecret,
-      redirectUri: app.redirectUri,
-      oauthClientAppId: app.oauthClientAppId,
-      accessTokenValidity: app.accessTokenValidity,
-    }));
+        if (!oauthAppsData || oauthAppsData.length === 0) {
+          return res.status(404).json({ error: 'No OAuth apps found' });
+        }
 
-    res.json({ oauthApps: organizedData });
+        const organizedData = oauthAppsData.map(app => ({
+          oauthAppName: app.oauthAppName,
+          clientId: app.clientId,
+          clientSecret: app.clientSecret,
+          redirectUri: app.redirectUri,
+          oauthClientAppId: app.oauthClientAppId,
+          accessTokenValidity: app.accessTokenValidity,
+        }));
+
+        res.json({ oauthApps: organizedData });
+      } catch (error) {
+        res.status(500).json({ error: 'Something went wrong, try again later' });
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }

@@ -5,10 +5,10 @@ const { userDB, oAuthClientAppDB, oAuthRolesDB } = require('../../../../../datab
 
 const router = express.Router();
 
-const JWT_PRIVATE_KEY = `
------BEGIN PRIVATE KEY-----
-${process.env.JWT_PRIVATE_KEY}
------END PRIVATE KEY-----
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
 `.trim();
 
 router.post('/', async (req, res) => {
@@ -19,9 +19,11 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
 
-
-  try {
-    const decoded = jwt.verify(access_token, JWT_PRIVATE_KEY);
+  jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+    if (error) {
+      return res.redirect('/login');
+    }
+      
     const userId = decoded.userId;
     const sid = decoded.sid;
 
@@ -55,9 +57,7 @@ router.post('/', async (req, res) => {
     await oAuthClientAppDB.updateOne({ oauthClientAppId }, { $pull: { oauthRoleIds: oauthRoleId } });
 
     res.status(200).json({ success: true, message: 'OAuth role has been successfully deleted' });
-  } catch (error) {
-    res.status(500).json({ error: 'Something went wrong, try again later' });
-  }
+  });
 });
 
 module.exports = router;

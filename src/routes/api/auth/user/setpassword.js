@@ -13,6 +13,12 @@ ${process.env.JWT_PRIVATE_KEY}
 -----END PRIVATE KEY-----
 `.trim();
 
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
+`.trim();
+
 router.post('/', async (req, res) => {
   const { password, password_reset_code } = req.body;
 
@@ -29,8 +35,10 @@ router.post('/', async (req, res) => {
       return res.status(460).json({ success: false, error: 'Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
     }
 
-    try {
-      const decoded = jwt.verify(password_reset_token, JWT_PRIVATE_KEY);
+    jwt.verify(password_reset_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+      if (error) {
+        return res.status(401).json({ error: 'Invalid password reset token' });
+      }
 
       const userId = decoded.userId;
 
@@ -50,10 +58,8 @@ router.post('/', async (req, res) => {
       res.clearCookie('password_reset_token');
       res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
       res.status(200).json({ success: true });
+    });
 
-    } catch (error) {
-      return res.status(401).json({ error: 'Invalid password reset token' });
-    }
   } catch (error) {
     notifyError(error);
     res.status(500).json({ error: 'Something went wrong, try again later' });

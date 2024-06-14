@@ -5,10 +5,10 @@ const { notifyError } = require('../../../notify/notifications.js');
 
 const router = express.Router();
 
-const JWT_PRIVATE_KEY = `
------BEGIN PRIVATE KEY-----
-${process.env.JWT_PRIVATE_KEY}
------END PRIVATE KEY-----
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
 `.trim();
 
 router.get('/', async (req, res) => {
@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
     // }
     
 
-    jwt.verify(access_token, JWT_PRIVATE_KEY, async (error, decoded) => {
+    jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
 
       if (error) {
         return res.redirect(`/login?redirect_uri=${redirect_uri}`);

@@ -20,6 +20,11 @@ ${process.env.JWT_PRIVATE_KEY}
 -----END PRIVATE KEY-----
 `.trim();
 
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
+`.trim();
 
 const app = express();
 app.use(cors());
@@ -31,19 +36,11 @@ connectToDatabase();
 
 // Verify access token
 const verifyToken = (req, res, next) => {
-  const access_token_cookie = req.headers.cookie;
+  const access_token = req.cookies.access_token;
   const requestedPath = req.baseUrl;
 
-  if (access_token_cookie) {
-    const cookies = access_token_cookie.split(';').reduce((cookiesObj, cookie) => {
-      const [name, value] = cookie.trim().split('=');
-      cookiesObj[name] = value;
-      return cookiesObj;
-    }, {});
-
-    const access_token = cookies['access_token'];
-
-    jwt.verify(access_token, JWT_PRIVATE_KEY, async (error, decoded) => {
+  if (access_token) {
+    jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
       if (error) {
         res.clearCookie('access_token');
         if (requestedPath !== '/login') {
@@ -90,21 +87,10 @@ const verifyToken = (req, res, next) => {
 
 // Handle existing access token
 const existingToken = (req, res, next) => {
-  const access_token_cookie = req.headers.cookie;
-
-  if (access_token_cookie) {
-    const cookies = access_token_cookie.split(';').reduce((cookiesObj, cookie) => {
-      const [name, value] = cookie.trim().split('=');
-      cookiesObj[name] = value;
-      return cookiesObj;
-    }, {});
-
-    const access_token = cookies['access_token'];
-
+  const access_token = req.cookies.access_token;
     if (access_token) {
       return verifyToken(req, res, next);
     }
-  }
   next();
 };
 
@@ -112,7 +98,7 @@ const existingToken = (req, res, next) => {
 
 // Redirect to /login
 app.get('/', (req, res) => {
-  res.redirect('/login');
+  return res.redirect('/login');
 });
 
 

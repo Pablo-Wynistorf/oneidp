@@ -5,10 +5,10 @@ const { userDB, oAuthClientAppDB, oAuthRolesDB } = require('../../../../../datab
 
 const router = express.Router();
 
-const JWT_PRIVATE_KEY = `
------BEGIN PRIVATE KEY-----
-${process.env.JWT_PRIVATE_KEY}
------END PRIVATE KEY-----
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
 `.trim();
 
 router.post('/', async (req, res) => {
@@ -18,38 +18,47 @@ router.post('/', async (req, res) => {
   if (!access_token) {
     return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
-  
+
   try {
-    const decoded = jwt.verify(access_token, JWT_PRIVATE_KEY);
-    const userId = decoded.userId;
-    const sid = decoded.sid;
+    jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+      if (error) {
+        return res.redirect('/login');
+      }
 
-    const userData = await userDB.findOne({ userId: userId, sid: sid });
-    if (!userData) {
-      res.clearCookie('access_token');
-      return res.redirect('/login');
-    }
+      const userId = decoded.userId;
+      const sid = decoded.sid;
 
-    const userAccess = await userDB.findOne({ userId: userId, sid: sid, providerRoles: 'oauthUser' });
+      try {
+        const userData = await userDB.findOne({ userId, sid });
+        if (!userData) {
+          res.clearCookie('access_token');
+          return res.redirect('/login');
+        }
 
-    if (!userAccess) {
-      return res.status(465).json({ error: 'User does not have access to create oauth apps' });
-    }
+        const userAccess = await userDB.findOne({ userId, sid, providerRoles: 'oauthUser' });
 
-    const testOauthClientAppId = userData.oauthClientAppIds.includes(oauthClientAppId);
+        if (!userAccess) {
+          return res.status(465).json({ error: 'User does not have access to create oauth apps' });
+        }
 
-    if (!testOauthClientAppId) {
-      return res.status(460).json({ error: 'User does not own this oauth app' });
-    }
+        const testOauthClientAppId = userData.oauthClientAppIds.includes(oauthClientAppId);
 
-    await oAuthClientAppDB.deleteOne({ oauthClientAppId });
-    await oAuthRolesDB.deleteMany({ oauthRoleId: { $regex: `${oauthClientAppId}-*` } });
-    await userDB.updateOne(
-      { userId },
-      { $pull: { oauthClientAppIds: parseInt(oauthClientAppId) } }
-    );
+        if (!testOauthClientAppId) {
+          return res.status(460).json({ error: 'User does not own this oauth app' });
+        }
 
-    res.status(200).json({ success: true, message: 'OAuth app has been successfully deleted' });
+        await oAuthClientAppDB.deleteOne({ oauthClientAppId });
+        await oAuthRolesDB.deleteMany({ oauthRoleId: { $regex: `${oauthClientAppId}-*` } });
+        await userDB.updateOne(
+          { userId },
+          { $pull: { oauthClientAppIds: parseInt(oauthClientAppId) } }
+        );
+
+        res.status(200).json({ success: true, message: 'OAuth app has been successfully deleted' });
+      } catch (error) {
+        res.status(500).json({ error: 'Something went wrong, try again later' });
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }

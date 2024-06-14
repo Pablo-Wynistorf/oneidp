@@ -5,10 +5,10 @@ const { userDB, oAuthRolesDB, oAuthClientAppDB} = require('../../../../../../dat
 
 const router = express.Router();
 
-const JWT_PRIVATE_KEY = `
------BEGIN PRIVATE KEY-----
-${process.env.JWT_PRIVATE_KEY}
------END PRIVATE KEY-----
+const JWT_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+${process.env.JWT_PUBLIC_KEY}
+-----END PUBLIC KEY-----
 `.trim();
 
 router.post('/', async (req, res) => {
@@ -90,7 +90,12 @@ router.post('/', async (req, res) => {
       return res.status(200).json({ success: true, message: 'OAuth role has been successfully updated' });
     }
 
-    const decoded = jwt.verify(access_token, JWT_PRIVATE_KEY);
+    const decoded = jwt.verify(access_token, JWT_PUBLIC_KEY
+      , async (error) => {
+        if (error) {
+          return res.redirect('/login');
+        }});
+        
     const userId = decoded.userId;
     const sid = decoded.sid;
 
