@@ -37,6 +37,7 @@ router.post('/', async (req, res) => {
     let userId;
     let oauthSid;
     let clientId = client_id;
+    let clientSecret = client_secret;
 
     if (grant_type !== 'authorization_code' && grant_type !== 'refresh_token') {
       return res.status(400).json({ error: 'Unsupported grant_type. Only authorization_code and refresh_token are supported' });
@@ -67,6 +68,18 @@ router.post('/', async (req, res) => {
       }
 
     } else if (grant_type === 'authorization_code') {
+      if (!clientSecret) {
+        const authorizationHeader = req.headers.authorization;
+        if (authorizationHeader) {
+          const authorizationHeaderBase64 = authorizationHeader.split(' ')[1];
+          authorizationHeaderDecoded = Buffer.from(authorizationHeaderBase64, 'base64').toString('utf-8');
+          clientId = authorizationHeaderDecoded.split(':')[0];
+          clientSecret = authorizationHeaderDecoded.split(':')[1];
+        } else {
+          return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid request, client_secret missing' });
+        }
+      }
+
       if (code_verifier) {
         oauth_user = await userDB.findOne({ oauthAuthorizationCode: code });
 
@@ -76,7 +89,6 @@ router.post('/', async (req, res) => {
 
         const code_challenge_method = oauth_user.codeChallengeMethod;
         const code_challenge = oauth_user.codeChallenge;
-        clientId = oauth_user.oauthClientId;
 
         if (code_challenge_method === 'S256') {
           const generatedCodeChallenge = crypto.createHash('sha256').update(code_verifier).digest('base64url');
@@ -87,16 +99,20 @@ router.post('/', async (req, res) => {
           return res.status(400).json({ error: 'Invalid Request', error_description: 'Unsupported code_challenge_method' });
         }
 
-        oauth_client = await oAuthClientAppDB.findOne({ clientId });
+        oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
 
-        await userDB.findOneAndUpdate({ oauthAuthorizationCode: code }, { $unset: { nonce: 1, oauthAuthorizationCode: 1, codeChallenge: 1, codeChallengeMethod: 1, oauthClientId: 1 } });
+        if (!oauth_client) {
+          return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or client_secret provided' });
+        }
+
+        await userDB.findOneAndUpdate({ oauthAuthorizationCode: code }, { $unset: { nonce: 1, oauthAuthorizationCode: 1, codeChallenge: 1, codeChallengeMethod: 1 } });
 
       } else {
-        if (!client_id || !client_secret) {
+        if (!clientId || !clientSecret) {
           return res.status(400).json({ error: 'Invalid Request', error_description: 'client_id and client_secret are required for standard authorization code flow' });
         }
 
-        oauth_client = await oAuthClientAppDB.findOne({ clientId: client_id, clientSecret: client_secret });
+        oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
 
         if (!oauth_client) {
           return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or client_secret provided' });
@@ -107,8 +123,6 @@ router.post('/', async (req, res) => {
         if (!oauth_user) {
           return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid authorization code provided' });
         }
-
-        clientId = client_id;
       }
 
       userId = oauth_user.userId;

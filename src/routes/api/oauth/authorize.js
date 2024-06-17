@@ -66,7 +66,7 @@ router.get('/', async (req, res) => {
         existingAuthorizationCode = await userDB.findOne({ oauthAuthorizationCode: authorizationCode });
       } while (existingAuthorizationCode);
       
-      await userDB.updateOne({ userId }, { $set: { oauthAuthorizationCode: authorizationCode, nonce: nonce, codeChallenge: code_challenge, codeChallengeMethod: code_challenge_method, oauthClientId: client_id } });
+      await userDB.updateOne({ userId }, { $set: { oauthAuthorizationCode: authorizationCode, nonce: nonce, codeChallenge: code_challenge, codeChallengeMethod: code_challenge_method } });
 
       if (!state || state === 'undefined') {
         const redirectUri = `${redirect_uri}?code=${authorizationCode}`;

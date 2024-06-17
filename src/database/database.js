@@ -41,7 +41,6 @@ const userSchema = new Schema({
   providerRoles: Array,
   oauthClientAppIds: Array,
   oauthAuthorizationCode: String,
-  oauthClientId: String,
   nonce: String,
   codeChallenge: String,
   codeChallengeMethod: String
