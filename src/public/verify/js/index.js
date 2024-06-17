@@ -23,9 +23,8 @@ function verifyCode() {
   }
 }
 
-async function getRedirectUri() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const redirectUri = urlParams.get('redirect_uri');
+function getRedirectUri() {
+  const redirectUri = window.location.search.split('redirect=')[1];
   return redirectUri;
 }
 

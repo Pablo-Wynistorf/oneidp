@@ -6,7 +6,7 @@ successBox.className = 'success-box';
 
 function redirect_register() {
   const redirectUrl = getRedirectUri()
-  window.location.href = '/register' + (redirectUrl ? `?redirect_uri=${redirectUrl}` : '');
+  window.location.href = '/register' + (redirectUrl ? `?redirect=${redirectUrl}` : '');
 }
 
 function redirect_resetpassword() {
@@ -46,7 +46,7 @@ function handleResponse(response, data) {
     } else if (!redirectUri) {
       window.location.href = 'home';
     } else {
-    window.location.href = redirectUri;
+      window.location.href = redirectUri;
     }
   } else if (response.status === 461) {
     handle461Error();
@@ -77,7 +77,7 @@ function handle462Error() {
 }
 
 function handle463Error(redirectUri) {
-  window.location.replace(`/mfa/?redirect_uri=${redirectUri}` || '/mfa')
+  window.location.replace(`/mfa/?redirect=${redirectUri}` || '/mfa')
 }
 
 function handleError() {
@@ -86,10 +86,10 @@ function handleError() {
 
 
 function getRedirectUri() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const redirectUri = urlParams.get('redirect_uri');
+  const redirectUri = window.location.search.split('redirect=')[1];
   return redirectUri;
 }
+
 
 
 

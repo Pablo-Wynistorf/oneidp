@@ -5,6 +5,8 @@ const { notifyError } = require('../../../notify/notifications.js');
 
 const router = express.Router();
 
+const URL = process.env.URL;
+
 const JWT_PUBLIC_KEY = `
 -----BEGIN PUBLIC KEY-----
 ${process.env.JWT_PUBLIC_KEY}
@@ -12,13 +14,13 @@ ${process.env.JWT_PUBLIC_KEY}
 `.trim();
 
 router.get('/', async (req, res) => {
-  const { client_id, redirect_uri, state, nonce, response_type, code_challenge_method, code_challenge } = req.query;
+  const { client_id, redirect_uri, state, nonce, code_challenge_method, code_challenge } = req.query;
   const access_token = req.cookies.access_token;
 
   try {
 
     if (!access_token || access_token === 'undefined') {
-      return res.redirect(`/login?redirect_uri=${redirect_uri}`);
+      return res.redirect(`/login?redirect=${URL + req.originalUrl}`);
     }
 
     if (!client_id || client_id === 'undefined') {
@@ -27,24 +29,19 @@ router.get('/', async (req, res) => {
 
     if (!redirect_uri || redirect_uri === 'undefined') {
       return res.status(400).json({ error: 'Invalid Request', error_description: 'No redirect_uri provided' });
-    }
-
-    // if ((response_type ?? '') !== 'code') {
-    //   return res.status(400).json({ error: 'Invalid Request', error_description: 'Only response_type "code" is supported' });
-    // }
-    
+    }    
 
     jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
 
       if (error) {
-        return res.redirect(`/login?redirect_uri=${redirect_uri}`);
+        return res.redirect(`/login?redirect=${URL + req.originalUrl}`);
       }
 
       const { userId, sid } = decoded;
       const user = await userDB.findOne({ userId, sid });
 
       if (!user) {
-        return res.redirect(`/login?redirect_uri=${redirect_uri}`);
+        return res.redirect(`/login?redirect=${URL + req.originalUrl}`);
       }
 
       const oauth_client = await oAuthClientAppDB.findOne({ clientId: client_id });
