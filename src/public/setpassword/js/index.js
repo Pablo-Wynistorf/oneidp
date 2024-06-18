@@ -120,8 +120,8 @@ function handle460Error() {
 }
 
 function handle461Error() {
-  document.getElementById('recovery-code').value = '';
   removeResetCode();
+  document.getElementById('recovery-code').value = '';
   const recoverButton = document.getElementById('recover-button');
   recoverButton.disabled = false;
   recoverButton.innerText = 'Set new account password';
@@ -130,6 +130,7 @@ function handle461Error() {
 }
 
 function handleError() {
+  removeResetCode();
   document.getElementById('password').value = '';
   document.getElementById('recovery-code').value = '';
   const recoverButton = document.getElementById('recover-button');

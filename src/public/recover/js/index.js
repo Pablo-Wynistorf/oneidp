@@ -1,18 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('email-field')) {
-    document.getElementById('email-field').focus();
-  }
-
+  document.getElementById('email-field').focus();
   const recoverButton = document.getElementById('recover-button');
-  if (recoverButton) {
-    recoverButton.addEventListener('click', recover);
-  }
-
-  document.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
-      recover();
-    }
-  });
+  recoverButton.addEventListener('click', recover);
 });
 
 function recover() {
@@ -33,14 +22,15 @@ function recover() {
     return;
   }
 
-  fetch(`/api/auth/user/resetpassword`, {
+    fetch(`/api/auth/user/resetpassword`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ email })
   })
-  .then(handleResponse)
+    .then(handleResponse)
+    .catch(handleError);
 }
 
 function handleResponse(response) {

@@ -41,9 +41,8 @@ router.post('/', async (req, res) => {
     try {
       sendRecoveryEmail(username, email, password_reset_token, password_reset_code, res);
       res.cookie('password_reset_token', password_reset_token, { maxAge: 1 * 60 * 60 * 1000, httpOnly: true, path: '/' });
-      res.status(200).json({ success: true });
+      return res.status(200).json({ success: true });
     } catch (error) {
-      console.error('Mailjet error:', error);
       res.status(500).json({ error: 'Failed to send password reset email' });
     }
   } catch (error) {
