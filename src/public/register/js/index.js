@@ -1,67 +1,28 @@
-const errorBox = document.createElement('div');
-const successBox = document.createElement('div');
-
-errorBox.className = 'error-box';
-successBox.className = 'success-box';
-
-const password = document.getElementById('password-field');
-password.addEventListener('input', passwordRequirements);
-
-
-function isStrongPassword(password) {
-  const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\[\]{}|;:,.<>?])([A-Za-z\d!@#$%^&*()_+\[\]{}|;:,.<>?]{8,})$/;
-  return passwordPattern.test(password);
-}
-
-function passwordRequirements(event) {
-  const password = event.target.value;
-
-  const isStrong = isStrongPassword(password);
-
-  if (isStrong) {
-    document.getElementById('passwordRequirementComponents').style.color = "green";
-    document.getElementById('register-button').disabled = false;
-  } else {
-    document.getElementById('passwordRequirementComponents').style.color = "red";
-    document.getElementById('register-button').disabled = true;
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('email-field')) {
+    document.getElementById('email-field').focus();
   }
-}
 
-function checkPasswordOnBlur(event) {
-  const password = event.target.value;
-  const isStrong = isStrongPassword(password);
-
-  if (!isStrong && (password.trim() !== '')) {
-    document.getElementById('passwordRequirementComponents').style.color = "red";
-
-    if (!document.getElementById('passwordError')) {
-      displayError('Error: Password doesn\'t match our requirements');
+  document.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+      signup();
     }
-  }
-}
+  });
+});
 
 
-function createUser() {
-  var password1 = document.getElementById("password-field").value;
-  var password2 = document.getElementById("password-retype-field").value;
-    if (password1 === password2) {
-        register();
-    } else {
-      displayError("Error: Passwords do not match")
-      document.getElementById('passwordRequirementComponents').style.color = "red";
-      document.getElementById('register-button').disabled = true;
-      document.getElementById("password-field").value = '';
-      document.getElementById("password-retype-field").value = '';
-
-    }
-}
-
-
-function register() {
+function signup() {
   const username = document.getElementById('username-field').value;
   const password = document.getElementById('password-field').value;
   const email = document.getElementById('email-field').value;
-  document.getElementById('register-button').disabled = true;
+  document.getElementById('signup-button').disabled = true;
+
+  if (!username || !password || !email) {
+    displayAlertError('Error: All fields are required');
+    document.getElementById('signup-button').disabled = false;
+    return;
+  }
+
   fetch(`/api/auth/register`, {
     method: 'POST',
     headers: {
@@ -76,11 +37,11 @@ function register() {
 
 
 function handleResponse(response) {
-  document.getElementById('register-button').disabled = false;
+  document.getElementById('signup-button').disabled = false;
   if (response.status === 200) {
     return response.json().then((data) => {
       const redirectUri = getRedirectUri();
-      window.location.href = '/verify' + (redirectUri ? `?redirect_uri=${redirectUri}` : '');
+      window.location.href = '/verify' + (redirectUri ? `?redirect=${redirectUri}` : '');
     });
   } else if (response.status === 429) {
     handle429Error();
@@ -100,72 +61,55 @@ function handleResponse(response) {
 }
 
 function handle429Error() {
-  displayError('Error: Too many requests')
+  displayAlertError('Error: Too many requests')
 }
 
 
 function handle460Error() {
-  const usernameInput = document.getElementById('username-field');
-  usernameInput.value = '';
-  displayError('Username must only contain letters, numbers, and dashes and be between 3 and 20 characters')
+  document.getElementById('username-field').value = '';
+  displayAlertError('Username must only contain letters, numbers, and dashes and be between 3 and 20 characters')
 }
 
 function handle461Error() {
-  const emailInput = document.getElementById('email-field');
-  emailInput.value = '';
-  displayError('Error: Invalid email address')
+  document.getElementById('email-field').value = '';
+  displayAlertError('Invalid email address')
 }
 
 function handle462Error() {
-  const passwordInput = document.getElementById('password-field');
-  passwordInput.value = '';
-  document.getElementById('passwordRequirementComponents').style.color = "red";
-  document.getElementById('register-button').disabled = true;
-  displayError('Error: Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character')
+  document.getElementById('password-field').value = '';
+  displayAlertError('Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character')
 }
 
 function handle463Error() {
-  const emailInput = document.getElementById('email-field');
-  emailInput.value = '';
-  displayError('Error: Email already registered')
+  document.getElementById('email-field').value = '';
+  displayAlertError('Email already registered')
 }
 
 function handle464Error() {
-  const usernameInput = document.getElementById('username-field');
-  usernameInput.value = '';
-  displayError('Error: Username already taken')
+  document.getElementById('username-field').value = '';
+  displayAlertError('Username already taken')
 }
 
 function handleError() {
-  displayError('Error: Something went wrong')
+  displayAlertError('Something went wrong, please try again later')
 }
 
 
-function displaySuccess(successMessage) {
-  successBox.textContent = successMessage;
-  document.body.appendChild(successBox);
-  setTimeout(() => {
-      successBox.remove();
-  }, 2500);
+function displayAlertError(message) {
+  const alertBox = document.getElementById('alert-box');
+  const alertMessage = document.getElementById('alert-message');
+  alertMessage.innerText = message;
+  alertBox.style.display = 'block';
 }
 
-function displayError(errorMessage) {
-  errorBox.textContent = errorMessage;
-  document.body.appendChild(errorBox);
-  setTimeout(() => {
-      errorBox.remove();
-  }, 4000);
+function redirect_login() {
+  const redirectUri = getRedirectUri();
+  window.location.href = `/login?redirect=${redirectUri}`;
 }
+
+
 
 function getRedirectUri() {
   const redirectUri = window.location.search.split('redirect=')[1];
   return redirectUri;
 }
-
-document.querySelector('#email-field').focus();
-
-document.addEventListener('keypress', function(event) {
-  if (event.key === 'Enter') {
-    createUser();
-  }
-});

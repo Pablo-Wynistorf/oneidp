@@ -1,27 +1,23 @@
-const errorBox = document.createElement('div');
-const successBox = document.createElement('div');
+document.addEventListener('DOMContentLoaded', () => {
+  const usernameEmailField = document.getElementById('username-email-field');
+  if (usernameEmailField) {
+    usernameEmailField.focus();
+  }
 
-errorBox.className = 'error-box';
-successBox.className = 'success-box';
+  const loginButton = document.querySelector('.login-button');
+  if (loginButton) {
+    loginButton.addEventListener('click', login);
+  }
 
-function redirect_register() {
-  const redirectUrl = getRedirectUri()
-  window.location.href = '/register' + (redirectUrl ? `?redirect=${redirectUrl}` : '');
-}
-
-function redirect_resetpassword() {
-  window.location.href = '/recover'
-}
-
-document.getElementById("login-button").addEventListener("submit", function(event) {
-  event.preventDefault();
-  login();
+  document.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+      login();
+    }
+  });
 });
 
-
 function login() {
-  document.getElementById('login-button').disabled = true;
-  const usernameInput = document.getElementById('username-field');
+  const usernameInput = document.getElementById('username-email-field');
   const passwordInput = document.getElementById('password-field');
   const username_or_email = usernameInput.value;
   const password = passwordInput.value;
@@ -38,7 +34,6 @@ function login() {
 
 
 function handleResponse(response, data) {
-  document.getElementById('login-button').disabled = false;
   const redirectUri = data.redirectUri;
   if (response.status === 200) {
     if (redirectUri === 'null') {
@@ -59,31 +54,32 @@ function handleResponse(response, data) {
   }
 }
 
-
-
 function handle461Error() {
-  displayError('Email not verified')
+  displayAlertError('Email not verified')
   window.location.href = '/verify';
 }
 
 function handle462Error() {
-  const usernameInput = document.getElementById('username-field');
+  const usernameInput = document.getElementById('username-email-field');
   const passwordInput = document.getElementById('password-field');
   usernameInput.value = '';
   passwordInput.value = '';
-  usernameInput.classList.add('wiggle');
-  passwordInput.classList.add('wiggle');
-  displayError('Username or password wrong')
+  displayAlertError('Username or password is incorrect');
 }
+
 
 function handle463Error(redirectUri) {
   window.location.replace(`/mfa/?redirect=${redirectUri}` || '/mfa')
 }
 
 function handleError() {
-  displayError('Something went wrong')
+  displayAlertError('Something went wrong')
 }
 
+function redirect_register() {
+  const redirectUrl = getRedirectUri()
+  window.location.href = '/register' + (redirectUrl ? `?redirect=${redirectUrl}` : '');
+}
 
 function getRedirectUri() {
   const redirectUri = window.location.search.split('redirect=')[1];
@@ -91,28 +87,9 @@ function getRedirectUri() {
 }
 
 
-
-
-function displaySuccess(successMessage) {
-  successBox.textContent = successMessage;
-  document.body.appendChild(successBox);
-  setTimeout(() => {
-      successBox.remove();
-  }, 3500);
+function displayAlertError(message) {
+  const alertBox = document.getElementById('alert-box');
+  const alertMessage = document.getElementById('alert-message');
+  alertMessage.innerText = message;
+  alertBox.style.display = 'block';
 }
-
-function displayError(errorMessage) {
-  errorBox.textContent = errorMessage;
-  document.body.appendChild(errorBox);
-  setTimeout(() => {
-      errorBox.remove();
-  }, 3500);
-}
-
-document.querySelector('#username-field').focus();
-
-document.addEventListener('keypress', function(event) {
-  if (event.key === 'Enter') {
-    login();
-  }
-});
