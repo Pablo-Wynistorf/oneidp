@@ -39,7 +39,7 @@ router.all('/:email_verification_token/:email_verification_code', async (req, re
     const oauthSid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
 
     await userDB.updateOne({ userId }, {
-      $set: { sid: sid, oauthSid: oauthSid },
+      $set: { sid: sid, oauthSid: oauthSid, emailVerified: true},
       $unset: { verifyCode: 1 }
     });
 
