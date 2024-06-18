@@ -106,7 +106,7 @@ app.get('/', (req, res) => {
 // All express routes
 app.use('/login', existingToken, express.static(path.join(__dirname, 'public/login')));
 app.use('/home', verifyToken, express.static(path.join(__dirname, 'public/home')));
-app.use('/register', existingToken, express.static(path.join(__dirname, 'public/register')));
+app.use('/signup', existingToken, express.static(path.join(__dirname, 'public/signup')));
 app.use('/setpassword', express.static(path.join(__dirname, 'public/setpassword')));
 app.use('/verify', existingToken, express.static(path.join(__dirname, 'public/verify')));
 app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
@@ -117,13 +117,13 @@ app.use('/home/oauth/settings/roles', verifyToken, express.static(path.join(__di
 
 
 // Login to the account, if account not verified, resend verification email.
-app.use('/api/auth/token/check', require('./routes/api/auth/token/check'));
+app.use('/api/auth/token/check', require('./routes/api/auth/token/check.js'));
 
 // Login to the account, if account not verified, resend verification email.
-app.use('/api/auth/login', require('./routes/api/auth/login'));
+app.use('/api/auth/login', require('./routes/api/auth/login.js'));
 
 // Register as new user, store userdata in the database and send verification email
-app.use('/api/auth/register', require('./routes/api/auth/register'));
+app.use('/api/auth/register', require('./routes/api/auth/register.js'));
 
 // Handle logout
 app.use('/api/auth/logout', require('./routes/api/auth/logout.js'));
@@ -146,10 +146,10 @@ app.use('/api/auth/mfa/disable', require('./routes/api/auth/mfa/disable.js'));
 
 
 // Verify user with verification code and token, and later generate access tokens
-app.use('/api/auth/user/verfy', require('./routes/api/auth/user/verify'));
+app.use('/api/auth/user/verify', require('./routes/api/auth/user/verify.js'));
 
 // Verify user with verification code and token with the verificationlink, and later generate access tokens
-app.use('/api/auth/user/confirmationlink', require('./routes/api/auth/user/confirmationlink'));
+app.use('/api/auth/user/confirmationlink', require('./routes/api/auth/user/confirmationlink.js'));
 
 // Convert link into usable password_reset_code and password_reset_token cookies
 app.use('/api/auth/user/setresettokens', require('./routes/api/auth/user/setresettokens.js'));

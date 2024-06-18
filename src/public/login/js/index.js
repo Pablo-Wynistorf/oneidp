@@ -80,9 +80,13 @@ function handleError() {
   displayAlertError('Something went wrong')
 }
 
-function redirect_register() {
+function redirect_signup() {
   const redirectUrl = getRedirectUri()
-  window.location.href = '/register' + (redirectUrl ? `?redirect=${redirectUrl}` : '');
+  if (!redirectUrl || redirectUrl === 'null' || redirectUrl === 'undefined') {
+    window.location.href = '/signup';
+  } else {
+  window.location.href = `/signup?redirect=${redirectUrl}`;
+  }
 }
 
 function getRedirectUri() {

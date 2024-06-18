@@ -103,8 +103,12 @@ function displayAlertError(message) {
 }
 
 function redirect_login() {
-  const redirectUri = getRedirectUri();
-  window.location.href = `/login?redirect=${redirectUri}`;
+  const redirectUrl = getRedirectUri()
+  if (!redirectUrl || redirectUrl === 'null' || redirectUrl === 'undefined') {
+    window.location.href = '/login';
+  } else {
+  window.location.href = `/login?redirect=${redirectUrl}`;
+  }
 }
 
 
