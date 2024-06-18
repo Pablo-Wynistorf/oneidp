@@ -1,27 +1,33 @@
-const errorBox = document.createElement('div');
-const successBox = document.createElement('div');
+addEventListener('DOMContentLoaded', () => {
+  const mfaCodeInput = document.getElementById('mfa-code');
+  mfaCodeInput.focus();
 
-errorBox.className = 'error-box';
-successBox.className = 'success-box';
+  mfaCodeInput.addEventListener('input', function() {
+    if (this.value.length === 6) {
+      if (this.value.match(/^[0-9]+$/)) {
+        verifyCode(this.value);
+      } else {
+        displayAlertError('Please enter a valid MFA code');
+        this.value = '';
+      }
+    } else if (this.value.length > 6) {
+      this.value = this.value.slice(0, 6);
+    }
+  });
+});
 
-
-const inputs = document.querySelectorAll('.mfa-code-input');
-var collectedInputs = '';
 
 function verifyCode() {
-  let code = '';
-  inputs.forEach(input => {
-    code += input.value;
-  });
+  const mfa_code = document.getElementById('mfa-code').value;
 
-  if (code.length === 6) {
+  if (mfa_code.length === 6) {
     const redirectUri = getRedirectUri();
     fetch(`/api/auth/mfa/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ mfaVerifyCode: code, redirectUri })
+      body: JSON.stringify({ mfaVerifyCode: mfa_code, redirectUri })
     })
       .then(response => handleResponse(response, { redirectUri }))
       .catch(handleError);
@@ -50,46 +56,28 @@ function handleResponse(response, data) {
   }
 }
 
-function handleError() {
-  displayError('An error occurred');
-}
-
 function handle460Error() {
-  displayError('MFA not enabled');
+  displayAlertError('MFA not enabled');
   setTimeout(() => {
     window.location.replace('/home');
-  }, 5000);
+  }, 2000);
 }
 
 function handle461Error() {
-  displayError('MFA code is incorrect');
-  inputs.forEach(input => {
-    input.value = '';
-  }); 
-  inputs[0].focus();
+  document.getElementById('mfa-code').value = '';
+  document.getElementById('mfa-code').focus();
+  displayAlertError('MFA code is incorrect');
 }
 
 function handle462Error() {
-  displayError('MFA session expired. Please login again start a new session');
+  displayAlertError('MFA session expired. Please login again start a new session');
   setTimeout(() => {
     window.location.replace('/login');
-  }, 5000);
+  }, 2000);
 }
 
-function displaySuccess(successMessage) {
-  successBox.textContent = successMessage;
-  document.body.appendChild(successBox);
-  setTimeout(() => {
-    successBox.remove();
-  }, 2500);
-}
-
-function displayError(errorMessage) {
-  errorBox.textContent = errorMessage;
-  document.body.appendChild(errorBox);
-  setTimeout(() => {
-    errorBox.remove();
-  }, 2500);
+function handleError() {
+  displayAlertError('An error occurred');
 }
 
 function getRedirectUri() {
@@ -97,71 +85,10 @@ function getRedirectUri() {
   return redirectUri;
 }
 
-function moveToNextOrPreviousInput(input, isBackspace) {
-  const maxLength = parseInt(input.getAttribute('maxlength'));
-  const currentLength = input.value.length;
-  
-  if (isBackspace && currentLength === 0) {
-    const previousInput = input.previousElementSibling;
-    if (previousInput) {
-      previousInput.focus();
-    }
-  } else if (!isBackspace && currentLength >= maxLength) {
-    const nextInput = input.nextElementSibling;
-    if (nextInput) {
-      nextInput.focus();
-    }
-  }
+
+function displayAlertError(message) {
+  const alertBox = document.getElementById('alert-box');
+  const alertMessage = document.getElementById('alert-message');
+  alertMessage.innerText = message;
+  alertBox.style.display = 'block';
 }
-
-function onlyNumbers(event) {
-  const key = event.key;
-  if (!/^\d$/.test(key) && key !== "Backspace") {
-    event.preventDefault();
-  }
-}
-
-function handleKeyDown(event) {
-  const key = event.key;
-  const input = event.target;
-
-  if (key === "Backspace") {
-    moveToNextOrPreviousInput(input, true);
-  } else if ((event.ctrlKey || event.metaKey) && key === "v" && input === document.querySelector('.mfa-code-input:first-child')) {
-    event.preventDefault();
-    navigator.clipboard.readText().then(pastedText => {
-      if (pastedText.length === 6 && /^\d+$/.test(pastedText)) {
-        const codes = pastedText.split('');
-        codeInputs.forEach((input, index) => {
-          input.value = codes[index];
-          if (index < codeInputs.length - 1) {
-            moveToNextOrPreviousInput(input, false);
-          }
-        });
-
-        verifyCode();
-      }
-    }).catch(err => {
-      console.error('Failed to read clipboard data: ', err);
-    });
-  } else {
-    const inputValue = input.value;
-    if (inputValue.length === 1 && /^\d+$/.test(inputValue)) {
-      moveToNextOrPreviousInput(input, false);
-    } else if (inputValue.length === 6 && /^\d+$/.test(inputValue)) {
-      verifyCode();
-    }
-  }
-}
-
-const codeInputs = document.querySelectorAll('.mfa-code-input');
-codeInputs.forEach(input => {
-  input.addEventListener('input', function (e) {
-    moveToNextOrPreviousInput(this, false);
-    verifyCode();
-  });
-  input.addEventListener('keydown', handleKeyDown);
-  input.addEventListener('keypress', onlyNumbers);
-});
-
-document.querySelector('.mfa-code-input:first-child').focus();

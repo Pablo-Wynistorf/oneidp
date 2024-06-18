@@ -74,6 +74,9 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri)
       await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
       const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
       res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
+      if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
+        return res.status(463).json({ success: true, message: 'Redirecting to mfa site' });
+      }
       return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri });
     }
 
@@ -88,7 +91,10 @@ async function loginSuccess(userId, username, sid, res, mfaEnabled, redirectUri)
     await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
     const mfa_token = jwt.sign({ userId: userId, mfaLoginSecret: newMfaLoginSecret }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
     res.cookie('mfa_token', mfa_token, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
-    return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri })
+    if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
+      return res.status(463).json({ success: true, message: 'Redirecting to mfa site' });
+    }
+    return res.status(463).json({ success: true, message: 'Redirecting to mfa site', redirectUri });
   }
 
   const token = jwt.sign({ userId: userId, sid: sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });

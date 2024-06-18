@@ -36,7 +36,7 @@ function login() {
 function handleResponse(response, data) {
   const redirectUri = data.redirectUri;
   if (response.status === 200) {
-    if (redirectUri === 'null') {
+    if (redirectUri === 'null' || redirectUri === 'undefined') {
       window.location.href = '/home';
     } else if (!redirectUri) {
       window.location.href = 'home';
@@ -64,12 +64,16 @@ function handle462Error() {
   const passwordInput = document.getElementById('password-field');
   usernameInput.value = '';
   passwordInput.value = '';
+  usernameInput.focus();
   displayAlertError('Username or password is incorrect');
 }
 
 
 function handle463Error(redirectUri) {
-  window.location.replace(`/mfa/?redirect=${redirectUri}` || '/mfa')
+  if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
+    return window.location.replace('/mfa')
+  }
+  window.location.replace(`/mfa/?redirect=${redirectUri}`)
 }
 
 function handleError() {
