@@ -3,6 +3,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('email-field').focus();
   }
 
+  const signupButton = document.getElementById('signup-button')
+  if (signupButton) {
+    signupButton.addEventListener('click', signup);
+  }
+
   document.addEventListener('keypress', (event) => {
     if (event.key === 'Enter') {
       signup();
@@ -27,7 +32,7 @@ function signup() {
     signupButton.disabled = false;
     signupButton.innerText = 'Create account';
     signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
-    displayAlertError('Error: All fields are required');
+    displayAlertError('All fields are required');
     return;
   }
 

@@ -71,7 +71,7 @@ function sendRecoveryEmail(username, email, password_reset_token, password_reset
               Email: email
             }
           ],
-          Subject: "Your Email Verification Code",
+          Subject: "Your account recovery code",
           HtmlPart: `
           <!doctype html>
           <html>

@@ -1,12 +1,37 @@
-const errorBox = document.createElement('div');
-const successBox = document.createElement('div');
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('email-field')) {
+    document.getElementById('email-field').focus();
+  }
 
-errorBox.className = 'error-box';
-successBox.className = 'success-box';
+  const recoverButton = document.getElementById('recover-button');
+  if (recoverButton) {
+    recoverButton.addEventListener('click', recover);
+  }
 
-function sendResetCode() {
+  document.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+      recover();
+    }
+  });
+});
+
+function recover() {
   const resetEmailImput = document.getElementById('email-field');
+  const recoverButton = document.getElementById('recover-button');
+  recoverButton.disabled = true;
   const email = resetEmailImput.value;
+
+  recoverButton.innerText = '';
+  recoverButton.classList.add('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  recoverButton.innerHTML = `<img src="/signup/images/spinner.svg" width="24" height="24" />`;
+
+  if (email === '' || email === null || email === undefined) {
+    recoverButton.disabled = false;
+    recoverButton.innerText = 'Get recovery code';
+    recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+    displayAlertError('Enter your email address to get a recovery code.');
+    return;
+  }
 
   fetch(`/api/auth/user/resetpassword`, {
     method: 'POST',
@@ -29,36 +54,35 @@ function handleResponse(response) {
 }
 
 function handle404Error() {
-  document.getElementById('email-field').value = '';
-  displayError('Error: No account found with that email address.')
+  const resetEmailImput = document.getElementById('email-field');
+  const recoverButton = document.getElementById('recover-button');
+  resetEmailImput.value = '';
+  recoverButton.disabled = false;
+  recoverButton.innerText = 'Get recovery code';
+  recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  displayAlertError('No account found with that email address.')
 }
 
 
 function handleError() {
-  document.getElementById('email-field').value = '';
-  displayError('Something went wrong')
+  const resetEmailImput = document.getElementById('email-field');
+  const recoverButton = document.getElementById('recover-button');
+  resetEmailImput.value = '';
+  recoverButton.disabled = false;
+  recoverButton.innerText = 'Get recovery code';
+  recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  displayAlertError('Something went wrong')
 }
 
-function displaySuccess(successMessage) {
-  successBox.textContent = successMessage;
-  document.body.appendChild(successBox);
-  setTimeout(() => {
-      successBox.remove();
-  }, 2500);
+
+function redirect_login() {
+  window.location.href = '/login';
 }
 
-function displayError(errorMessage) {
-  errorBox.textContent = errorMessage;
-  document.body.appendChild(errorBox);
-  setTimeout(() => {
-      errorBox.remove();
-  }, 2500);
+
+function displayAlertError(message) {
+  const alertBox = document.getElementById('alert-box');
+  const alertMessage = document.getElementById('alert-message');
+  alertMessage.innerText = message;
+  alertBox.style.display = 'block';
 }
-
-document.querySelector('#email-field').focus();
-
-document.addEventListener('keypress', function(event) {
-  if (event.key === 'Enter') {
-    sendResetCode();
-  }
-});
