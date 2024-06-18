@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const mailjet = require('node-mailjet');
 const { MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE, MJ_SENDER_EMAIL } = process.env;
 const { URL } = process.env;
-const { notifyError, notifyRegister } = require('../../../notify/notifications');
+const { notifyError, notifyRegister } = require('../../../notify/notifications.js');
 
 
 const { userDB } = require('../../../database/database.js');
@@ -72,6 +72,7 @@ router.post('/', async (req, res) => {
       password: hashedPassword,
       email: email,
       verifyCode: email_verification_code,
+      emailVerified: false,
       mfaEnabled: false,
       providerRoles: ['standardUser', 'oauthUser'],
     });

@@ -23,7 +23,7 @@ function signup() {
     return;
   }
 
-  fetch(`/api/auth/register`, {
+  fetch(`/api/auth/signup`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
 
     const storedPasswordHash = user.password;
     const userId = user.userId;
-    const email_verification_code = user.verifyCode;
+    const emailVerified = user.emailVerified;
     const username = user.username;
     const email = user.email;
     const mfaEnabled = user.mfaEnabled;
@@ -47,7 +47,7 @@ router.post('/', async (req, res) => {
       return res.status(462).json({ success: false, error: 'Invalid username or password' });
     }
 
-    if (email_verification_code) {
+    if (!emailVerified) {
       const email_verification_token = jwt.sign({ userId: userId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
 
       const new_email_verification_code = Math.floor(100000 + Math.random() * 900000).toString();

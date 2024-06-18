@@ -38,6 +38,7 @@ const userSchema = new Schema({
   mfaSecret: String,
   mfaLoginSecret: String,
   mfaEnabled: Boolean,
+  emailVerified: Boolean,
   providerRoles: Array,
   oauthClientAppIds: Array,
   oauthAuthorizationCode: String,

@@ -123,7 +123,7 @@ app.use('/api/auth/token/check', require('./routes/api/auth/token/check.js'));
 app.use('/api/auth/login', require('./routes/api/auth/login.js'));
 
 // Register as new user, store userdata in the database and send verification email
-app.use('/api/auth/register', require('./routes/api/auth/register.js'));
+app.use('/api/auth/signup', require('./routes/api/auth/signup.js'));
 
 // Handle logout
 app.use('/api/auth/logout', require('./routes/api/auth/logout.js'));
