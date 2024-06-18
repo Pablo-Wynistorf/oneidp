@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     usernameEmailField.focus();
   }
 
-  const loginButton = document.querySelector('.login-button');
+  const loginButton = document.getElementById('login-button');
   if (loginButton) {
     loginButton.addEventListener('click', login);
   }
@@ -19,9 +19,25 @@ document.addEventListener('DOMContentLoaded', () => {
 function login() {
   const usernameInput = document.getElementById('username-email-field');
   const passwordInput = document.getElementById('password-field');
+  const loginButton = document.getElementById('login-button');
+
+  loginButton.disabled = true;
+  loginButton.innerText = '';
+  loginButton.classList.add('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  loginButton.innerHTML = `<img src="/login/images/spinner.svg" width="24" height="24" />`
+
   const username_or_email = usernameInput.value;
   const password = passwordInput.value;
   const redirectUri = getRedirectUri();
+
+  if (!username_or_email || !password) {
+    displayAlertError('Error: All fields are required');
+    loginButton.disabled = false;
+    loginButton.innerText = 'Sign In';
+    loginButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+    return;
+  }
+
   fetch(`/api/auth/login`, {
     method: 'POST',
     headers: {
@@ -62,6 +78,10 @@ function handle461Error() {
 function handle462Error() {
   const usernameInput = document.getElementById('username-email-field');
   const passwordInput = document.getElementById('password-field');
+  const loginButton = document.getElementById('login-button');
+  loginButton.disabled = false;
+  loginButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  loginButton.innerHTML = `Sign In`
   usernameInput.value = '';
   passwordInput.value = '';
   usernameInput.focus();

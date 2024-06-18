@@ -15,11 +15,19 @@ function signup() {
   const username = document.getElementById('username-field').value;
   const password = document.getElementById('password-field').value;
   const email = document.getElementById('email-field').value;
-  document.getElementById('signup-button').disabled = true;
+  const signupButton = document.getElementById('signup-button')
+
+  signupButton.disabled = true;
+  signupButton.innerText = '';
+  signupButton.classList.add('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  signupButton.innerHTML = `<img src="/signup/images/spinner.svg" width="24" height="24" />`;
 
   if (!username || !password || !email) {
+    const signupButton = document.getElementById('signup-button');
+    signupButton.disabled = false;
+    signupButton.innerText = 'Create account';
+    signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
     displayAlertError('Error: All fields are required');
-    document.getElementById('signup-button').disabled = false;
     return;
   }
 
@@ -61,36 +69,62 @@ function handleResponse(response) {
 }
 
 function handle429Error() {
+  const signupButton = document.getElementById('signup-button');
+  signupButton.disabled = false;
+  signupButton.innerText = 'Create account';
+  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
   displayAlertError('Error: Too many requests')
 }
 
 
 function handle460Error() {
+  const signupButton = document.getElementById('signup-button');
+  signupButton.disabled = false;
+  signupButton.innerText = 'Create account';
+  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
   document.getElementById('username-field').value = '';
   displayAlertError('Username must only contain letters, numbers, and dashes and be between 3 and 20 characters')
 }
 
 function handle461Error() {
+  const signupButton = document.getElementById('signup-button');
+  signupButton.disabled = false;
+  signupButton.innerText = 'Create account';
+  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
   document.getElementById('email-field').value = '';
   displayAlertError('Invalid email address')
 }
 
 function handle462Error() {
+  const signupButton = document.getElementById('signup-button');
+  signupButton.disabled = false;
+  signupButton.innerText = 'Create account';
+  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
   document.getElementById('password-field').value = '';
   displayAlertError('Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character')
 }
 
 function handle463Error() {
-  document.getElementById('email-field').value = '';
+  const signupButton = document.getElementById('signup-button');
+  signupButton.disabled = false;
+  signupButton.innerText = 'Create account';
+  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
   displayAlertError('Email already registered')
 }
 
 function handle464Error() {
-  document.getElementById('username-field').value = '';
+  const signupButton = document.getElementById('signup-button');
+  signupButton.disabled = false;
+  signupButton.innerText = 'Create account';
+  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
   displayAlertError('Username already taken')
 }
 
 function handleError() {
+  const signupButton = document.getElementById('signup-button');
+  signupButton.disabled = false;
+  signupButton.innerText = 'Create account';
+  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
   displayAlertError('Something went wrong, please try again later')
 }
 
