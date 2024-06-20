@@ -58,7 +58,7 @@ const verifyToken = (req, res, next) => {
           res.clearCookie('access_token');
           return res.redirect('/login');
         }
-        if (requestedPath !== '/dashboard' && requestedPath !== '/settings' && requestedPath !== '/oidc/apps' && requestedPath !== '/oidc/roles') {
+        if (requestedPath !== '/dashboard' && requestedPath !== '/settings' && requestedPath !== '/oidc/apps' && requestedPath !== '/oidc/roles' && requestedPath !== '/home/oauth/settings/roles') {
           return res.redirect('/dashboard');
         }
 
@@ -115,6 +115,9 @@ app.use('/home/mfa/settings', existingToken, express.static(path.join(__dirname,
 app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
 app.use('/oidc/apps', verifyToken, express.static(path.join(__dirname, 'public/oidc/apps')));
 app.use('/oidc/roles', verifyToken, express.static(path.join(__dirname, 'public/oidc/roles')));
+
+// Provisoric route for development
+app.use('/home/oauth/settings/roles', verifyToken, express.static(path.join(__dirname, 'public/oidc/roles')));
 
 
 // Login to the account, if account not verified, resend verification email.
