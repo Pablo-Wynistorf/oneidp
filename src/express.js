@@ -58,7 +58,7 @@ const verifyToken = (req, res, next) => {
           res.clearCookie('access_token');
           return res.redirect('/login');
         }
-        if (requestedPath !== '/dashboard' && requestedPath !== '/home/mfa/settings' && requestedPath !== '/oidc/apps' && requestedPath !== '/oidc/roles') {
+        if (requestedPath !== '/dashboard' && requestedPath !== '/settings' && requestedPath !== '/oidc/apps' && requestedPath !== '/oidc/roles') {
           return res.redirect('/dashboard');
         }
 
@@ -106,6 +106,7 @@ app.get('/', (req, res) => {
 // All express routes
 app.use('/login', existingToken, express.static(path.join(__dirname, 'public/login')));
 app.use('/dashboard', verifyToken, express.static(path.join(__dirname, 'public/dashboard')));
+app.use('/settings', verifyToken, express.static(path.join(__dirname, 'public/settings')));
 app.use('/signup', existingToken, express.static(path.join(__dirname, 'public/signup')));
 app.use('/setpassword', express.static(path.join(__dirname, 'public/setpassword')));
 app.use('/verify', existingToken, express.static(path.join(__dirname, 'public/verify')));

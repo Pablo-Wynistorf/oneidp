@@ -79,6 +79,6 @@ function redirect_oidc_roles() {
   window.location.href = '/oidc/roles';
 }
 
-function redirect_settings() {
-  window.location.href = '/settings';
+function redirect_dashboard() {
+  window.location.href = '/dashboard';
 }
