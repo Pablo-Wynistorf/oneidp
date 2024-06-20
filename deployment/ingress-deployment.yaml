@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: login.onedns.ch
+    - host: oneidp.ch
       http:
         paths:
         - path: /
@@ -22,5 +22,5 @@ spec:
                 number: 8080
   tls:
   - hosts:
-    - login.onedns.ch
-    secretName: login-onedns-ch-tls
+    - oneidp.ch
+    secretName: oneidp-ch-tls
