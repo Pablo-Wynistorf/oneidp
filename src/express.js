@@ -116,7 +116,7 @@ app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
 app.use('/oidc/apps', verifyToken, express.static(path.join(__dirname, 'public/oidc/apps')));
 app.use('/oidc/roles', verifyToken, express.static(path.join(__dirname, 'public/oidc/roles')));
 
-// Provisoric route for development
+// Provisionally route for development
 app.use('/home/oauth/settings/roles', verifyToken, express.static(path.join(__dirname, 'public/oidc/roles')));
 
 
