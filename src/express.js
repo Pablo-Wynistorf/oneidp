@@ -58,8 +58,8 @@ const verifyToken = (req, res, next) => {
           res.clearCookie('access_token');
           return res.redirect('/login');
         }
-        if (requestedPath !== '/home' && requestedPath !== '/home/mfa/settings' && requestedPath !== '/home/oauth/settings' && requestedPath !== '/home/oauth/settings/roles') {
-          return res.redirect('/home');
+        if (requestedPath !== '/dashboard' && requestedPath !== '/home/mfa/settings' && requestedPath !== '/oidc/apps' && requestedPath !== '/oidc/roles') {
+          return res.redirect('/dashboard');
         }
 
         const now = Math.floor(Date.now() / 1000);
@@ -105,15 +105,15 @@ app.get('/', (req, res) => {
 
 // All express routes
 app.use('/login', existingToken, express.static(path.join(__dirname, 'public/login')));
-app.use('/home', verifyToken, express.static(path.join(__dirname, 'public/home')));
+app.use('/dashboard', verifyToken, express.static(path.join(__dirname, 'public/dashboard')));
 app.use('/signup', existingToken, express.static(path.join(__dirname, 'public/signup')));
 app.use('/setpassword', express.static(path.join(__dirname, 'public/setpassword')));
 app.use('/verify', existingToken, express.static(path.join(__dirname, 'public/verify')));
 app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
 app.use('/home/mfa/settings', existingToken, express.static(path.join(__dirname, 'public/mfasettings')));
 app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
-app.use('/home/oauth/settings', verifyToken, express.static(path.join(__dirname, 'public/oauthsettings')));
-app.use('/home/oauth/settings/roles', verifyToken, express.static(path.join(__dirname, 'public/oauthrolesettings')));
+app.use('/oidc/apps', verifyToken, express.static(path.join(__dirname, 'public/oidc/apps')));
+app.use('/oidc/roles', verifyToken, express.static(path.join(__dirname, 'public/oidc/roles')));
 
 
 // Login to the account, if account not verified, resend verification email.
