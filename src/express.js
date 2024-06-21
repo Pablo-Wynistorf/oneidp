@@ -58,9 +58,6 @@ const verifyToken = (req, res, next) => {
           res.clearCookie('access_token');
           return res.redirect('/login');
         }
-        if (requestedPath !== '/dashboard' && requestedPath !== '/settings' && requestedPath !== '/oidc/apps' && requestedPath !== '/oidc/roles' && requestedPath !== '/home/oauth/settings/roles') {
-          return res.redirect('/dashboard');
-        }
 
         const now = Math.floor(Date.now() / 1000);
         const tokenExpirationThreshold = now + (24 * 60 * 60);

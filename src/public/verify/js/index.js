@@ -35,7 +35,7 @@ function verifyCode() {
 
 function handleResponse(response) {
   if (response.status === 200) {
-      window.location.href = '/home';
+      window.location.href = '/dashboard';
     }
     else if (response.status === 460) {
     return handle460Error();

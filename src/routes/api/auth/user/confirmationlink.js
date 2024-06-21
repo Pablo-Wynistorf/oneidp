@@ -45,7 +45,7 @@ router.all('/:email_verification_token/:email_verification_code', async (req, re
 
     const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
     res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
-    return res.redirect('/home');
+    return res.redirect('/dashboard');
   });
 });
 

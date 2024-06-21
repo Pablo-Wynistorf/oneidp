@@ -1,28 +1,33 @@
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('email-field').focus();
-  const recoverButton = document.getElementById('recover-button');
-  recoverButton.addEventListener('click', recover);
+
+  // Add event listener for Enter key
+  document.getElementById('email-field').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+      recover();
+    }
+  });
 });
 
 function recover() {
-  const resetEmailImput = document.getElementById('email-field');
+  const resetEmailInput = document.getElementById('email-field');
   const recoverButton = document.getElementById('recover-button');
   recoverButton.disabled = true;
-  const email = resetEmailImput.value;
+  const email = resetEmailInput.value;
 
   recoverButton.innerText = '';
-  recoverButton.classList.add('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  recoverButton.classList.add('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500');
   recoverButton.innerHTML = `<img src="/signup/images/spinner.svg" width="24" height="24" />`;
 
   if (email === '' || email === null || email === undefined) {
     recoverButton.disabled = false;
     recoverButton.innerText = 'Get recovery code';
-    recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+    recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500');
     displayAlertError('Enter your email address to get a recovery code.');
     return;
   }
 
-    fetch(`/api/auth/user/resetpassword`, {
+  fetch(`/api/auth/user/resetpassword`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -33,9 +38,10 @@ function recover() {
     .catch(handleError);
 }
 
+
 function handleResponse(response) {
   if (response.status === 200) {
-      window.location.href = '/setpassword';
+      return window.location.href = '/setpassword';
   } else if (response.status === 404) {
     handle404Error();
   }else {

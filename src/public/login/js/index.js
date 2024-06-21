@@ -53,9 +53,9 @@ function handleResponse(response, data) {
   const redirectUri = data.redirectUri;
   if (response.status === 200) {
     if (redirectUri === 'null' || redirectUri === 'undefined') {
-      window.location.href = '/home';
+      window.location.href = '/dashboard';
     } else if (!redirectUri) {
-      window.location.href = 'home';
+      window.location.href = '/dashboard';
     } else {
       window.location.href = redirectUri;
     }

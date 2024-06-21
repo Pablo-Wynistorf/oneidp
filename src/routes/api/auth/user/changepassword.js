@@ -20,7 +20,7 @@ ${process.env.JWT_PUBLIC_KEY}
 `.trim();
 
 router.post('/', async (req, res) => {
-  const { password } = req.body;
+  const { currentPassword, newPassword } = req.body;
   const access_token = req.cookies.access_token;
 
   if (!access_token) {
@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
   }
 
   const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\[\]{}|;:,.<>?])([A-Za-z\d!@#$%^&*()_+\[\]{}|;:,.<>?]{8,})$/;
-  if (typeof password !== 'string' || password.length < 8 || password.length > 10000 || !passwordPattern.test(password)) {
+  if (typeof newPassword !== 'string' || newPassword.length < 8 || newPassword.length > 10000 || !passwordPattern.test(newPassword)) {
     return res.status(460).json({ success: false, error: 'Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
   }
 
@@ -46,7 +46,13 @@ router.post('/', async (req, res) => {
       return res.redirect('/login');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const passwordMatch = await bcrypt.compare(currentPassword, userData.password);
+    if (!passwordMatch) {
+      return res.status(461).json({ success: false, error: 'Incorrect current Password' });
+    }
+
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     const newsid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
     const newOauthSid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
 
