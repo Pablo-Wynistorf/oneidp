@@ -69,6 +69,11 @@ const verifyToken = (req, res, next) => {
         res.clearCookie('email_verification_token');
         res.clearCookie('password_reset_token');
         res.clearCookie('password_reset_code');
+
+        if (requestedPath === '/login' || requestedPath === '/signup' || requestedPath === '/recover' || requestedPath === '/setpassword' || requestedPath === '/verify') {
+          return res.redirect('/dashboard');
+        }
+
         next();
       } catch (error) {
         res.clearCookie('access_token');
