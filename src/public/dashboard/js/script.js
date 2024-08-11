@@ -21,11 +21,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('email-input').textContent  = data.email;
         document.getElementById('roles-input').textContent  = data.providerRoles;
         document.getElementById('mfa-enabled-input').textContent  = data.mfaEnabled;
-
         sha256(data.email).then(hash => {
           document.getElementById('avatar').src = `https://www.gravatar.com/avatar/${hash}?&d=identicon&r=PG`;
         });
-
       })
       .catch(error => {
         handleError();
