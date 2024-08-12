@@ -1,199 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title>OAUTH APPS ROLE SETTINGS</title>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-    />
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="https://fonts.googleapis.com/css?family=Ubuntu:regular,bold&subset=Latin"
-    />
-    <link rel="stylesheet" href="css/style.css" />
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
-  </head>
-  <body
-    class="img js-fullheight"
-    style="
-      background-image: url(https://cdn.onedns.ch/attachment/1230122254784794644);
-    "
-  >
-    <button
-      class="btn btn-primary"
-      onclick="window.location.href = '/dashboard';"
-      style="position: absolute; top: 30px; left: 30px"
-    >
-      Back to Dashboard
-    </button>
-    <div class="container" style="justify-content: center">
-      <div class="px-4 sm:px-6 lg:px-8">
-        <div class="sm:flex sm:items-center">
-          <div class="sm:flex-auto">
-            <h1 class="text-base font-semibold text-white">Roles</h1>
-            <p class="mt-2 text-sm text-white">Add roles to your oauth app and add users to each individual role</p>
-          </div>
-          <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-            <button
-              type="button"
-              class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              onclick="openAddModal()"
-            >
-              Add Role
-            </button>
-          </div>
-        </div>
-        <div class="mt-8 overflow-x-auto max-h-[37rem]">
-          <table class="min-w-full divide-y divide-gray-300">
-            <thead class="bg-gray-50 sticky top-0">
-              <tr>
-                <th
-                  scope="col"
-                  class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-                >
-                  Role Id
-                </th>
-                <th
-                  scope="col"
-                  class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                >
-                  Role Name
-                </th>
-                <th
-                  scope="col"
-                  class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                >
-                  User Ids
-                </th>
-                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                  <span class="sr-only">Edit</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-              <!-- Your table rows go here -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <dialog data-modal id="add-role" class="rounded-lg">
-      <div class="bg-white rounded-lg shadow-lg">
-        <div class="px-6 py-8">
-          <h3 class="text-lg font-semibold leading-6 text-gray-900">
-            Create a new Role
-          </h3>
-          <div class="mt-4 text-sm text-gray-600">
-            <p>Define a new role name</p>
-          </div>
-          <form class="mt-6 flex items-center">
-            <div class="w-full max-w-md">
-              <label for="role-name" class="sr-only">Role Name</label>
-              <input
-                type="role-name"
-                name="role-name"
-                id="role-name"
-                class="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent sm:text-sm"
-              />
-            </div>
-            <button
-              type="button"
-              onclick="closeAddModal()"
-              class="ml-4 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onclick="addRole()"
-              class="ml-4 inline-flex items-center justify-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap"
-            >
-              Add Role
-            </button>
-          </form>
-        </div>
-      </div>
-    </dialog>
-    <dialog data-modal id="edit-role" class="rounded-lg">
-      <div class="bg-white rounded-lg shadow-lg">
-        <button
-        id="delete-userids-button"
-        onclick="deleteUids()"
-        type="button"
-        class="absolute top-0 left-5 mt-2 mr-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-sm"
-      >
-        Remove Userids
-      </button>
-        <button
-          id="delete-role-button"
-          onclick="deleteRole()"
-          type="button"
-          class="absolute top-0 right-0 mt-2 mr-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-sm"
-        >
-          Delete Role
-        </button>
-        <div class="px-6 py-8">
-          <h3 class="text-lg font-semibold leading-6 text-gray-900">
-            Update your role
-          </h3>
-          <div class="mt-4 text-sm text-gray-600">
-            <p>Add or delete userids. Separate them with a comma</p>
-            <p>If you want to add this role to every user use: *</p>
-          </div>
-          <form class="mt-6 flex items-center">
-            <div class="w-full max-w-md">
-              <label for="role-userids" class="sr-only">Role Userids</label>
-              <input
-                type="role-userids"
-                name="role-userids"
-                id="role-userids"
-                class="block w-full rounded-md border border-gray-300 py-2 px-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent sm:text-sm"
-              />
-            </div>
-            <button
-              type="button"
-              onclick="closeEditModal()"
-              id="cancel-edit-role-button"
-              class="ml-4 inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              id="edit-role-button"
-              onclick="editRole()"
-              class="ml-4 inline-flex items-center justify-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 whitespace-nowrap"
-            >
-              Update Role
-            </button>
-          </form>
-        </div>
-      </div>
-    </dialog>
-
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OIDC Roles</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="./js/tailwind.config.js"></script>
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        fetchData();
-        const roleNameInput = document.getElementById("role-name");
-        const roleUserIdsInput = document.getElementById("role-userids");
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+</head>
+<body class="bg-gray-800 text-gray-200">
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar" class="w-full md:w-64 bg-gray-900 p-4 flex flex-col md:fixed top-0 bottom-0 left-0">
+            <!-- Mobile Menu Button Container -->
+            <div class="absolute top-0 right-0 mt-1 p-4 flex items-center space-x-2 md:hidden">
+                <img id="mobile-open-menu" src="svg/mobile-open-menu.svg" class="h-10 w-10 cursor-pointer transition-transform duration-300" alt="Mobile Menu">
+                <img id="mobile-close-menu" src="svg/mobile-close-menu.svg" class="h-10 w-10 cursor-pointer hidden transition-transform duration-300" alt="Close Menu">
+            </div>
 
-        roleNameInput.addEventListener("keydown", function (event) {
-          if (event.key === "Enter") {
-            event.preventDefault();
-          }
-        });
+            <div class="flex flex-col flex-grow">
+                <!-- Mobile and Desktop Title -->
+                <div class="flex items-center mt-1 mb-1 md:justify-start">
+                    <img src="img/oneidp.png" class="w-10 h-10 ml-1" alt="Oneidp">
+                    <span class="text-xl font-semibold ml-4 hidden md:block">ONEIDP</span>
+                    <span class="text-xl font-semibold ml-4 md:hidden flex items-center">ONEIDP</span>
+                </div>
 
-        roleUserIdsInput.addEventListener("keydown", function (event) {
-          if (event.key === "Enter") {
-            event.preventDefault();
-          }
-        });
-      });
-    </script>
-    <script src="js/index.js"></script>
-  </body>
+                <!-- Navigation Items -->
+                <ul id="nav-items" class="space-y-2 mt-4 md:block hidden">
+                    <li>
+                        <a href="/dashboard" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
+                            <img src="svg/dashboard.svg" class="w-6 h-6" alt="Dashboard">
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/oidc/apps" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
+                            <img src="svg/oidc-apps.svg" class="w-6 h-6" alt="OIDC Apps">
+                            <span class="ml-3">OIDC Apps</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="" class="flex items-center p-3 text-white bg-blue-700 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-blue-800">
+                            <img src="svg/oidc-roles.svg" class="w-6 h-6" alt="OIDC Roles">
+                            <span class="ml-3">OIDC Roles</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Settings and Logout Buttons (initially hidden on mobile) -->
+            <div id="settings-logout-buttons" class="mt-2 hidden md:block">
+                <ul class="space-y-2">
+                    <li id="settings-item">
+                        <a href="/settings" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
+                            <img src="svg/settings.svg" class="w-6 h-6" alt="Settings">
+                            <span class="ml-3">Settings</span>
+                        </a>
+                    </li>
+                    <li id="logout-item">
+                        <a href="" id="logout-button" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
+                            <img src="svg/logout.svg" class="w-6 h-6" alt="Logout">
+                            <span class="ml-3">Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-6 md:ml-64">
+            <div class="bg-slate-800 p-8 rounded-lg shadow-lg">
+                <div class="text-center mb-6">
+                    <h2 class="text-3xl font-semibold">ONEDNS OAUTH Roles</h2>
+                </div>
+                <div class="space-y-6">
+                    <h3 class="text-xl text-center mb-4">Select an OAuth Application</h3>
+                    <div class="space-y-4">
+                        <div class="form-group">
+                            <select id="oauth-app-select" class="w-full p-3 bg-gray-900 text-white text-lg rounded-lg">
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button id="create-role-button" class="px-4 py-2 bg-green-600 text-white rounded-lg">Create New Role</button>
+                    </div>
+                </div>
+            </div>
+            <div id="oauth-apps-container" class="block max-w-full overflow-auto text-ellipsis p-4 mt-6">
+                <table class="min-w-full bg-gray-700 rounded-lg">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 text-left">Role Id</th>
+                            <th class="py-2 px-4 text-left">Role Name</th>
+                            <th class="py-2 px-4 text-left">User Ids</th>
+                            <th class="py-2 px-4 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON Dialog -->
+    <dialog id="json-dialog" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+            <h3 class="text-lg font-semibold mb-4">Edit Role Information</h3>
+            <label for="role-name-input" class="block text-gray-700">Role Name</label>
+            <input id="role-name-input" type="text" class="block w-full border border-gray-300 p-2 rounded mb-4">
+            <div id="user-ids-container" class="mb-4"></div>
+            <input id="user-input" type="text" class="block w-full border border-gray-300 p-2 rounded mb-4" placeholder="Enter username or user ID">
+            <button id="add-user-button" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add User</button>
+            <button data-close-modal class="mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">Close</button>
+        </div>
+    </dialog>
+
+
+
+    <!-- Confirmation Box -->
+    <dialog data-modal id="delete-role-dialog" class="bg-gray-900 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50">
+        <h2 class="text-lg mb-4 text-white">Do you really want to delete this role?</h2>
+        <div class="flex justify-center space-x-4">
+            <button type="button" class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg" data-close-modal>No</button>
+            <button type="submit" id="delete-button" class="px-4 py-2 bg-red-600 text-white rounded-lg">Yes</button>
+        </div>
+    </dialog>
+
+    <!-- Create Role Dialog -->
+    <dialog id="create-role-dialog" class="bg-gray-900 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50 w-80">
+        <h2 class="text-lg mb-4 text-white">Create New Role</h2>
+        <input id="new-role-name" type="text" placeholder="Enter role name" class="w-full p-2 mb-2 bg-gray-700 text-white rounded-lg">
+        <div class="flex justify-between mt-4">
+            <button type="button" class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg" data-close-modal>Close</button>
+            <button id="create-role-submit" class="px-4 py-2 bg-green-600 text-white rounded-lg">Create Role</button>
+        </div>
+    </dialog>
+
+    <script src="js/base.js"></script>
+    <script src="js/navbar.js"></script>
+    <script src="js/script.js"></script>
+</body>
 </html>

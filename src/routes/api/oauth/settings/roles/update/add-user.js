@@ -18,7 +18,7 @@ router.post('/', async (req, res) => {
   let { oauthRoleUserIds } = req.body;
 
   if (!oauthRoleUserIds) {
-    return res.status(400).json({ success: false, error: 'oauthRoleUserIds not provided' });
+    return res.status(400).json({ success: false, error: 'No userid provided' });
   }
 
   if (!oauthClientAppId) {

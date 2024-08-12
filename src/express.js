@@ -183,14 +183,17 @@ app.use('/api/oauth/settings/apps/delete', require('./routes/api/oauth/settings/
 // Get oauth app roles
 app.use('/api/oauth/settings/roles/get', require('./routes/api/oauth/settings/roles/get.js'));
 
+// Get oauth app role users
+app.use('/api/oauth/settings/roles/get-users', require('./routes/api/oauth/settings/roles/get-users.js'));
+
 // Add oauth app role
 app.use('/api/oauth/settings/roles/add', require('./routes/api/oauth/settings/roles/add.js'));
 
 // Delete userids from oauth app role
-app.use('/api/oauth/settings/roles/update/removeuid', require('./routes/api/oauth/settings/roles/update/removeuid.js'));
+app.use('/api/oauth/settings/roles/update/remove-user', require('./routes/api/oauth/settings/roles/update/remove-user.js'));
 
 // Add userid to oauth app role
-app.use('/api/oauth/settings/roles/update/adduid', require('./routes/api/oauth/settings/roles/update/adduid.js'));
+app.use('/api/oauth/settings/roles/update/add-user', require('./routes/api/oauth/settings/roles/update/add-user.js'));
 
 // Delete oauth app role
 app.use('/api/oauth/settings/roles/delete', require('./routes/api/oauth/settings/roles/delete.js'));

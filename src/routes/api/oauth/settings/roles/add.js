@@ -78,6 +78,7 @@ router.post('/', async (req, res) => {
           oauthClientAppId,
           oauthRoleName,
           oauthClientId,
+          owner: userId,
         });
 
         await newOauthRole.save();

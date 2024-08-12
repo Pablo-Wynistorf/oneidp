@@ -67,6 +67,7 @@ const oAuthRolesSchema = new Schema({
   oauthClientId: String,
   oauthRoleName: String,
   oauthUserIds: Array,
+  owner: String,
 }, {
   timestamps: true
 });

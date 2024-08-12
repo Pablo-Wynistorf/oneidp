@@ -61,8 +61,6 @@ router.post('/', async (req, res) => {
 
     const organizedData = oauthRolesData.map(app => ({
       oauthRoleId: app.oauthRoleId,
-      oauthClientAppId : oauthClientAppId,
-      oauthRoleName: app.oauthRoleName,
       oauthUserIds: app.oauthUserIds,
     }));
 
