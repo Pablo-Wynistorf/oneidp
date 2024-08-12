@@ -35,6 +35,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // Set URLs for OAuth endpoints
   var currentURL = window.location.origin;
+  document.getElementById("oidc-url").textContent = currentURL;
   document.getElementById("authorization-url").textContent =
     currentURL + "/api/oauth/authorize";
   document.getElementById("token-url").textContent =
@@ -45,6 +46,10 @@ document.addEventListener("DOMContentLoaded", function() {
     currentURL + "/api/oauth/userinfo";
 
   // Clipboard copy functionality for OAuth endpoint URLs
+  document.getElementById("oidc-url-copy").addEventListener("click", function() {
+    copyTextToClipboard("oidc-url");
+  });
+
   document.getElementById("authorization-url-copy").addEventListener("click", function() {
     copyTextToClipboard("authorization-url");
   });

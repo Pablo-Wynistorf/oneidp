@@ -90,12 +90,13 @@
                         <div class="form-group">
                             <button type="submit" id="create-app-button" class="w-full p-3 bg-blue-700 text-white rounded-lg hover:bg-blue-800 font-semibold mb-8" onclick="create_app()">Create Application</button>
                         </div>
-                        <div class="bg-gray-900 p-8 rounded-lg shadow-lg space-y-4 max-w-full overflow-hidden break-all">
-                            <p>Authorization URL: <span id="authorization-url"></span><span><img id="authorization-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
-                            <p>Token URL: <span id="token-url"></span><span><img id="token-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
-                            <p>Token check URL: <span id="token-check-url"></span><span><img id="token-check-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
-                            <p>Userinfo URL: <span id="userinfo-url"></span><span><img id="userinfo-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
-                            <p>Refresh Token validity: 20 days</p>
+                        <div class="bg-gray-900 p-8 rounded-lg shadow-lg space-y-4 max-w-full overflow-hidden break-all font-semibold">
+                            <p>Openid Connect Base URL: <span id="oidc-url" class="font-normal"></span><span><img id="oidc-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
+                            <p>Authorization URL: <span id="authorization-url" class="font-normal"></span><span><img id="authorization-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
+                            <p>Token URL: <span id="token-url" class="font-normal"></span><span><img id="token-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
+                            <p>Token check URL: <span id="token-check-url" class="font-normal"></span><span><img id="token-check-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
+                            <p>Userinfo URL: <span id="userinfo-url" class="font-normal"></span><span><img id="userinfo-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
+                            <p>Refresh Token validity: <span class="font-normal">20 Days</span></p>
                         </div>
                     </div>
                 </div>
