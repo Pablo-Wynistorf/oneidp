@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
-const { userDB, oAuthRolesDB, oAuthClientAppDB } = require('../../../../../../database/database.js');
+const { userDB, oAuthRolesDB } = require('../../../../../../database/database.js');
 
 const router = express.Router();
 
@@ -10,6 +10,13 @@ const JWT_PUBLIC_KEY = `
 ${process.env.JWT_PUBLIC_KEY}
 -----END PUBLIC KEY-----
 `.trim();
+
+// Function to validate oauthRoleUserIds
+const isValidOauthRoleUserIds = (ids) => {
+  if (ids === '*') return true;
+  if (!Array.isArray(ids)) return false;
+  return ids.every(id => typeof id === 'number' || id === '*');
+};
 
 router.post('/', async (req, res) => {
   const access_token = req.cookies.access_token;
@@ -68,18 +75,21 @@ router.post('/', async (req, res) => {
     if (!existingRole) {
       return res.status(404).json({ error: 'User has no access to manage this role' });
     }
+
+    if (!isValidOauthRoleUserIds(oauthRoleUserIds)) {
+      return res.status(400).json({ error: 'Invalid format for oauthRoleUserIds' });
+    }
+
     if (oauthRoleUserIds === '*') {
       await oAuthRolesDB.updateOne(
         { oauthRoleId, oauthClientAppId },
         { $set: { oauthUserIds: '*' } }
       );
-    } else if (Array.isArray(oauthRoleUserIds)) {
+    } else {
       await oAuthRolesDB.updateOne(
         { oauthRoleId, oauthClientAppId },
         { $set: { oauthUserIds: oauthRoleUserIds } }
       );
-    } else {
-      return res.status(400).json({ error: 'Invalid format for oauthRoleUserIds' });
     }
 
     res.status(200).json({ success: true, message: 'OAuth role has been successfully updated' });
