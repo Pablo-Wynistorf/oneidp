@@ -98,7 +98,7 @@ function handleResponse(response) {
   if (response.status === 200) {
     return response.json().then(data => {
       removeResetCode();
-      window.location.href = '/home'
+      window.location.href = '/dashboard'
     })
   } else if (response.status === 460) {
     handle460Error();
