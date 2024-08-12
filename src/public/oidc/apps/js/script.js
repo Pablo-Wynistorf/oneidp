@@ -83,7 +83,7 @@ function displayOAuthApps(data) {
   container.innerHTML = ""; // Clear any existing content
   data.oauthApps.forEach((app) => {
     const appBox = document.createElement("div");
-    appBox.classList.add("oauth-app-box", "p-4", "bg-gray-900", "rounded-lg", "shadow-md", "transition", "transform", "mb-4");
+    appBox.classList.add("oauth-app-box", "p-4", "bg-gray-900", "rounded-lg", "shadow-md", "transition", "transform", "mb-4", "max-w-full", "overflow-hidden", "break-words");
     appBox.id = app.oauthClientAppId;
 
     appBox.innerHTML = `
@@ -145,7 +145,7 @@ function create_app() {
       .then((data) => {
         const container = document.querySelector("#oauth-apps-container");
         const newAppBox = document.createElement("div");
-        newAppBox.classList.add("oauth-app-box", "p-4", "bg-gray-900", "rounded-lg", "shadow-md", "transition", "transform", "mb-4");
+        newAppBox.classList.add("oauth-app-box", "p-4", "bg-gray-900", "rounded-lg", "shadow-md", "transition", "transform", "mb-4", "max-w-full", "overflow-hidden", "break-words");
         newAppBox.id = data.oauthClientAppId;
 
         const appBoxHTML = `
