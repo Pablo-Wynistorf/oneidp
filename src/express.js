@@ -195,6 +195,9 @@ app.use('/api/oauth/settings/roles/update/remove-user', require('./routes/api/oa
 // Add userid to oauth app role
 app.use('/api/oauth/settings/roles/update/add-user', require('./routes/api/oauth/settings/roles/update/add-user.js'));
 
+// Add userid to oauth app role
+app.use('/api/oauth/settings/roles/update/bulk-update', require('./routes/api/oauth/settings/roles/update/bulk-update.js'));
+
 // Delete oauth app role
 app.use('/api/oauth/settings/roles/delete', require('./routes/api/oauth/settings/roles/delete.js'));
 

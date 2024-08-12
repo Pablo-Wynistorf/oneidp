@@ -169,16 +169,19 @@ function closeDialog() {
 }
 
 
-document.getElementById('add-user-button').addEventListener('click', async () => {
-  const userInput = document.getElementById('user-input').value.trim();
-  document.getElementById('user-input').value = '';
-  if (!userInput) {
-      displayAlertError('Please enter a username or user ID');
-      return;
-  }
+document.getElementById('save-bulk-edit-button').addEventListener('click', async () => {
+  const userIdsInput = document.getElementById('json-input').value;
 
   try {
-      const response = await fetch('/api/oauth/settings/roles/update/add-user', {
+      // Parse the input as JSON to get the user IDs array
+      const parsedInput = JSON.parse(userIdsInput);
+
+      // Validate that the parsed input is an object containing the `oauthUserIds` array
+      if (!parsedInput || !Array.isArray(parsedInput.oauthUserIds)) {
+          return displayAlertError("Input must be a valid JSON object with an array under 'oauthUserIds'.");
+      }
+
+      const response = await fetch('/api/oauth/settings/roles/update/bulk-update', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
@@ -186,7 +189,7 @@ document.getElementById('add-user-button').addEventListener('click', async () =>
           body: JSON.stringify({
               oauthRoleId: currentRole.oauthRoleId,
               oauthClientAppId: currentRole.oauthClientAppId,
-              oauthRoleUserIds: [userInput], // Send user IDs as an array
+              oauthRoleUserIds: parsedInput.oauthUserIds, // Extract the array from the parsed object
           }),
       });
 
@@ -206,6 +209,8 @@ document.getElementById('add-user-button').addEventListener('click', async () =>
       displayAlertError("Error: " + error.message);
   }
 });
+
+
 
 // Close dialog functionality
 document.addEventListener('DOMContentLoaded', () => {
