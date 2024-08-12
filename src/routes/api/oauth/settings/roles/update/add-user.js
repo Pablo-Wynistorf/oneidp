@@ -15,10 +15,10 @@ router.post('/', async (req, res) => {
   const basicAuth = req.headers.authorization;
   const access_token = req.cookies.access_token;
   const { oauthClientAppId, oauthRoleId } = req.body;
-  let { oauthRoleUserIds } = req.body;
+  let { userId_or_username } = req.body;
 
-  if (!oauthRoleUserIds) {
-    return res.status(400).json({ success: false, error: 'No user ids provided' });
+  if (!userId_or_username) {
+    return res.status(400).json({ success: false, error: 'No userId or username provided' });
   }
 
   if (!oauthClientAppId) {
@@ -54,28 +54,33 @@ router.post('/', async (req, res) => {
         return res.status(404).json({ success: false, error: 'Oauth role not assigned to app' });
       }
 
-      if (oauthRoleUserIds === '*') {
-        oauthRoleUserIds = '*';
-      } else if (Array.isArray(oauthRoleUserIds)) {
-        const validUserIds = await userDB.find({ userId: { $in: oauthRoleUserIds } }).distinct('userId');
-
-        const nonExistingUsers = oauthRoleUserIds.filter(id => !validUserIds.includes(id));
-        if (nonExistingUsers.length > 0) {
-          return res.status(464).json({ error: `The following users do not exist: ${nonExistingUsers.join(', ')}` });
-        }
-
-        if (existingRole && existingRole.oauthUserIds === '*') {
-          await oAuthRolesDB.updateOne(
-            { oauthRoleId, oauthClientAppId: basicAuth_oauthClientAppId },
-            { $unset: { oauthUserIds: '' } }
-          );
-        }
-
-        if (existingRole && Array.isArray(existingRole.oauthUserIds)) {
-          oauthRoleUserIds = [...new Set([...existingRole.oauthUserIds, ...oauthRoleUserIds])];
+      let userId;
+      if (/^\d+$/.test(userId_or_username)) {
+        // Check if it's a userId
+        userId = await userDB.findOne({ userId: userId_or_username });
+        if (!userId) {
+          return res.status(404).json({ success: false, error: 'UserId not found' });
         }
       } else {
-        return res.status(400).json({ success: false, error: 'Invalid format for oauthRoleUserIds' });
+        // Check if it's a username
+        const user = await userDB.findOne({ username: userId_or_username });
+        if (!user) {
+          return res.status(404).json({ success: false, error: 'Username not found' });
+        }
+        userId = user.userId;
+      }
+
+      let oauthRoleUserIds = [userId];
+
+      if (existingRole && existingRole.oauthUserIds === '*') {
+        await oAuthRolesDB.updateOne(
+          { oauthRoleId, oauthClientAppId: basicAuth_oauthClientAppId },
+          { $unset: { oauthUserIds: '' } }
+        );
+      }
+
+      if (existingRole && Array.isArray(existingRole.oauthUserIds)) {
+        oauthRoleUserIds = [...new Set([...existingRole.oauthUserIds, ...oauthRoleUserIds])];
       }
 
       await oAuthRolesDB.findOneAndUpdate(
@@ -128,28 +133,32 @@ router.post('/', async (req, res) => {
           return res.status(404).json({ error: 'OAuth role not found' });
         }
 
-        if (oauthRoleUserIds === '*') {
-          oauthRoleUserIds = '*';
-        } else if (Array.isArray(oauthRoleUserIds)) {
-          const validUserIds = await userDB.find({ userId: { $in: oauthRoleUserIds } }).distinct('userId');
-
-          const nonExistingUsers = oauthRoleUserIds.filter(id => !validUserIds.includes(id));
-          if (nonExistingUsers.length > 0) {
-            return res.status(464).json({ error: `The following users do not exist: ${nonExistingUsers.join(', ')}` });
+        let oauthRoleUserIds;
+        if (/^\d+$/.test(userId_or_username)) {
+          // Check if it's a userId
+          const user = await userDB.findOne({ userId: userId_or_username });
+          if (!user) {
+            return res.status(404).json({ success: false, error: 'UserId not found' });
           }
-
-          if (existingRole && existingRole.oauthUserIds === '*') {
-            await oAuthRolesDB.updateOne(
-              { oauthRoleId, oauthClientAppId },
-              { $unset: { oauthUserIds: '' } }
-            );
-          }
-
-          if (existingRole && Array.isArray(existingRole.oauthUserIds)) {
-            oauthRoleUserIds = [...new Set([...existingRole.oauthUserIds, ...oauthRoleUserIds])];
-          }
+          oauthRoleUserIds = [userId_or_username];
         } else {
-          return res.status(400).json({ error: 'Invalid format for oauthRoleUserIds' });
+          // Check if it's a username
+          const user = await userDB.findOne({ username: userId_or_username });
+          if (!user) {
+            return res.status(404).json({ success: false, error: 'Username not found' });
+          }
+          oauthRoleUserIds = [user.userId];
+        }
+
+        if (existingRole && existingRole.oauthUserIds === '*') {
+          await oAuthRolesDB.updateOne(
+            { oauthRoleId, oauthClientAppId },
+            { $unset: { oauthUserIds: '' } }
+          );
+        }
+
+        if (existingRole && Array.isArray(existingRole.oauthUserIds)) {
+          oauthRoleUserIds = [...new Set([...existingRole.oauthUserIds, ...oauthRoleUserIds])];
         }
 
         await oAuthRolesDB.findOneAndUpdate(

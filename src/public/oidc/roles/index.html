@@ -106,24 +106,26 @@
     </div>
 
 
-    <dialog id="json-dialog" class="bg-gray-900 p-8 rounded-lg shadow-lg backdrop:backdrop-brightness-50 w-4/5 max-w-3xl">
-        <h2 class="text-lg mb-4 text-white">Edit Role</h2>
-        <form method="dialog">
-            <!-- JSON Textarea for editing JSON data -->
-            <textarea id="json-input" class="w-full h-64 p-2 border-gray-700 bg-gray-800 text-white rounded-md shadow-sm mb-4" placeholder="JSON data will appear here..."></textarea>
-            
-            <!-- Existing elements -->
-            <div id="user-ids-container" class="mb-4"></div>
-            
-            <div class="flex justify-between items-center mt-4">
-                <button type="button" data-close-modal class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg">Close</button>
-                <button type="button" id="save-bulk-edit-button" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Save</button>
-            </div>
-        </form>
-    </dialog>
+<dialog id="json-dialog" class="bg-gray-900 p-8 rounded-lg shadow-lg backdrop:backdrop-brightness-50 w-4/5 max-w-3xl">
+    <h2 class="text-lg mb-4 text-white">Edit Role</h2>
+    <form method="dialog">
+        <div class="flex items-center mb-8">
+            <input id="userid_or_username" type="text" class="w-5/6 p-2 bg-gray-700 text-white rounded-lg" placeholder="Userid or Username">
+            <button type="button" id="add-user" class="bg-blue-600 text-white px-4 py-2 rounded-lg ml-4 whitespace-nowrap overflow-hidden text-ellipsis">Add User</button>
+        </div>
+        <h1 class="text-lg text-white mb-2">Bulk Edit:</h1>
+        <textarea id="json-input" class="w-full h-64 p-2 border-gray-700 bg-gray-800 text-white rounded-md shadow-sm mb-4" placeholder="Loading..."></textarea>
+        <div id="user-ids-container" class="mb-4"></div>
+        
+        <div class="flex justify-between items-center mt-4">
+            <button type="button" data-close-modal class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg">Close</button>
+            <button type="button" id="save-bulk-edit-button" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Save</button>
+        </div>
+    </form>
+</dialog>
+
     
-      
-    <!-- Confirmation Box -->
+    
     <dialog data-modal id="delete-role-dialog" class="bg-gray-900 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50">
         <h2 class="text-lg mb-4 text-white">Do you really want to delete this role?</h2>
         <div class="flex justify-center space-x-4">
@@ -132,7 +134,6 @@
         </div>
     </dialog>
 
-    <!-- Create Role Dialog -->
     <dialog id="create-role-dialog" class="bg-gray-900 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50 w-80">
         <h2 class="text-lg mb-4 text-white">Create New Role</h2>
         <input id="new-role-name" type="text" placeholder="Enter role name" class="w-full p-2 mb-2 bg-gray-700 text-white rounded-lg">

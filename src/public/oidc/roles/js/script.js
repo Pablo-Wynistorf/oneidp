@@ -173,10 +173,8 @@ document.getElementById('save-bulk-edit-button').addEventListener('click', async
   const userIdsInput = document.getElementById('json-input').value;
 
   try {
-      // Parse the input as JSON to get the user IDs array
       const parsedInput = JSON.parse(userIdsInput);
 
-      // Validate that the parsed input is an object containing the `oauthUserIds` array
       if (!parsedInput || !Array.isArray(parsedInput.oauthUserIds)) {
           return displayAlertError("Input must be a valid JSON object with an array under 'oauthUserIds'.");
       }
@@ -189,7 +187,41 @@ document.getElementById('save-bulk-edit-button').addEventListener('click', async
           body: JSON.stringify({
               oauthRoleId: currentRole.oauthRoleId,
               oauthClientAppId: currentRole.oauthClientAppId,
-              oauthRoleUserIds: parsedInput.oauthUserIds, // Extract the array from the parsed object
+              oauthRoleUserIds: parsedInput.oauthUserIds,
+          }),
+      });
+
+      if (!response.ok) {
+          return displayAlertError(await response.text());
+      }
+
+      const updatedRole = await response.json();
+      populateJsonDialog(updatedRole);
+      displayAlertSuccess("User added successfully");
+
+      const dialog = document.getElementById('json-dialog');
+      if (dialog.close) {
+          dialog.close();
+      }
+  } catch (error) {
+      displayAlertError("Error: " + error.message);
+  }
+});
+
+document.getElementById('add-user').addEventListener('click', async () => {
+  const userId_or_username = document.getElementById('userid_or_username').value;
+  document.getElementById('userid_or_username').value = '';
+
+  try {
+      const response = await fetch('/api/oauth/settings/roles/update/add-user', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+              oauthRoleId: currentRole.oauthRoleId,
+              oauthClientAppId: currentRole.oauthClientAppId,
+              userId_or_username: userId_or_username,
           }),
       });
 

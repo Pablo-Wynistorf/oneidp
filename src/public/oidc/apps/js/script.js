@@ -16,24 +16,20 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  // Event listener for modal close button
   closeButton.addEventListener("click", function() {
     modal.close();
   });
 
-  // Event listener for edit button
   document.addEventListener("click", function(event) {
     const editButton = event.target.closest(".edit-button");
     if (editButton) {
       const appId = editButton.id.split("-")[1];
-      window.location.href = `/home/oauth/settings/roles/?oauthClientAppId=${appId}`;
+      window.location.href = `/home/oauth/settings/roles/?oauthAppId=${appId}`;
     }
   });
 
-  // Fetch and display OAuth apps when the page loads
   fetchData();
 
-  // Set URLs for OAuth endpoints
   var currentURL = window.location.origin;
   document.getElementById("oidc-url").textContent = currentURL;
   document.getElementById("authorization-url").textContent =
@@ -45,7 +41,6 @@ document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("userinfo-url").textContent =
     currentURL + "/api/oauth/userinfo";
 
-  // Clipboard copy functionality for OAuth endpoint URLs
   document.getElementById("oidc-url-copy").addEventListener("click", function() {
     copyTextToClipboard("oidc-url");
   });
@@ -67,7 +62,6 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 });
 
-// Fetch OAuth apps from the server and display them
 async function fetchData() {
   try {
     const response = await fetch("/api/oauth/settings/apps/get", {});
@@ -82,10 +76,9 @@ async function fetchData() {
   }
 }
 
-// Display the OAuth apps on the page
 function displayOAuthApps(data) {
   const container = document.querySelector("#oauth-apps-container");
-  container.innerHTML = ""; // Clear any existing content
+  container.innerHTML = "";
   data.oauthApps.forEach((app) => {
     const appBox = document.createElement("div");
     appBox.classList.add("oauth-app-box", "p-4", "bg-gray-900", "rounded-lg", "shadow-md", "transition", "transform", "mb-4", "max-w-full", "overflow-hidden", "break-all");
