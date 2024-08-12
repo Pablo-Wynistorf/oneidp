@@ -14,15 +14,14 @@ ${process.env.JWT_PUBLIC_KEY}
 const isValidOauthRoleUserIds = (ids) => {
   if (ids === '*') return true;
   if (!Array.isArray(ids)) return false;
-  if (ids.length === 0) return false;
+  if (ids.length === 0) return true;
+
   return ids.every(id => {
     if (id === '*') return true;
     const numberId = Number(id);
-    return !isNaN(numberId) && (typeof id === 'number' || id === numberId.toString());
+    return id === '' || (!isNaN(numberId) && (typeof id === 'number' || id === numberId.toString()));
   });
 };
-
-
 
 
 router.post('/', async (req, res) => {
