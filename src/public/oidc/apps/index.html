@@ -1,57 +1,119 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-  	<title>ODIC</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-	<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Ubuntu:regular,bold&subset=Latin">
-	<link rel="stylesheet" href="css/style.css">
-	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-	</head>
-	<body class="img js-fullheight" style="background-image: url(https://cdn.onedns.ch/attachment/1230122254784794644);">
-		<button class="btn btn-primary" onclick="window.location.href = '/dashboard';" style="position: absolute; top: 30px; left: 30px;">Back to Dashboard</button>
-		<center>
-		  <div class="container">
-			<div class="row justify-content-center">
-				<div class="text-center mb-3 mt-3">
-					<h2 class="heading-section">ONEDNS OAUTH APPS</h2>
-				</div>
-			</div>
-			<div class="row justify-content-center">
-				<h3 class="text-section mb-4 text-center">Get your oauth app credentials!</h3>
-				<div class="form-group">
-					<input type="text" id="appname-field" class="form-control" placeholder="App Name: My oauth app" required>
-				</div>
-				<div class="form-group">
-					<input type="text" id="redirecturl-field" class="form-control" placeholder="Redirect URL: https://example.com/api/auth/callback" required>
-				</div>
-				<div class="form-group">
-					<input type="number" id="access-token-validity-field" class="form-control" placeholder="Access Token validity in seconds: 720" required>
-				</div>
-			  <div class="form-group">
-				  <button type="submit" id="create-app-button" class="form-control btn btn-primary submit px-3" onclick="create_app()">Get oauth app credentials</button>
-			  </div>
-			</div>
-			<div class="oauth-app-info">
-				<p>Authorization URL: <span id="authorization-url"></span><span><img id="authorization-url-copy" src="./images/clipboard.svg" alt="Clipboard Icon"></span></p>
-				<p>Token URL: <span id="token-url"></span><span><img id="token-url-copy" src="./images/clipboard.svg" alt="Clipboard Icon"></span></p>
-				<p>Token check URL: <span id="token-check-url"></span><span><img id="token-check-url-copy" src="./images/clipboard.svg" alt="Clipboard Icon"></span></p>
-				<p>Userinfo URL: <span id="userinfo-url"></span><span><img id="userinfo-url-copy" src="./images/clipboard.svg" alt="Clipboard Icon"></span></p>
-				<p>Refresh_Token validity: 20 days</p>
-			</div>
-            <div id="oauth-apps-container" class="row justify-content-center"></div>
-			<dialog data-modal id="confirmation-box">
-				<h2>Do you really want to delete this app?</h2>
-				<button type="submit" id="delete-button" class="btn btn-yes">Yes</button>
-				<button type="submit" class="btn btn-no" data-close-modal>NO</button>
-			</dialog>
-		</div>
-	  </center>
-	<script>
-	document.addEventListener('DOMContentLoaded', () => {
-		fetchData();
-	});
-	</script>
-	<script src="js/index.js"></script>
-	</body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oneidp Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-800 text-gray-200">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar" class="w-full md:w-64 bg-gray-900 p-4 flex flex-col fixed top-0 bottom-0 left-0">
+            <!-- Mobile Menu Button Container -->
+            <div class="absolute top-0 right-0 mt-1 p-4 flex items-center space-x-2 md:hidden">
+                <img id="mobile-open-menu" src="svg/mobile-open-menu.svg" class="h-10 w-10 cursor-pointer transition-transform duration-300" alt="Mobile Menu">
+                <img id="mobile-close-menu" src="svg/mobile-close-menu.svg" class="h-10 w-10 cursor-pointer hidden transition-transform duration-300" alt="Close Menu">
+            </div>
+
+            <div class="flex flex-col flex-grow">
+                <!-- Mobile and Desktop Title -->
+                <div class="flex items-center mt-1 mb-1 md:justify-start">
+                    <img src="img/oneidp.png" class="w-10 h-10 ml-1" alt="Oneidp">
+                    <span class="text-xl font-semibold ml-4 hidden md:block">ONEIDP</span>
+                    <span class="text-xl font-semibold ml-4 md:hidden flex items-center">ONEIDP</span>
+                </div>
+
+                <!-- Navigation Items -->
+                <ul id="nav-items" class="space-y-2 mt-4">
+                    <li>
+                        <a href="/dashboard" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
+                            <img src="svg/dashboard.svg" class="w-6 h-6" alt="Dashboard">
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href=""  class="flex items-center p-3 text-white bg-blue-700 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-blue-800">
+                            <img src="svg/oidc-apps.svg" class="w-6 h-6" alt="OIDC Apps">
+                            <span class="ml-3">OIDC Apps</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/oidc/roles/" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
+                            <img src="svg/oidc-roles.svg" class="w-6 h-6" alt="OIDC Roles">
+                            <span class="ml-3">OIDC Roles</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Settings and Logout Buttons -->
+            <div class="mt-auto">
+                <ul class="space-y-2">
+                    <li id="settings-item" class="hidden md:block">
+                        <a href="/settings" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
+                            <img src="svg/settings.svg" class="w-6 h-6" alt="Settings">
+                            <span class="ml-3">Settings</span>
+                        </a>
+                    </li>
+                    <li id="logout-item" class="hidden md:block">
+                        <a href="" id="logout-button" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
+                            <img src="svg/logout.svg" class="w-6 h-6" alt="Logout">
+                            <span class="ml-3">Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-6 ml-64">
+            <div class="bg-slate-800 p-8 rounded-lg shadow-lg">
+                <div class="text-center mb-6">
+                    <h2 class="text-3xl font-semibold">ONEDNS OAUTH APPS</h2>
+                </div>
+                <div class="space-y-6">
+                    <h3 class="text-xl text-center mb-4">Get your OAuth app credentials!</h3>
+                    <div class="space-y-4">
+                        <div class="form-group">
+                            <input type="text" id="appname-field" class="w-full p-3 bg-gray-900 text-gray-300 rounded-lg" placeholder="App Name: My OAuth app" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="redirecturl-field" class="w-full p-3 bg-gray-900 text-gray-300 rounded-lg" placeholder="Redirect URL: https://example.com/api/auth/callback" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="number" id="access-token-validity-field" class="w-full p-3 bg-gray-900 text-gray-300 rounded-lg" placeholder="Access Token validity in seconds: 720" required>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" id="create-app-button" class="w-full p-3 bg-blue-700 text-white rounded-lg hover:bg-blue-800 font-semibold mb-8" onclick="create_app()">Create Application</button>
+                        </div>
+                        <div class="bg-gray-900 p-8 rounded-lg shadow-lg space-y-4">
+                            <p>Authorization URL: <span id="authorization-url"></span><span><img id="authorization-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
+                            <p>Token URL: <span id="token-url"></span><span><img id="token-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
+                            <p>Token check URL: <span id="token-check-url"></span><span><img id="token-check-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
+                            <p>Userinfo URL: <span id="userinfo-url"></span><span><img id="userinfo-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="inline w-5 h-5 cursor-pointer ml-2"></span></p>
+                            <p>Refresh Token validity: 20 days</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="oauth-apps-container" class="container mt-6"></div>
+        </div>
+    </div>
+
+    <dialog data-modal id="confirmation-box" class="bg-gray-900 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50">
+        <h2 class="text-lg mb-4 text-white">Do you really want to delete this app?</h2>
+        <div class="flex justify-center space-x-4">
+            <button type="button" class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg" data-close-modal>No</button>
+            <button type="submit" id="delete-button" class="px-4 py-2 bg-red-600 text-white rounded-lg">Yes</button>
+        </div>
+    </dialog>
+
+    <script src="js/base.js"></script>
+    <script src="js/navbar.js"></script>
+    <script src="js/script.js"></script>
+</body>
 </html>
