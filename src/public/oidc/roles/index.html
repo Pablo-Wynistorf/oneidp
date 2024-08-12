@@ -105,21 +105,28 @@
         </div>
     </div>
 
-    <!-- JSON Dialog -->
-    <dialog id="json-dialog" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-            <h3 class="text-lg font-semibold mb-4">Edit Role Information</h3>
-            <label for="role-name-input" class="block text-gray-700">Role Name</label>
-            <input id="role-name-input" type="text" class="block w-full border border-gray-300 p-2 rounded mb-4">
+
+    <dialog id="json-dialog" class="bg-gray-900 p-8 rounded-lg shadow-lg backdrop:backdrop-brightness-50 w-4/5 max-w-3xl">
+        <h2 class="text-lg mb-4 text-white">Edit Role</h2>
+        <form method="dialog">
+            <!-- JSON Textarea for editing JSON data -->
+            <textarea id="json-input" class="w-full h-64 p-2 border-gray-700 bg-gray-800 text-white rounded-md shadow-sm mb-4" placeholder="JSON data will appear here..."></textarea>
+            
+            <!-- Existing elements -->
             <div id="user-ids-container" class="mb-4"></div>
-            <input id="user-input" type="text" class="block w-full border border-gray-300 p-2 rounded mb-4" placeholder="Enter username or user ID">
-            <button id="add-user-button" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Add User</button>
-            <button data-close-modal class="mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">Close</button>
-        </div>
+            <input type="text" id="user-input" class="mt-1 block w-full border-gray-700 bg-gray-800 text-white rounded-md shadow-sm" placeholder="Enter user ID" />
+            
+            <div class="flex justify-between items-center mt-4">
+                <button type="button" data-close-modal class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg">Close</button>
+                <button type="button" id="add-user-button" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Add User</button>
+            </div>
+        </form>
     </dialog>
-
-
-
+    
+    
+    
+    
+      
     <!-- Confirmation Box -->
     <dialog data-modal id="delete-role-dialog" class="bg-gray-900 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50">
         <h2 class="text-lg mb-4 text-white">Do you really want to delete this role?</h2>

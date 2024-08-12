@@ -29,20 +29,14 @@ function displayOAuthApps(data) {
     select.appendChild(option);
   });
 
-  // No option is selected initially
-  select.value = ""; 
+  select.value = ""; // No option is selected initially
 
   select.addEventListener("change", async () => {
     const selectedAppId = select.value;
     if (selectedAppId) {
-      // Reset currentRole to ensure no stale data persists
-      currentRole = null;
-      
-      // Clear existing roles
-      displayOAuthRoles({ oauthRoles: [] });
-      
+      currentRole = null; // Reset currentRole to ensure no stale data persists
+      displayOAuthRoles({ oauthRoles: [] }); // Clear existing roles
       await fetchData(selectedAppId);
-      // Update URL without reloading the page
       const url = new URL(window.location);
       url.searchParams.set("oauthAppId", selectedAppId);
       history.pushState({}, '', url);
@@ -98,11 +92,11 @@ function displayOAuthRoles(data) {
     roleNameCell.textContent = role.oauthRoleName;
     row.appendChild(roleNameCell);
 
-    // User IDs (View button)
+    // User IDs (Edit button)
     const userIdsCell = document.createElement('td');
     userIdsCell.className = "py-2 px-4 border-b border-gray-600";
     userIdsCell.innerHTML = `
-      <button class="text-blue-500 hover:underline" onclick='openJsonDialog(${JSON.stringify(role)})'>Edit</button>
+      <button class="text-blue-500 hover:underline" onclick='openJsonDialog("${role.oauthRoleId}", "${role.oauthClientAppId}")'>Edit</button>
     `;
     row.appendChild(userIdsCell);
 
@@ -118,59 +112,100 @@ function displayOAuthRoles(data) {
   });
 }
 
-function openJsonDialog(role) {
-  currentRole = role; // Store the current role for use in adding users
-  const dialog = document.getElementById('json-dialog');
-  const jsonContent = document.getElementById('json-content');
-  jsonContent.textContent = JSON.stringify(role, null, 2); // Format JSON with indentation
-  if (dialog.showModal) {
-    dialog.showModal(); // Show the dialog
-  } else {
-    displayAlertError('Dialog not supported in this browser'); // Fallback for unsupported browsers
+async function openJsonDialog(roleId, oauthClientAppId) {
+  currentRole = { oauthRoleId: roleId, oauthClientAppId: oauthClientAppId };
+
+  try {
+      const response = await fetch(`/api/oauth/settings/roles/get-users`, {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ oauthRoleId: roleId, oauthClientAppId: oauthClientAppId }),
+      });
+
+      if (!response.ok) {
+          displayAlertError("Error fetching user data");
+          return;
+      }
+
+      const data = await response.json();
+
+      populateJsonDialog(data);
+
+      const dialog = document.getElementById('json-dialog');
+      if (dialog.showModal) {
+          dialog.showModal(); // Show the dialog
+      } else {
+          displayAlertError('Dialog not supported in this browser'); // Fallback for unsupported browsers
+      }
+  } catch (error) {
+      displayAlertError("Error: " + error.message);
   }
 }
+
+function populateJsonDialog(data) {
+  const jsonInput = document.getElementById('json-input');
+  
+  // Format JSON with indentation
+  const formattedJson = JSON.stringify(data, null, 2);
+
+  // Set formatted JSON into the text area
+  jsonInput.value = formattedJson;
+}
+
+// Ensure you have the following HTML structure somewhere in your document
+// <dialog id="json-dialog">
+//     <textarea id="json-input" rows="10" cols="50"></textarea>
+//     <button onclick="closeDialog()">Close</button>
+// </dialog>
+
+// Example function to close the dialog
+function closeDialog() {
+  const dialog = document.getElementById('json-dialog');
+  if (dialog.close) {
+      dialog.close(); // Close the dialog
+  }
+}
+
 
 document.getElementById('add-user-button').addEventListener('click', async () => {
   const userInput = document.getElementById('user-input').value.trim();
   document.getElementById('user-input').value = '';
   if (!userInput) {
-    displayAlertError('Please enter a username or user ID');
-    return;
+      displayAlertError('Please enter a username or user ID');
+      return;
   }
 
   try {
-    const response = await fetch('/api/oauth/settings/roles/update/add-user', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        oauthRoleId: currentRole.oauthRoleId,
-        oauthClientAppId: currentRole.oauthClientAppId,
-        oauthRoleUserIds: userInput,
-      }),
-    });
+      const response = await fetch('/api/oauth/settings/roles/update/add-user', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+              oauthRoleId: currentRole.oauthRoleId,
+              oauthClientAppId: currentRole.oauthClientAppId,
+              oauthRoleUserIds: [userInput], // Send user IDs as an array
+          }),
+      });
 
-    if (!response.ok) {
-      return displayAlertError(await response.text());
-    }
+      if (!response.ok) {
+          return displayAlertError(await response.text());
+      }
 
-    const updatedRole = await response.json();
-    currentRole = updatedRole;
-    document.getElementById('json-content').textContent = JSON.stringify(updatedRole, null, 2);
-    displayAlertSuccess("User added successfully");
+      const updatedRole = await response.json();
+      populateJsonDialog(updatedRole);
+      displayAlertSuccess("User added successfully");
 
-    // Close the dialog after a successful operation
-    const dialog = document.getElementById('json-dialog');
-    if (dialog.close) {
-      dialog.close();
-    }
-
+      const dialog = document.getElementById('json-dialog');
+      if (dialog.close) {
+          dialog.close();
+      }
   } catch (error) {
-    displayAlertError("Error: " + error.message);
+      displayAlertError("Error: " + error.message);
   }
 });
-
 
 // Close dialog functionality
 document.addEventListener('DOMContentLoaded', () => {
@@ -178,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
       dialog.close();
   }
 
-  // Attach click event listeners to close buttons
   document.querySelectorAll('[data-close-modal]').forEach(button => {
       button.addEventListener('click', () => {
           const dialog = button.closest('dialog');
@@ -186,7 +220,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   });
 
-  // You may also want to handle ESC key to close dialogs
   document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
           const openDialog = document.querySelector('dialog[open]');
@@ -196,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   });
 });
-
 
 function confirmDeleteRole(roleId) {
   const dialog = document.getElementById('delete-role-dialog');
@@ -208,7 +240,6 @@ function confirmDeleteRole(roleId) {
   
   dialog.showModal(); // Show the dialog
   
-  // Setup delete button click event inside confirmDeleteRole
   document.getElementById('delete-button').onclick = async () => {
     try {
       const oauthClientAppId = document.getElementById('oauth-app-select').value;
@@ -225,10 +256,7 @@ function confirmDeleteRole(roleId) {
         return;
       }
 
-      // Close the confirmation dialog
       dialog.close();
-
-      // Remove the role row from the table
       removeRoleFromTable(roleId);
       displayAlertSuccess("Role deleted successfully");
     } catch (error) {
@@ -236,7 +264,6 @@ function confirmDeleteRole(roleId) {
     }
   };
   
-  // Close dialog functionality when clicking 'No'
   document.querySelector('dialog[data-modal]').addEventListener('click', (event) => {
     if (event.target.hasAttribute('data-close-modal')) {
       dialog.close();

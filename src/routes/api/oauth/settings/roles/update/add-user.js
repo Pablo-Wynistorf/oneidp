@@ -18,7 +18,7 @@ router.post('/', async (req, res) => {
   let { oauthRoleUserIds } = req.body;
 
   if (!oauthRoleUserIds) {
-    return res.status(400).json({ success: false, error: 'No userid provided' });
+    return res.status(400).json({ success: false, error: 'No user ids provided' });
   }
 
   if (!oauthClientAppId) {
@@ -56,12 +56,10 @@ router.post('/', async (req, res) => {
 
       if (oauthRoleUserIds === '*') {
         oauthRoleUserIds = '*';
-      } else {
-        let userIdsArray = oauthRoleUserIds.split(',').map(id => id.trim());
+      } else if (Array.isArray(oauthRoleUserIds)) {
+        const validUserIds = await userDB.find({ userId: { $in: oauthRoleUserIds } }).distinct('userId');
 
-        const validUserIds = await userDB.find({ userId: { $in: userIdsArray } }).distinct('userId');
-
-        const nonExistingUsers = userIdsArray.filter(id => !validUserIds.includes(id));
+        const nonExistingUsers = oauthRoleUserIds.filter(id => !validUserIds.includes(id));
         if (nonExistingUsers.length > 0) {
           return res.status(464).json({ error: `The following users do not exist: ${nonExistingUsers.join(', ')}` });
         }
@@ -74,10 +72,10 @@ router.post('/', async (req, res) => {
         }
 
         if (existingRole && Array.isArray(existingRole.oauthUserIds)) {
-          userIdsArray = [...new Set([...existingRole.oauthUserIds, ...userIdsArray])];
+          oauthRoleUserIds = [...new Set([...existingRole.oauthUserIds, ...oauthRoleUserIds])];
         }
-
-        oauthRoleUserIds = userIdsArray.sort();
+      } else {
+        return res.status(400).json({ success: false, error: 'Invalid format for oauthRoleUserIds' });
       }
 
       await oAuthRolesDB.findOneAndUpdate(
@@ -120,7 +118,7 @@ router.post('/', async (req, res) => {
           return res.status(404).json({ error: 'No OAuth apps found for this user' });
         }
 
-        if (oauthApps.indexOf(oauthClientAppId) === -1) {
+        if (!oauthApps.includes(oauthClientAppId)) {
           return res.status(461).json({ error: 'User does not have access to this oauth app' });
         }
 
@@ -132,12 +130,10 @@ router.post('/', async (req, res) => {
 
         if (oauthRoleUserIds === '*') {
           oauthRoleUserIds = '*';
-        } else {
-          let userIdsArray = oauthRoleUserIds.split(',').map(id => id.trim());
+        } else if (Array.isArray(oauthRoleUserIds)) {
+          const validUserIds = await userDB.find({ userId: { $in: oauthRoleUserIds } }).distinct('userId');
 
-          const validUserIds = await userDB.find({ userId: { $in: userIdsArray } }).distinct('userId');
-
-          const nonExistingUsers = userIdsArray.filter(id => !validUserIds.includes(id));
+          const nonExistingUsers = oauthRoleUserIds.filter(id => !validUserIds.includes(id));
           if (nonExistingUsers.length > 0) {
             return res.status(464).json({ error: `The following users do not exist: ${nonExistingUsers.join(', ')}` });
           }
@@ -150,10 +146,10 @@ router.post('/', async (req, res) => {
           }
 
           if (existingRole && Array.isArray(existingRole.oauthUserIds)) {
-            userIdsArray = [...new Set([...existingRole.oauthUserIds, ...userIdsArray])];
+            oauthRoleUserIds = [...new Set([...existingRole.oauthUserIds, ...oauthRoleUserIds])];
           }
-
-          oauthRoleUserIds = userIdsArray.sort();
+        } else {
+          return res.status(400).json({ error: 'Invalid format for oauthRoleUserIds' });
         }
 
         await oAuthRolesDB.findOneAndUpdate(
@@ -164,10 +160,12 @@ router.post('/', async (req, res) => {
 
         res.status(200).json({ success: true, message: 'OAuth role has been successfully updated' });
       } catch (error) {
+        console.log(error);
         res.status(500).json({ error: 'Something went wrong, try again later' });
       }
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });

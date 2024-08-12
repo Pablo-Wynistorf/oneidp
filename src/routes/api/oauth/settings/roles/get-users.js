@@ -14,6 +14,7 @@ ${process.env.JWT_PUBLIC_KEY}
 router.post('/', async (req, res) => {
   const access_token = req.cookies.access_token
   const oauthClientAppId = req.body.oauthClientAppId;
+  const oauthRoleId = req.body.oauthRoleId;
 
   if (!access_token) {
     return res.status(400).json({ success: false, error: 'Access Token not found' });
@@ -53,18 +54,14 @@ router.post('/', async (req, res) => {
       return res.status(466).json({ error: 'User does not have access to this oauth app' });
     }
 
-    const oauthRolesData = await oAuthRolesDB.find({ oauthRoleId: { $regex: `${oauthClientAppId}-*` } });
+    const oauthRolesData = await oAuthRolesDB.findOne({ oauthRoleId: oauthRoleId });
 
     if (!oauthRolesData || oauthRolesData.length === 0) {
       return res.status(404).json({ error: 'No OAuth roles found for this app' });
     }
+    const oauthUserIds = oauthRolesData.oauthUserIds || [];
 
-    const organizedData = oauthRolesData.map(app => ({
-      oauthRoleId: app.oauthRoleId,
-      oauthUserIds: app.oauthUserIds,
-    }));
-
-    res.json({ oauthRoles: organizedData });
+    res.json({ oauthUserIds: oauthUserIds });
   });
 });
 
