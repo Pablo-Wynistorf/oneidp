@@ -10,9 +10,9 @@
     <link rel="icon" type="image/x-icon" href="img/favicon.ico">
 </head>
 <body class="bg-gray-800 text-gray-200">
-    <div class="flex min-h-screen">
+    <div class="flex flex-col md:flex-row min-h-screen">
         <!-- Sidebar -->
-        <div id="sidebar" class="w-full md:w-64 bg-gray-900 p-4 flex flex-col fixed top-0 bottom-0 left-0">
+        <div id="sidebar" class="w-full md:w-64 bg-gray-900 p-4 flex flex-col md:fixed top-0 bottom-0 left-0">
             <!-- Mobile Menu Button Container -->
             <div class="absolute top-0 right-0 mt-1 p-4 flex items-center space-x-2 md:hidden">
                 <img id="mobile-open-menu" src="svg/mobile-open-menu.svg" class="h-10 w-10 cursor-pointer transition-transform duration-300" alt="Mobile Menu">
@@ -28,7 +28,7 @@
                 </div>
 
                 <!-- Navigation Items -->
-                <ul id="nav-items" class="space-y-2 mt-4">
+                <ul id="nav-items" class="space-y-2 mt-4 md:block hidden">
                     <li>
                         <a href="/dashboard" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
                             <img src="svg/dashboard.svg" class="w-6 h-6" alt="Dashboard">
@@ -50,16 +50,16 @@
                 </ul>
             </div>
 
-            <!-- Settings and Logout Buttons -->
-            <div class="mt-auto">
+            <!-- Settings and Logout Buttons (initially hidden on mobile) -->
+            <div id="settings-logout-buttons" class="mt-2 hidden md:block">
                 <ul class="space-y-2">
-                    <li id="settings-item" class="hidden md:block">
+                    <li id="settings-item">
                         <a href="/settings" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
                             <img src="svg/settings.svg" class="w-6 h-6" alt="Settings">
                             <span class="ml-3">Settings</span>
                         </a>
                     </li>
-                    <li id="logout-item" class="hidden md:block">
+                    <li id="logout-item">
                         <a href="" id="logout-button" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
                             <img src="svg/logout.svg" class="w-6 h-6" alt="Logout">
                             <span class="ml-3">Logout</span>
@@ -70,7 +70,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 p-6 ml-64">
+        <div class="flex-1 p-6 md:ml-64">
             <div class="bg-slate-800 p-8 rounded-lg shadow-lg">
                 <div class="text-center mb-6">
                     <h2 class="text-3xl font-semibold">ONEDNS OAUTH APPS</h2>
