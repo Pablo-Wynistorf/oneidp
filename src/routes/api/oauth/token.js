@@ -72,7 +72,7 @@ router.post('/', async (req, res) => {
         const authorizationHeader = req.headers.authorization;
         if (authorizationHeader) {
           const authorizationHeaderBase64 = authorizationHeader.split(' ')[1];
-          authorizationHeaderDecoded = Buffer.from(authorizationHeaderBase64, 'base64').toString('utf-8');
+          let authorizationHeaderDecoded = Buffer.from(authorizationHeaderBase64, 'base64').toString('utf-8');
           clientId = authorizationHeaderDecoded.split(':')[0];
           clientSecret = authorizationHeaderDecoded.split(':')[1];
         } else {

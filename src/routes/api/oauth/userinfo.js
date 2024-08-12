@@ -12,7 +12,7 @@ ${process.env.JWT_PUBLIC_KEY}
 
 const router = express.Router();
 
-router.post('/', (req, res) => {
+router.all('/', (req, res) => {
   let access_token;
 
   const authorizationHeader = req.headers['authorization'];
