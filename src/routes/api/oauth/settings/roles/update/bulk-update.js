@@ -11,12 +11,19 @@ ${process.env.JWT_PUBLIC_KEY}
 -----END PUBLIC KEY-----
 `.trim();
 
-// Function to validate oauthRoleUserIds
 const isValidOauthRoleUserIds = (ids) => {
   if (ids === '*') return true;
   if (!Array.isArray(ids)) return false;
-  return ids.every(id => typeof id === 'number' || id === '*');
+  if (ids.length === 0) return false;
+  return ids.every(id => {
+    if (id === '*') return true;
+    const numberId = Number(id);
+    return !isNaN(numberId) && (typeof id === 'number' || id === numberId.toString());
+  });
 };
+
+
+
 
 router.post('/', async (req, res) => {
   const access_token = req.cookies.access_token;
@@ -57,10 +64,6 @@ router.post('/', async (req, res) => {
     }
 
     let oauthApps = userData.oauthClientAppIds || [];
-
-    if (!Array.isArray(oauthApps)) {
-      return res.status(400).json({ error: 'Invalid format for oauthApps' });
-    }
 
     if (oauthApps.length === 0) {
       return res.status(404).json({ error: 'No OAuth apps found for this user' });
