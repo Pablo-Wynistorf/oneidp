@@ -54,31 +54,33 @@ router.post('/', async (req, res) => {
         return res.status(404).json({ success: false, error: 'Oauth role not assigned to app' });
       }
 
-      let userId;
-      if (/^\d+$/.test(userId_or_username)) {
-        userId = await userDB.findOne({ userId: userId_or_username });
-        if (!userId) {
-          return res.status(404).json({ success: false, error: 'UserId not found' });
-        }
+      let oauthRoleUserIds;
+
+      if (userId_or_username === '*') {
+        oauthRoleUserIds = '*';
       } else {
-        const user = await userDB.findOne({ username: userId_or_username });
-        if (!user) {
-          return res.status(404).json({ success: false, error: 'Username not found' });
+        let userId;
+        if (/^\d+$/.test(userId_or_username)) {
+          const user = await userDB.findOne({ userId: userId_or_username });
+          if (!user) {
+            return res.status(404).json({ success: false, error: 'UserId not found' });
+          }
+          userId = user.userId;
+        } else {
+          const user = await userDB.findOne({ username: userId_or_username });
+          if (!user) {
+            return res.status(404).json({ success: false, error: 'Username not found' });
+          }
+          userId = user.userId;
         }
-        userId = user.userId;
-      }
 
-      let oauthRoleUserIds = [userId];
+        oauthRoleUserIds = [userId];
 
-      if (existingRole && existingRole.oauthUserIds === '*') {
-        await oAuthRolesDB.updateOne(
-          { oauthRoleId, oauthClientAppId: basicAuth_oauthClientAppId },
-          { $unset: { oauthUserIds: '' } }
-        );
-      }
-
-      if (existingRole && Array.isArray(existingRole.oauthUserIds)) {
-        oauthRoleUserIds = [...new Set([...existingRole.oauthUserIds, ...oauthRoleUserIds])];
+        if (existingRole && existingRole.oauthUserIds === '*') {
+          oauthRoleUserIds = '*';
+        } else if (existingRole && Array.isArray(existingRole.oauthUserIds)) {
+          oauthRoleUserIds = [...new Set([...existingRole.oauthUserIds, ...oauthRoleUserIds])];
+        }
       }
 
       await oAuthRolesDB.findOneAndUpdate(
@@ -132,25 +134,29 @@ router.post('/', async (req, res) => {
         }
 
         let oauthRoleUserIds;
-        if (/^\d+$/.test(userId_or_username)) {
-          const user = await userDB.findOne({ userId: userId_or_username });
-          if (!user) {
-            return res.status(404).json({ success: false, error: 'UserId not found' });
-          }
-          oauthRoleUserIds = [userId_or_username];
-        } else {
-          const user = await userDB.findOne({ username: userId_or_username });
-          if (!user) {
-            return res.status(404).json({ success: false, error: 'Username not found' });
-          }
-          oauthRoleUserIds = [user.userId];
-        }
 
-        if (existingRole && existingRole.oauthUserIds === '*') {
-          await oAuthRolesDB.updateOne(
-            { oauthRoleId, oauthClientAppId },
-            { $unset: { oauthUserIds: "" } }
-          );
+        if (userId_or_username === '*') {
+          oauthRoleUserIds = '*';
+        } else {
+          if (/^\d+$/.test(userId_or_username)) {
+            const user = await userDB.findOne({ userId: userId_or_username });
+            if (!user) {
+              return res.status(404).json({ success: false, error: 'UserId not found' });
+            }
+            oauthRoleUserIds = [userId_or_username];
+          } else {
+            const user = await userDB.findOne({ username: userId_or_username });
+            if (!user) {
+              return res.status(404).json({ success: false, error: 'Username not found' });
+            }
+            oauthRoleUserIds = [user.userId];
+          }
+
+          if (existingRole && existingRole.oauthUserIds === '*') {
+            oauthRoleUserIds = '*';
+          } else if (existingRole && Array.isArray(existingRole.oauthUserIds)) {
+            oauthRoleUserIds = [...new Set([...existingRole.oauthUserIds, ...oauthRoleUserIds])];
+          }
         }
 
         await oAuthRolesDB.findOneAndUpdate(

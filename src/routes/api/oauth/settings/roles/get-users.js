@@ -5,7 +5,6 @@ const { userDB, oAuthRolesDB } = require('../../../../../database/database.js');
 
 const router = express.Router();
 
-// Ensure JWT_PUBLIC_KEY is properly formatted and not empty
 const JWT_PUBLIC_KEY = `
 -----BEGIN PUBLIC KEY-----
 ${process.env.JWT_PUBLIC_KEY || ''}
@@ -64,13 +63,11 @@ router.post('/', async (req, res) => {
     const userNames = await Promise.all(
       oauthUserIds.map(async (userId) => {
         const user = await userDB.findOne({ userId });
-        return user.username
+        return user ? user.username : `${userId}_unknown_user`;
       })
     );
 
-    const oauthUserNames = userNames.filter(name => name !== null);
-
-    res.json({ oauthUserIds, oauthUserNames });
+    res.json({ oauthUserIds, oauthUserNames: userNames });
   } catch (error) {
     console.error(error);
     if (error.name === 'JsonWebTokenError') {
