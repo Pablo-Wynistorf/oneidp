@@ -19,7 +19,7 @@ async function fetchOAuthApps() {
 
 function displayOAuthApps(data) {
   const select = document.getElementById("oauth-app-select");
-  select.innerHTML = ""; // Clear existing options
+  select.innerHTML = "";
 
   data.oauthApps.forEach(app => {
     const option = document.createElement("option");
@@ -29,13 +29,13 @@ function displayOAuthApps(data) {
     select.appendChild(option);
   });
 
-  select.value = ""; // No option is selected initially
+  select.value = "";
 
   select.addEventListener("change", async () => {
     const selectedAppId = select.value;
     if (selectedAppId) {
-      currentRole = null; // Reset currentRole to ensure no stale data persists
-      displayOAuthRoles({ oauthRoles: [] }); // Clear existing roles
+      currentRole = null;
+      displayOAuthRoles({ oauthRoles: [] });
       await fetchData(selectedAppId);
       const url = new URL(window.location);
       url.searchParams.set("oauthAppId", selectedAppId);
@@ -100,7 +100,6 @@ function displayOAuthRoles(data) {
     `;
     row.appendChild(userIdsCell);
 
-    // Actions (Delete Role)
     const actionsCell = document.createElement('td');
     actionsCell.className = "py-2 px-4 border-b border-gray-600 text-center";
     actionsCell.innerHTML = `
@@ -136,7 +135,7 @@ async function openJsonDialog(roleId, oauthClientAppId) {
     if (dialog.showModal) {
       dialog.showModal();
     } else {
-      displayAlertError('Dialog not supported in this browser'); // Fallback for unsupported browsers
+      displayAlertError('Dialog not supported in this browser');
     }
   } catch (error) {
     displayAlertError("Error: " + error.message);
@@ -239,7 +238,6 @@ document.getElementById('save-bulk-edit-button').addEventListener('click', async
     let updatePayload;
 
     if (toggleDisplay) {
-      // Usernames are displayed
       if (!Array.isArray(parsedInput.oauthUserNames)) {
         return displayAlertError("Input must be a valid JSON object with an array under 'oauthUserNames'.");
       }
@@ -249,7 +247,6 @@ document.getElementById('save-bulk-edit-button').addEventListener('click', async
         oauthRoleUserNames: parsedInput.oauthUserNames,
       };
     } else {
-      // User IDs are displayed
       if (!Array.isArray(parsedInput.oauthUserIds)) {
         return displayAlertError("Input must be a valid JSON object with an array under 'oauthUserIds'.");
       }
@@ -287,7 +284,6 @@ document.getElementById('save-bulk-edit-button').addEventListener('click', async
 
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Update UI function for the Role Action toggle
   const updateRoleActionUI = () => {
       const toggleRoleAction = document.getElementById('toggle-role-action');
       const dynamicActionButton = document.getElementById('dynamic-action-button');
@@ -309,14 +305,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   };
 
-  // Initial setup for Role Action toggle
   const toggleRoleAction = document.getElementById('toggle-role-action');
   updateRoleActionUI();
 
-  // Add event listener for Role Action toggle
   toggleRoleAction.addEventListener('change', updateRoleActionUI);
 
-  // Update UI function for the OAuth Display toggle
   const updateOauthDisplayUI = () => {
       const toggleOauthDisplay = document.getElementById('toggle-oauth-display');
       const sliderOauthDisplay = toggleOauthDisplay.nextElementSibling.querySelector('span:nth-child(1)');
@@ -331,60 +324,73 @@ document.addEventListener('DOMContentLoaded', () => {
       }
   };
 
-  // Initial setup for OAuth Display toggle
   const toggleOauthDisplay = document.getElementById('toggle-oauth-display');
   updateOauthDisplayUI();
 
-  // Add event listener for OAuth Display toggle
   toggleOauthDisplay.addEventListener('change', updateOauthDisplayUI);
 });
 
 
 
-function handleAddUser() {
+async function handleAddUser() {
   const userIdOrUsername = document.getElementById('userid_or_username').value;
   document.getElementById('userid_or_username').value = '';
 
-  fetch('/api/oauth/settings/roles/update/add-user', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      oauthRoleId: currentRole.oauthRoleId,
-      oauthClientAppId: currentRole.oauthClientAppId,
-      userId_or_username: userIdOrUsername,
-    }),
-  })
-  .then(response => response.json())
-  .then(updatedRole => {
+  try {
+    const response = await fetch('/api/oauth/settings/roles/update/add-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        oauthRoleId: currentRole.oauthRoleId,
+        oauthClientAppId: currentRole.oauthClientAppId,
+        userId_or_username: userIdOrUsername,
+      }),
+    });
+
+    const updatedRole = await response.json();
+    const errorMessage = updatedRole.error;
+    const message = updatedRole.message;
+
+    if (!response.ok) {
+      return displayAlertError(errorMessage);
+    }
+
     populateJsonDialog(updatedRole);
-    displayAlertSuccess("User successfully added to role");
-    closeDialog();
-  })
-  .catch(error => displayAlertError("Error: " + error.message));
+    displayAlertSuccess(message);
+    return closeDialog();
+  } catch (error) {
+    displayAlertError(errorMessage);
+  }
 }
-
-
-
-function handleRemoveUser() {
+async function handleRemoveUser() {
   const userIdOrUsername = document.getElementById('userid_or_username').value;
   document.getElementById('userid_or_username').value = '';
 
-  fetch('/api/oauth/settings/roles/update/remove-user', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      oauthRoleId: currentRole.oauthRoleId,
-      oauthClientAppId: currentRole.oauthClientAppId,
-      userId_or_username: userIdOrUsername,
-    }),
-  })
-  .then(response => response.json())
-  .then(updatedRole => {
+  try {
+    const response = await fetch('/api/oauth/settings/roles/update/remove-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        oauthRoleId: currentRole.oauthRoleId,
+        oauthClientAppId: currentRole.oauthClientAppId,
+        userId_or_username: userIdOrUsername,
+      }),
+    });
+
+    const updatedRole = await response.json();
+    const errorMessage = updatedRole.error;
+    const message = updatedRole.message;
+
+    if (!response.ok) {
+      return displayAlertError(errorMessage);
+    }
+
     populateJsonDialog(updatedRole);
-    displayAlertSuccess("User successfully removed from role");
-    closeDialog();
-  })
-  .catch(error => displayAlertError("Error: " + error.message));
+    displayAlertSuccess(message);
+    return closeDialog();
+  } catch (error) {
+    displayAlertError(errorMessage);
+  }
 }
 
 
@@ -475,9 +481,9 @@ document.addEventListener("DOMContentLoaded", () => {
 document.getElementById('create-role-button').addEventListener('click', () => {
   const dialog = document.getElementById('create-role-dialog');
   if (dialog.showModal) {
-    dialog.showModal(); // Show the dialog
+    dialog.showModal();
   } else {
-    displayAlertError('Dialog not supported in this browser'); // Fallback for unsupported browsers
+    displayAlertError('Dialog not supported in this browser');
   }
 });
 
