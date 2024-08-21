@@ -43,37 +43,27 @@ router.post('/', async (req, res) => {
         return res.status(404).json({ success: false, error: 'Role not found' });
       }
 
-      let oauthRoleUserIds;
+      let userId;
 
-      if (userId_or_username === '*') {
-        oauthRoleUserIds = '*';
+      if (/^\d+$/.test(userId_or_username)) {
+        const user = await userDB.findOne({ userId: userId_or_username });
+        if (!user) {
+          return res.status(404).json({ success: false, error: 'UserId not found' });
+        }
+        userId = user.userId;
       } else {
-        let userId;
-
-        if (/^\d+$/.test(userId_or_username)) {
-          const user = await userDB.findOne({ userId: userId_or_username });
-          if (!user) {
-            return res.status(404).json({ success: false, error: 'UserId not found' });
-          }
-          userId = user.userId;
-        } else {
-          const user = await userDB.findOne({ username: userId_or_username });
-          if (!user) {
-            return res.status(404).json({ success: false, error: 'Username not found' });
-          }
-          userId = user.userId;
+        const user = await userDB.findOne({ username: userId_or_username });
+        if (!user) {
+          return res.status(404).json({ success: false, error: 'Username not found' });
         }
-
-        oauthRoleUserIds = [userId];
-
-        if (role && role.oauthUserIds === '*') {
-          oauthRoleUserIds = '*';
-        } else if (role && Array.isArray(role.oauthUserIds)) {
-          oauthRoleUserIds = [...new Set([...role.oauthUserIds, ...oauthRoleUserIds])];
-        }
+        userId = user.userId;
       }
 
-      const index = role.oauthUserIds.indexOf(oauthRoleUserIds);
+      if (!Array.isArray(role.oauthUserIds)) {
+        return res.status(400).json({ success: false, error: 'Invalid role user list' });
+      }
+
+      const index = role.oauthUserIds.indexOf(userId);
       if (index === -1) {
         return res.status(404).json({ success: false, error: 'User is not in the role' });
       }
@@ -101,17 +91,17 @@ router.post('/', async (req, res) => {
       return res.redirect('/login');
     }
 
-    const userId = decoded.userId;
+    const userIdFromToken = decoded.userId;
     const sid = decoded.sid;
 
     try {
-      const userData = await userDB.findOne({ userId, sid });
+      const userData = await userDB.findOne({ userId: userIdFromToken, sid });
       if (!userData) {
         res.clearCookie('access_token');
         return res.redirect('/login');
       }
 
-      const userAccess = await userDB.findOne({ userId, sid, providerRoles: 'oauthUser' });
+      const userAccess = await userDB.findOne({ userId: userIdFromToken, sid, providerRoles: 'oauthUser' });
 
       if (!userAccess) {
         return res.status(460).json({ success: false, error: 'User has no permissions to manage oauth apps' });
@@ -131,33 +121,27 @@ router.post('/', async (req, res) => {
         return res.status(404).json({ success: false, error: 'Role not found' });
       }
 
-      let oauthRoleUserIds;
+      let userId;
 
-      if (userId_or_username === '*') {
-        oauthRoleUserIds = '*';
+      if (/^\d+$/.test(userId_or_username)) {
+        const user = await userDB.findOne({ userId: userId_or_username });
+        if (!user) {
+          return res.status(404).json({ success: false, error: 'UserId not found' });
+        }
+        userId = user.userId;
       } else {
-        if (/^\d+$/.test(userId_or_username)) {
-          const user = await userDB.findOne({ userId: userId_or_username });
-          if (!user) {
-            return res.status(404).json({ success: false, error: 'UserId not found' });
-          }
-          oauthRoleUserIds = [userId_or_username];
-        } else {
-          const user = await userDB.findOne({ username: userId_or_username });
-          if (!user) {
-            return res.status(404).json({ success: false, error: 'Username not found' });
-          }
-          oauthRoleUserIds = [user.userId];
+        const user = await userDB.findOne({ username: userId_or_username });
+        if (!user) {
+          return res.status(404).json({ success: false, error: 'Username not found' });
         }
-
-        if (role && role.oauthUserIds === '*') {
-          oauthRoleUserIds = '*';
-        } else if (role && Array.isArray(role.oauthUserIds)) {
-          oauthRoleUserIds = [...new Set([...role.oauthUserIds, ...oauthRoleUserIds])];
-        }
+        userId = user.userId;
       }
 
-      const index = role.oauthUserIds.indexOf(oauthRoleUserIds);
+      if (!Array.isArray(role.oauthUserIds)) {
+        return res.status(400).json({ success: false, error: 'Invalid role user list' });
+      }
+
+      const index = role.oauthUserIds.indexOf(userId);
       if (index === -1) {
         return res.status(404).json({ success: false, error: 'User is not in the role' });
       }
@@ -169,10 +153,10 @@ router.post('/', async (req, res) => {
         { $set: { oauthUserIds: role.oauthUserIds } }
       );
 
-      res.status(200).json({ success: true, message: 'User successfully removed from role' });
+      return res.status(200).json({ success: true, message: 'User successfully removed from role' });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ success: false, error: 'Something went wrong, try again later' });
+      return res.status(500).json({ success: false, error: 'Something went wrong, try again later' });
     }
   });
 });
