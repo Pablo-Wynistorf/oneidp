@@ -5,28 +5,25 @@ const { userDB, oAuthRolesDB } = require('../../../../../database/database.js');
 
 const router = express.Router();
 
+// Ensure JWT_PUBLIC_KEY is properly formatted and not empty
 const JWT_PUBLIC_KEY = `
 -----BEGIN PUBLIC KEY-----
-${process.env.JWT_PUBLIC_KEY}
+${process.env.JWT_PUBLIC_KEY || ''}
 -----END PUBLIC KEY-----
 `.trim();
 
 router.post('/', async (req, res) => {
-  const access_token = req.cookies.access_token
+  const accessToken = req.cookies.access_token;
   const oauthClientAppId = req.body.oauthClientAppId;
   const oauthRoleId = req.body.oauthRoleId;
 
-  if (!access_token) {
+  if (!accessToken) {
     return res.status(400).json({ success: false, error: 'Access Token not found' });
   }
 
-  jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
-    if (error) {
-      return res.redirect('/login');
-    }
-      
-    const userId = decoded.userId;
-    const sid = decoded.sid;
+  try {
+    const decoded = jwt.verify(accessToken, JWT_PUBLIC_KEY);
+    const { userId, sid } = decoded;
 
     const userData = await userDB.findOne({ userId, sid });
     if (!userData) {
@@ -34,35 +31,53 @@ router.post('/', async (req, res) => {
       return res.redirect('/login');
     }
 
-    const userAccess = await userDB.findOne({ userId: userId, sid: sid, providerRoles: 'oauthUser' });
-
+    const userAccess = await userDB.findOne({ userId, sid, providerRoles: 'oauthUser' });
     if (!userAccess) {
-      return res.status(465).json({ error: 'User does not have access to manage oauth apps' });
+      return res.status(403).json({ error: 'User does not have access to manage OAuth apps' });
     }
 
     let oauthApps = userData.oauthClientAppIds || [];
 
     if (!Array.isArray(oauthApps)) {
-      return res.status(400).json({ error: 'Invalid format for oauthApps' });
+      return res.status(400).json({ error: 'Invalid format for oauthClientAppIds' });
     }
 
     if (oauthApps.length === 0) {
       return res.status(404).json({ error: 'No OAuth apps found for this user' });
     }
 
-    if (oauthApps.indexOf(oauthClientAppId) === -1) {
-      return res.status(466).json({ error: 'User does not have access to this oauth app' });
+    if (!oauthApps.includes(oauthClientAppId)) {
+      return res.status(403).json({ error: 'User does not have access to this OAuth app' });
     }
 
-    const oauthRolesData = await oAuthRolesDB.findOne({ oauthRoleId: oauthRoleId });
-
-    if (!oauthRolesData || oauthRolesData.length === 0) {
+    const oauthRolesData = await oAuthRolesDB.findOne({ oauthRoleId });
+    if (!oauthRolesData) {
       return res.status(404).json({ error: 'No OAuth roles found for this app' });
     }
+
     const oauthUserIds = oauthRolesData.oauthUserIds || [];
 
-    res.json({ oauthUserIds: oauthUserIds });
-  });
+    if (oauthUserIds.length === 1 && oauthUserIds[0] === '*') {
+      return res.json({ oauthUserIds: ['*'], oauthUserNames: ['*'] });
+    }
+
+    const userNames = await Promise.all(
+      oauthUserIds.map(async (userId) => {
+        const user = await userDB.findOne({ userId });
+        return user.username
+      })
+    );
+
+    const oauthUserNames = userNames.filter(name => name !== null);
+
+    res.json({ oauthUserIds, oauthUserNames });
+  } catch (error) {
+    console.error(error);
+    if (error.name === 'JsonWebTokenError') {
+      return res.redirect('/login');
+    }
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
 module.exports = router;

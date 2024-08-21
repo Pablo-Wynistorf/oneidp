@@ -116,97 +116,150 @@ async function openJsonDialog(roleId, oauthClientAppId) {
   currentRole = { oauthRoleId: roleId, oauthClientAppId: oauthClientAppId };
 
   try {
-      const response = await fetch(`/api/oauth/settings/roles/get-users`, {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ oauthRoleId: roleId, oauthClientAppId: oauthClientAppId }),
-      });
+    const response = await fetch(`/api/oauth/settings/roles/get-users`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ oauthRoleId: roleId, oauthClientAppId: oauthClientAppId }),
+    });
 
-      if (!response.ok) {
-          displayAlertError("Error fetching user data");
-          return;
-      }
+    if (!response.ok) {
+      displayAlertError("Error fetching user data");
+      return;
+    }
 
-      const data = await response.json();
+    const data = await response.json();
+    populateJsonDialog(data);
 
-      populateJsonDialog(data);
-
-      const dialog = document.getElementById('json-dialog');
-      if (dialog.showModal) {
-          dialog.showModal(); // Show the dialog
-      } else {
-          displayAlertError('Dialog not supported in this browser'); // Fallback for unsupported browsers
-      }
+    const dialog = document.getElementById('json-dialog');
+    if (dialog.showModal) {
+      dialog.showModal();
+    } else {
+      displayAlertError('Dialog not supported in this browser'); // Fallback for unsupported browsers
+    }
   } catch (error) {
-      displayAlertError("Error: " + error.message);
+    displayAlertError("Error: " + error.message);
   }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+  const toggleCheckbox = document.getElementById('toggle-oauth-display');
+  const slider = toggleCheckbox.nextElementSibling.querySelector('span:nth-child(1)');
+  const sliderCircle = toggleCheckbox.nextElementSibling.querySelector('span:nth-child(2)');
+  const jsonInput = document.getElementById('json-input');
+
+  // Update UI based on toggle state
+  const updateUI = () => {
+    if (toggleCheckbox.checked) {
+      slider.classList.replace('bg-gray-400', 'bg-blue-500');
+      sliderCircle.classList.replace('transform', 'translate-x-6');
+    } else {
+      slider.classList.replace('bg-blue-500', 'bg-gray-400');
+      sliderCircle.classList.replace('translate-x-6', 'transform');
+    }
+  };
+
+  updateUI();
+
+  toggleCheckbox.addEventListener('change', updateUI);
+});
+
+
+
+document.getElementById('toggle-oauth-display').addEventListener('change', function () {
+  const jsonInput = document.getElementById('json-input');
+  const parsedData = {
+    oauthUserIds: JSON.parse(jsonInput.dataset.userIds || '{"oauthUserIds": []}').oauthUserIds,
+    oauthUserNames: JSON.parse(jsonInput.dataset.userNames || '{"oauthUserNames": []}').oauthUserNames,
+  };
+
+  populateJsonDialog(parsedData);
+});
+
+
+
 function populateJsonDialog(data) {
   const jsonInput = document.getElementById('json-input');
-  
-  // Format JSON with indentation
-  const formattedJson = JSON.stringify(data, null, 2);
+  const toggleDisplay = document.getElementById('toggle-oauth-display');
 
-  // Set formatted JSON into the text area
-  jsonInput.value = formattedJson;
+  jsonInput.dataset.userIds = JSON.stringify({ oauthUserIds: data.oauthUserIds || [] }, null, 2);
+  jsonInput.dataset.userNames = JSON.stringify({ oauthUserNames: data.oauthUserNames || [] }, null, 2);
+
+  if (toggleDisplay.checked) {
+    jsonInput.value = jsonInput.dataset.userNames;
+  } else {
+    jsonInput.value = jsonInput.dataset.userIds;
+  }
 }
 
-// Ensure you have the following HTML structure somewhere in your document
-// <dialog id="json-dialog">
-//     <textarea id="json-input" rows="10" cols="50"></textarea>
-//     <button onclick="closeDialog()">Close</button>
-// </dialog>
 
-// Example function to close the dialog
+
+
+
 function closeDialog() {
   const dialog = document.getElementById('json-dialog');
   if (dialog.close) {
-      dialog.close(); // Close the dialog
+      dialog.close();
   }
 }
 
 
 document.getElementById('save-bulk-edit-button').addEventListener('click', async () => {
-  const userIdsInput = document.getElementById('json-input').value;
+  const jsonInput = document.getElementById('json-input').value;
+  const toggleDisplay = document.getElementById('toggle-oauth-display').checked;
 
   try {
-      const parsedInput = JSON.parse(userIdsInput);
+    const parsedInput = JSON.parse(jsonInput);
+    let updatePayload;
 
-      if (!parsedInput || !Array.isArray(parsedInput.oauthUserIds)) {
-          return displayAlertError("Input must be a valid JSON object with an array under 'oauthUserIds'.");
+    if (toggleDisplay) {
+      // Usernames are displayed
+      if (!Array.isArray(parsedInput.oauthUserNames)) {
+        return displayAlertError("Input must be a valid JSON object with an array under 'oauthUserNames'.");
       }
-
-      const response = await fetch('/api/oauth/settings/roles/update/bulk-update', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-              oauthRoleId: currentRole.oauthRoleId,
-              oauthClientAppId: currentRole.oauthClientAppId,
-              oauthRoleUserIds: parsedInput.oauthUserIds,
-          }),
-      });
-
-      if (!response.ok) {
-          return displayAlertError(await response.text());
+      updatePayload = {
+        oauthRoleId: currentRole.oauthRoleId,
+        oauthClientAppId: currentRole.oauthClientAppId,
+        oauthRoleUserNames: parsedInput.oauthUserNames,
+      };
+    } else {
+      // User IDs are displayed
+      if (!Array.isArray(parsedInput.oauthUserIds)) {
+        return displayAlertError("Input must be a valid JSON object with an array under 'oauthUserIds'.");
       }
+      updatePayload = {
+        oauthRoleId: currentRole.oauthRoleId,
+        oauthClientAppId: currentRole.oauthClientAppId,
+        oauthRoleUserIds: parsedInput.oauthUserIds,
+      };
+    }
 
-      const updatedRole = await response.json();
-      populateJsonDialog(updatedRole);
-      displayAlertSuccess("User added successfully");
+    const response = await fetch('/api/oauth/settings/roles/update/bulk-update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatePayload),
+    });
 
-      const dialog = document.getElementById('json-dialog');
-      if (dialog.close) {
-          dialog.close();
-      }
+    if (!response.ok) {
+      return displayAlertError(await response.text());
+    }
+
+    const updatedRole = await response.json();
+    populateJsonDialog(updatedRole);
+    displayAlertSuccess("User updated successfully");
+
+    const dialog = document.getElementById('json-dialog');
+    if (dialog.close) {
+      dialog.close();
+    }
   } catch (error) {
-      displayAlertError("Error: " + error.message);
+    displayAlertError("Error: " + error.message);
   }
 });
+
 
 document.getElementById('add-user').addEventListener('click', async () => {
   const userId_or_username = document.getElementById('userid_or_username').value;

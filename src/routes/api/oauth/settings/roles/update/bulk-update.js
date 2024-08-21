@@ -11,26 +11,21 @@ ${process.env.JWT_PUBLIC_KEY}
 -----END PUBLIC KEY-----
 `.trim();
 
-const isValidOauthRoleUserIds = (ids) => {
-  if (ids === '*') return true;
-  if (!Array.isArray(ids)) return false;
-  if (ids.length === 0) return true;
-
-  return ids.every(id => {
-    if (id === '*') return true;
-    const numberId = Number(id);
-    return id === '' || (!isNaN(numberId) && (typeof id === 'number' || id === numberId.toString()));
-  });
+const getUserIdsFromUsernames = async (usernames) => {
+  const userDocs = await userDB.find({ username: { $in: usernames } }).select('username userId');
+  const userMap = new Map(userDocs.map(user => [user.username, user.userId]));
+  return { userMap, userIds: usernames.map(username => userMap.get(username)).filter(userId => userId) };
 };
 
+const checkUserIdsExist = async (userIds) => {
+  const existingUsers = await userDB.find({ userId: { $in: userIds } }).select('userId');
+  const existingUserIds = new Set(existingUsers.map(user => user.userId));
+  return userIds.filter(userId => existingUserIds.has(userId));
+};
 
 router.post('/', async (req, res) => {
   const access_token = req.cookies.access_token;
-  const { oauthClientAppId, oauthRoleId, oauthRoleUserIds } = req.body;
-
-  if (!oauthRoleUserIds) {
-    return res.status(400).json({ success: false, error: 'No user ids provided' });
-  }
+  const { oauthClientAppId, oauthRoleId, oauthRoleUserIds, oauthRoleUserNames } = req.body;
 
   if (!oauthClientAppId) {
     return res.status(400).json({ success: false, error: 'oauthClientAppId not provided' });
@@ -46,7 +41,6 @@ router.post('/', async (req, res) => {
 
   try {
     const decoded = jwt.verify(access_token, JWT_PUBLIC_KEY);
-
     const userId = decoded.userId;
     const sid = decoded.sid;
 
@@ -78,21 +72,37 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'User has no access to manage this role' });
     }
 
-    if (!isValidOauthRoleUserIds(oauthRoleUserIds)) {
-      return res.status(400).json({ error: 'Invalid format for oauthRoleUserIds' });
-    }
-
-    if (oauthRoleUserIds === '*') {
+    if (
+      (Array.isArray(oauthRoleUserIds) && oauthRoleUserIds.includes('*')) ||
+      (Array.isArray(oauthRoleUserNames) && oauthRoleUserNames.includes('*'))
+    ) {
       await oAuthRolesDB.updateOne(
         { oauthRoleId, oauthClientAppId },
         { $set: { oauthUserIds: '*' } }
       );
-    } else {
+      return res.status(200).json({ success: true, message: 'OAuth role has been successfully updated' });
+    }
+    
+    
+
+    let finalUserIds = [];
+
+    if (Array.isArray(oauthRoleUserNames)) {
+      const { userMap, userIds: usernamesToIds } = await getUserIdsFromUsernames(oauthRoleUserNames);
+      finalUserIds = finalUserIds.concat(usernamesToIds);
+    }
+
+    if (Array.isArray(oauthRoleUserIds)) {
+      const validUserIds = await checkUserIdsExist(oauthRoleUserIds);
+      finalUserIds = finalUserIds.concat(validUserIds);
+    }
+
+
+      finalUserIds = Array.from(new Set(finalUserIds));
       await oAuthRolesDB.updateOne(
         { oauthRoleId, oauthClientAppId },
-        { $set: { oauthUserIds: oauthRoleUserIds } }
+        { $set: { oauthUserIds: finalUserIds } }
       );
-    }
 
     res.status(200).json({ success: true, message: 'OAuth role has been successfully updated' });
   } catch (error) {
