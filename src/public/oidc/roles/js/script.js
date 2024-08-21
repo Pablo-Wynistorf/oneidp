@@ -144,25 +144,50 @@ async function openJsonDialog(roleId, oauthClientAppId) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const toggleCheckbox = document.getElementById('toggle-oauth-display');
-  const slider = toggleCheckbox.nextElementSibling.querySelector('span:nth-child(1)');
-  const sliderCircle = toggleCheckbox.nextElementSibling.querySelector('span:nth-child(2)');
+  // Handle OAuth Display Toggle
+  const toggleOAuthDisplay = document.getElementById('toggle-oauth-display');
+  const oauthDisplaySlider = toggleOAuthDisplay.nextElementSibling.querySelector('span:nth-child(1)');
+  const oauthDisplaySliderCircle = toggleOAuthDisplay.nextElementSibling.querySelector('span:nth-child(2)');
   const jsonInput = document.getElementById('json-input');
 
-  // Update UI based on toggle state
-  const updateUI = () => {
-    if (toggleCheckbox.checked) {
-      slider.classList.replace('bg-gray-400', 'bg-blue-500');
-      sliderCircle.classList.replace('transform', 'translate-x-6');
+  const updateOAuthDisplayUI = () => {
+    if (toggleOAuthDisplay.checked) {
+      oauthDisplaySlider.classList.replace('bg-gray-400', 'bg-blue-500');
+      oauthDisplaySliderCircle.classList.replace('transform', 'translate-x-6');
     } else {
-      slider.classList.replace('bg-blue-500', 'bg-gray-400');
-      sliderCircle.classList.replace('translate-x-6', 'transform');
+      oauthDisplaySlider.classList.replace('bg-blue-500', 'bg-gray-400');
+      oauthDisplaySliderCircle.classList.replace('translate-x-6', 'transform');
     }
   };
 
-  updateUI();
+  updateOAuthDisplayUI();
+  toggleOAuthDisplay.addEventListener('change', () => {
+    updateOAuthDisplayUI();
+    const parsedData = {
+      oauthUserIds: JSON.parse(jsonInput.dataset.userIds || '{"oauthUserIds": []}').oauthUserIds,
+      oauthUserNames: JSON.parse(jsonInput.dataset.userNames || '{"oauthUserNames": []}').oauthUserNames,
+    };
+    populateJsonDialog(parsedData);
+  });
 
-  toggleCheckbox.addEventListener('change', updateUI);
+  // Handle Role Action Toggle
+  const toggleRoleAction = document.getElementById('toggle-role-action');
+  const actionButton = document.getElementById('dynamic-action-button');
+
+  const updateRoleActionUI = () => {
+    if (toggleRoleAction.checked) {
+      actionButton.classList.replace('bg-blue-600', 'bg-red-600');
+      actionButton.textContent = 'Remove User';
+      actionButton.onclick = handleRemoveUser;
+    } else {
+      actionButton.classList.replace('bg-red-600', 'bg-blue-600');
+      actionButton.textContent = 'Add User';
+      actionButton.onclick = handleAddUser;
+    }
+  };
+
+  updateRoleActionUI();
+  toggleRoleAction.addEventListener('change', updateRoleActionUI);
 });
 
 
@@ -262,34 +287,61 @@ document.getElementById('save-bulk-edit-button').addEventListener('click', async
 
 
 document.addEventListener('DOMContentLoaded', () => {
-  const toggleCheckbox = document.getElementById('toggle-role-action');
-  const actionButton = document.getElementById('dynamic-action-button');
+  // Update UI function for the Role Action toggle
+  const updateRoleActionUI = () => {
+      const toggleRoleAction = document.getElementById('toggle-role-action');
+      const dynamicActionButton = document.getElementById('dynamic-action-button');
+      const sliderRoleAction = toggleRoleAction.nextElementSibling.querySelector('span:nth-child(1)');
+      const sliderCircleRoleAction = toggleRoleAction.nextElementSibling.querySelector('span:nth-child(2)');
 
-  // Function to update the UI based on the toggle state
-  const updateUI = () => {
-    if (toggleCheckbox.checked) {
-      // Toggle is on
-      actionButton.classList.replace('bg-blue-600', 'bg-red-600');
-      actionButton.textContent = 'Remove User';
-      actionButton.onclick = handleRemoveUser;
-    } else {
-      // Toggle is off
-      actionButton.classList.replace('bg-red-600', 'bg-blue-600');
-      actionButton.textContent = 'Add User';
-      actionButton.onclick = handleAddUser;
-    }
+      if (toggleRoleAction.checked) {
+          sliderRoleAction.classList.replace('bg-gray-400', 'bg-blue-500');
+          sliderCircleRoleAction.classList.replace('translate-x-0', 'translate-x-6');
+          dynamicActionButton.classList.replace('bg-blue-600', 'bg-red-600');
+          dynamicActionButton.textContent = 'Remove User';
+          dynamicActionButton.onclick = handleRemoveUser;
+      } else {
+          sliderRoleAction.classList.replace('bg-blue-500', 'bg-gray-400');
+          sliderCircleRoleAction.classList.replace('translate-x-6', 'translate-x-0');
+          dynamicActionButton.classList.replace('bg-red-600', 'bg-blue-600');
+          dynamicActionButton.textContent = 'Add User';
+          dynamicActionButton.onclick = handleAddUser;
+      }
   };
 
-  // Initial UI update
-  updateUI();
+  // Initial setup for Role Action toggle
+  const toggleRoleAction = document.getElementById('toggle-role-action');
+  updateRoleActionUI();
 
-  // Update UI when toggle changes
-  toggleCheckbox.addEventListener('change', updateUI);
+  // Add event listener for Role Action toggle
+  toggleRoleAction.addEventListener('change', updateRoleActionUI);
+
+  // Update UI function for the OAuth Display toggle
+  const updateOauthDisplayUI = () => {
+      const toggleOauthDisplay = document.getElementById('toggle-oauth-display');
+      const sliderOauthDisplay = toggleOauthDisplay.nextElementSibling.querySelector('span:nth-child(1)');
+      const sliderCircleOauthDisplay = toggleOauthDisplay.nextElementSibling.querySelector('span:nth-child(2)');
+
+      if (toggleOauthDisplay.checked) {
+          sliderOauthDisplay.classList.replace('bg-gray-400', 'bg-blue-500');
+          sliderCircleOauthDisplay.classList.replace('translate-x-0', 'translate-x-6');
+      } else {
+          sliderOauthDisplay.classList.replace('bg-blue-500', 'bg-gray-400');
+          sliderCircleOauthDisplay.classList.replace('translate-x-6', 'translate-x-0');
+      }
+  };
+
+  // Initial setup for OAuth Display toggle
+  const toggleOauthDisplay = document.getElementById('toggle-oauth-display');
+  updateOauthDisplayUI();
+
+  // Add event listener for OAuth Display toggle
+  toggleOauthDisplay.addEventListener('change', updateOauthDisplayUI);
 });
 
-// Handler for Add User button
+
+
 function handleAddUser() {
-  // Your existing logic to add a user
   const userIdOrUsername = document.getElementById('userid_or_username').value;
   document.getElementById('userid_or_username').value = '';
 
@@ -305,10 +357,13 @@ function handleAddUser() {
   .then(response => response.json())
   .then(updatedRole => {
     populateJsonDialog(updatedRole);
-    displayAlertSuccess("User added successfully");
+    displayAlertSuccess("User successfully added to role");
+    closeDialog();
   })
   .catch(error => displayAlertError("Error: " + error.message));
 }
+
+
 
 function handleRemoveUser() {
   const userIdOrUsername = document.getElementById('userid_or_username').value;
@@ -326,7 +381,8 @@ function handleRemoveUser() {
   .then(response => response.json())
   .then(updatedRole => {
     populateJsonDialog(updatedRole);
-    displayAlertSuccess("User removed successfully");
+    displayAlertSuccess("User successfully removed from role");
+    closeDialog();
   })
   .catch(error => displayAlertError("Error: " + error.message));
 }

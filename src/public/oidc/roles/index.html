@@ -115,41 +115,33 @@
                     <label for="toggle-role-action" class="mr-2 text-white">Action:</label>
                     <input id="toggle-role-action" type="checkbox" class="hidden" />
                     <label for="toggle-role-action" class="relative inline-flex items-center cursor-pointer">
-                        <span class="block w-12 h-6 bg-gray-400 rounded-full shadow-inner transition-colors duration-200 ease-in-out"></span>
-                        <span class="absolute w-6 h-6 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out"></span>
+                        <span class="block w-12 h-6 bg-gray-400 rounded-full shadow-inner transition-colors duration-300 ease-in-out"></span>
+                        <span class="absolute block w-6 h-6 bg-white rounded-full shadow transform transition-transform duration-300 ease-in-out translate-x-0"></span>
                     </label>
                 </div>
-    
                 <!-- User ID or Username Input -->
                 <input id="userid_or_username" type="text" class="w-4/6 p-2 bg-gray-700 text-white rounded-lg" placeholder="Userid or Username">
-                
                 <!-- Add User Button -->
                 <button type="button" id="dynamic-action-button" class="bg-blue-600 text-white px-4 py-2 rounded-lg ml-4">Add User</button>
             </div>
-    
             <h1 class="text-lg text-white mb-2">Bulk Edit:</h1>
-    
             <!-- Slider for User ID / User Name toggle -->
             <div class="flex items-center justify-center mb-4">
                 <label class="mr-4 text-white">User IDs</label>
                 <input id="toggle-oauth-display" type="checkbox" class="hidden" />
                 <label for="toggle-oauth-display" class="relative inline-flex items-center cursor-pointer">
-                    <span class="block w-12 h-6 bg-gray-400 rounded-full shadow-inner transition-colors duration-200 ease-in-out"></span>
-                    <span class="absolute w-6 h-6 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out"></span>
+                    <span class="block w-12 h-6 bg-gray-400 rounded-full shadow-inner transition-colors duration-300 ease-in-out"></span>
+                    <span class="absolute block w-6 h-6 bg-white rounded-full shadow transform transition-transform duration-300 ease-in-out translate-x-0"></span>
                 </label>
                 <label class="ml-4 text-white">User Names</label>
             </div>
-    
             <textarea id="json-input" class="w-full h-64 p-2 bg-gray-800 text-white rounded-md shadow-sm mb-4" placeholder="Loading..."></textarea>
-    
             <div class="flex justify-between items-center mt-4">
                 <button type="button" data-close-modal class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg">Close</button>
                 <button type="button" id="save-bulk-edit-button" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Save</button>
             </div>
         </form>
     </dialog>
-    
-    
     
     
     <dialog data-modal id="delete-role-dialog" class="bg-gray-900 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50">
