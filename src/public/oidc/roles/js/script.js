@@ -261,43 +261,77 @@ document.getElementById('save-bulk-edit-button').addEventListener('click', async
 });
 
 
-document.getElementById('add-user').addEventListener('click', async () => {
-  const userId_or_username = document.getElementById('userid_or_username').value;
-  document.getElementById('userid_or_username').value = '';
+document.addEventListener('DOMContentLoaded', () => {
+  const toggleCheckbox = document.getElementById('toggle-role-action');
+  const actionButton = document.getElementById('dynamic-action-button');
 
-  try {
-      const response = await fetch('/api/oauth/settings/roles/update/add-user', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-              oauthRoleId: currentRole.oauthRoleId,
-              oauthClientAppId: currentRole.oauthClientAppId,
-              userId_or_username: userId_or_username,
-          }),
-      });
+  // Function to update the UI based on the toggle state
+  const updateUI = () => {
+    if (toggleCheckbox.checked) {
+      // Toggle is on
+      actionButton.classList.replace('bg-blue-600', 'bg-red-600');
+      actionButton.textContent = 'Remove User';
+      actionButton.onclick = handleRemoveUser;
+    } else {
+      // Toggle is off
+      actionButton.classList.replace('bg-red-600', 'bg-blue-600');
+      actionButton.textContent = 'Add User';
+      actionButton.onclick = handleAddUser;
+    }
+  };
 
-      if (!response.ok) {
-          return displayAlertError(await response.text());
-      }
+  // Initial UI update
+  updateUI();
 
-      const updatedRole = await response.json();
-      populateJsonDialog(updatedRole);
-      displayAlertSuccess("User added successfully");
-
-      const dialog = document.getElementById('json-dialog');
-      if (dialog.close) {
-          dialog.close();
-      }
-  } catch (error) {
-      displayAlertError("Error: " + error.message);
-  }
+  // Update UI when toggle changes
+  toggleCheckbox.addEventListener('change', updateUI);
 });
 
+// Handler for Add User button
+function handleAddUser() {
+  // Your existing logic to add a user
+  const userIdOrUsername = document.getElementById('userid_or_username').value;
+  document.getElementById('userid_or_username').value = '';
+
+  fetch('/api/oauth/settings/roles/update/add-user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      oauthRoleId: currentRole.oauthRoleId,
+      oauthClientAppId: currentRole.oauthClientAppId,
+      userId_or_username: userIdOrUsername,
+    }),
+  })
+  .then(response => response.json())
+  .then(updatedRole => {
+    populateJsonDialog(updatedRole);
+    displayAlertSuccess("User added successfully");
+  })
+  .catch(error => displayAlertError("Error: " + error.message));
+}
+
+function handleRemoveUser() {
+  const userIdOrUsername = document.getElementById('userid_or_username').value;
+  document.getElementById('userid_or_username').value = '';
+
+  fetch('/api/oauth/settings/roles/update/remove-user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      oauthRoleId: currentRole.oauthRoleId,
+      oauthClientAppId: currentRole.oauthClientAppId,
+      userId_or_username: userIdOrUsername,
+    }),
+  })
+  .then(response => response.json())
+  .then(updatedRole => {
+    populateJsonDialog(updatedRole);
+    displayAlertSuccess("User removed successfully");
+  })
+  .catch(error => displayAlertError("Error: " + error.message));
+}
 
 
-// Close dialog functionality
 document.addEventListener('DOMContentLoaded', () => {
   function closeDialog(dialog) {
       dialog.close();
@@ -328,7 +362,7 @@ function confirmDeleteRole(roleId) {
     return;
   }
   
-  dialog.showModal(); // Show the dialog
+  dialog.showModal();
   
   document.getElementById('delete-button').onclick = async () => {
     try {

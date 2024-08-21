@@ -89,7 +89,7 @@ router.post('/', async (req, res) => {
         { upsert: true }
       );
 
-      return res.status(200).json({ success: true, message: 'OAuth role has been successfully updated' });
+      return res.status(200).json({ success: true, message: 'User successfully added to role' });
     }
 
     jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
@@ -165,7 +165,7 @@ router.post('/', async (req, res) => {
           { upsert: true }
         );
 
-        res.status(200).json({ success: true, message: 'OAuth role has been successfully updated' });
+        res.status(200).json({ success: true, message: 'User successfully added to role' });
       } catch (error) {
         console.log(error);
         res.status(500).json({ error: 'Something went wrong, try again later' });
