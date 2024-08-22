@@ -90,7 +90,7 @@ const verifyToken = (req, res, next) => {
 const existingToken = (req, res, next) => {
   const access_token = req.cookies.access_token;
     if (access_token) {
-      return verifyToken(req, res, next);
+      return res.redirect('/dashboard');
     }
   next();
 };
