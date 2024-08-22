@@ -15,7 +15,7 @@ spec:
         app.kubernetes.io/name: loginapp-app
     spec:
       containers:
-      - image: pablo06/loginapp:latest
+      - image: pablo06/oneidp:latest
         imagePullPolicy: Always
         name: loginapp-app
         ports:
