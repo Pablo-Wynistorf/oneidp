@@ -70,7 +70,7 @@ const verifyToken = (req, res, next) => {
         res.clearCookie('password_reset_token');
         res.clearCookie('password_reset_code');
 
-        if (requestedPath === '/login' || requestedPath === '/signup' || requestedPath === '/recover' || requestedPath === '/setpassword' || requestedPath === '/verify') {
+        if (requestedPath === '/login' || requestedPath === '/signup' || requestedPath === '/recover' || requestedPath === '/setpassword' || requestedPath === '/verify' || requestedPath === '/') {
           return res.redirect('/dashboard');
         }
 
@@ -90,7 +90,7 @@ const verifyToken = (req, res, next) => {
 const existingToken = (req, res, next) => {
   const access_token = req.cookies.access_token;
     if (access_token) {
-      return res.redirect('/dashboard');
+      return verifyToken(req, res, next);
     }
   next();
 };
