@@ -97,15 +97,8 @@ const existingToken = (req, res, next) => {
 };
 
 
-
-// Redirect to /login
-app.get('/', (req, res) => {
-  return res.redirect('/login');
-});
-
-
-
 // All express routes
+app.use('/', existingToken, express.static(path.join(__dirname, 'public/homepage')));
 app.use('/login', existingToken, express.static(path.join(__dirname, 'public/login')));
 app.use('/dashboard', verifyToken, express.static(path.join(__dirname, 'public/dashboard')));
 app.use('/settings', verifyToken, express.static(path.join(__dirname, 'public/settings')));
