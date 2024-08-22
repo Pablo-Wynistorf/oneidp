@@ -86,7 +86,6 @@ const verifyToken = (req, res, next) => {
 };
 
 
-
 // Handle existing access token
 const existingToken = (req, res, next) => {
   const access_token = req.cookies.access_token;
