@@ -24,16 +24,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
-      - name: Extract commit message and format tag
-        id: extract-tag
+      - name: Extract commit hash, date, and format tags
+        id: extract-tags
         run: |
-          COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-          DATE_TAG=$(date +%Y%m%d)
-          echo "COMMIT_MESSAGE=$COMMIT_MESSAGE" >> $GITHUB_ENV
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          DATE_TAG=$(date +%Y%m%d-%H%M%S)
+          echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_ENV
           echo "DATE_TAG=$DATE_TAG" >> $GITHUB_ENV
-          # Clean up commit message for use as a tag (optional)
-          CLEAN_COMMIT_MESSAGE=$(echo $COMMIT_MESSAGE | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
-          echo "CLEAN_COMMIT_MESSAGE=$CLEAN_COMMIT_MESSAGE" >> $GITHUB_ENV
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
@@ -42,4 +39,4 @@ jobs:
           push: true
           tags: |
             pablo06/oneidp:latest
-            pablo06/oneidp:${{ env.CLEAN_COMMIT_MESSAGE }}-${{ env.DATE_TAG }}
+            pablo06/oneidp:${{ env.COMMIT_HASH }}-${{ env.DATE_TAG }}
