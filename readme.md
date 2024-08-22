@@ -1,4 +1,6 @@
-# Basic loginapp and with api:
+# Free and opensource openid-connect and oauth2 provider
+
+Use predeployed provider under: https://oneidp.ch
 
 This loginapp can be placed in front of practically ever application to authenticate their users. After a successful login, the api sends back a session cookie to authenticate the user.
 
