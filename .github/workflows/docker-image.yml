@@ -39,4 +39,4 @@ jobs:
           push: true
           tags: |
             pablo06/oneidp:latest
-            pablo06/oneidp:${{ env.COMMIT_HASH }}-${{ env.DATE_TAG }}
+            pablo06/oneidp:${{ env.COMMIT_HASH }}
