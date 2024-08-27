@@ -15,7 +15,7 @@ ${process.env.JWT_PUBLIC_KEY}
 -----END PUBLIC KEY-----
 `.trim();
 
-router.get('/', async (req, res) => {
+router.post('/', async (req, res) => {
   const access_token = req.cookies.access_token;
 
   if (!access_token) {
