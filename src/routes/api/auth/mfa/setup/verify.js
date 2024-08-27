@@ -60,8 +60,8 @@ router.post('/', async (req, res) => {
       const newsid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
       await userDB.updateOne({ userId: userId, sid: sid }, { $set: { sid: newsid } });
 
-      const token = jwt.sign({ userId: userId, sid: newsid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
-      res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+      const access_token = jwt.sign({ userId: userId, sid: newsid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+      res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
 
       return res.status(200).json({ success: true, message: 'MFA enabled' });
     } else {

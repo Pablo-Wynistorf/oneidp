@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const editButton = event.target.closest(".edit-button");
     if (editButton) {
       const appId = editButton.id.split("-")[1];
-      window.location.href = `/home/oauth/settings/roles/?oauthAppId=${appId}`;
+      window.location.href = `/oidc/roles/?oauthAppId=${appId}`;
     }
   });
 

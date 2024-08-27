@@ -1,12 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('email-field').focus();
+  const emailField = document.getElementById('email-field');
+  const recoverButton = document.getElementById('recover-button');
 
-  // Add event listener for Enter key
-  document.getElementById('email-field').addEventListener('keypress', function (e) {
+  emailField.focus();
+
+  emailField.addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
+      e.preventDefault();
       recover();
     }
   });
+
+  recoverButton.addEventListener('click', recover);
 });
 
 function recover() {
@@ -34,47 +39,36 @@ function recover() {
     },
     body: JSON.stringify({ email })
   })
-    .then(handleResponse)
-    .catch(handleError);
-}
-
-
-function handleResponse(response) {
-  if (response.status === 200) {
-      return window.location.href = '/setpassword';
-  } else if (response.status === 404) {
-    handle404Error();
-  }else {
-    handleError();
-  }
+    .then(response => {
+      if (response.status === 200) {
+        return window.location.replace('/setpassword');
+      } else if (response.status === 404) {
+        handle404Error();
+      } else {
+        handleError();
+      }
+    });
 }
 
 function handle404Error() {
-  const resetEmailImput = document.getElementById('email-field');
+  const resetEmailInput = document.getElementById('email-field');
   const recoverButton = document.getElementById('recover-button');
-  resetEmailImput.value = '';
+  resetEmailInput.value = '';
   recoverButton.disabled = false;
   recoverButton.innerText = 'Get recovery code';
-  recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
-  displayAlertError('No account found with that email address.')
+  recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500');
+  displayAlertError('No account found with that email address.');
 }
-
 
 function handleError() {
-  const resetEmailImput = document.getElementById('email-field');
+  const resetEmailInput = document.getElementById('email-field');
   const recoverButton = document.getElementById('recover-button');
-  resetEmailImput.value = '';
+  resetEmailInput.value = '';
   recoverButton.disabled = false;
   recoverButton.innerText = 'Get recovery code';
-  recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
-  displayAlertError('Something went wrong')
+  recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500');
+  displayAlertError('Something went wrong');
 }
-
-
-function redirect_login() {
-  window.location.href = '/login';
-}
-
 
 function displayAlertError(message) {
   const alertBox = document.getElementById('alert-box');

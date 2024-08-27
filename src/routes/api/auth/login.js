@@ -70,8 +70,8 @@ const handleLoginSuccess = async (user, res, redirectUri) => {
   }
 
   notifyLogin(username);
-  const token = jwt.sign({ userId, sid: newsid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
-  res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+  const access_token = jwt.sign({ userId, sid: newsid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+  res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
 
   return res.status(200).json({ success: true, redirectUri });
 };

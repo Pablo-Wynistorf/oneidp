@@ -21,8 +21,9 @@ addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
+  document.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
       setNewPassword();
     }
   });

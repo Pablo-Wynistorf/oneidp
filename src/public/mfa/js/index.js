@@ -39,9 +39,9 @@ function handleResponse(response, data) {
   const redirectUri = data.redirectUri;
   if (response.status === 200) {
     if (redirectUri === 'null') {
-      window.location.href = '/home';
+      window.location.href = '/dashboard';
     } else if (!redirectUri) {
-      window.location.href = '/home';
+      window.location.href = '/dashboard';
     } else {
     window.location.href = redirectUri;
     }
@@ -59,7 +59,7 @@ function handleResponse(response, data) {
 function handle460Error() {
   displayAlertError('MFA not enabled');
   setTimeout(() => {
-    window.location.replace('/home');
+    window.location.replace('/dashboard');
   }, 2000);
 }
 
