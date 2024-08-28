@@ -55,7 +55,7 @@ function handle200Response() {
   if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
     window.location.href = '/setpassword';
   } else {
-    window.location.href = `/setpassword?redirect=${redirectUri}`;
+    window.location.href = `/setpassword?redirectUri=${redirectUri}`;
   }
 }
 
@@ -84,13 +84,13 @@ function redirect_login() {
   if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
     window.location.href = '/login';
   } else {
-    window.location.href = `/login?redirect=${redirectUri}`;
+    window.location.href = `/login?redirectUri=${redirectUri}`;
   }
 }
 
 function getRedirectUri() {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('redirect');
+  return urlParams.get('redirectUri');
 }
 
 function displayAlertError(message) {

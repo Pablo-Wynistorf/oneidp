@@ -75,7 +75,7 @@ function handle200Response() {
 function handle461Error() {
   displayAlertError('Email not verified');
   const redirectUrl = getRedirectUri();
-    window.location.replace(`/verify?redirect=${redirectUrl}`);
+    window.location.replace(`/verify?redirectUri=${redirectUrl}`);
 }
 
 function handle462Error() {
@@ -99,7 +99,7 @@ function handle463Error() {
   if (!redirectUrl || redirectUrl === 'null' || redirectUrl === 'undefined') {
     window.location.href = '/mfa';
   } else {
-    window.location.href = `/mfa?redirect=${redirectUrl}`;
+    window.location.href = `/mfa?redirectUri=${redirectUrl}`;
   }
 }
 
@@ -112,7 +112,7 @@ function redirect_signup() {
   if (!redirectUrl || redirectUrl === 'null' || redirectUrl === 'undefined') {
     window.location.href = '/signup';
   } else {
-    window.location.href = `/signup?redirect=${redirectUrl}`;
+    window.location.href = `/signup?redirectUri=${redirectUrl}`;
   }
 }
 
@@ -121,13 +121,13 @@ function redirect_recovery() {
   if (!redirectUrl || redirectUrl === 'null' || redirectUrl === 'undefined') {
     window.location.href = '/recovery';
   } else {
-    window.location.href = `/recovery?redirect=${redirectUrl}`;
+    window.location.href = `/recovery?redirectUri=${redirectUrl}`;
   }
 }
 
 function getRedirectUri() {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('redirect');
+  return urlParams.get('redirectUri');
 }
 
 function displayAlertError(message) {

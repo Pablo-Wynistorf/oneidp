@@ -75,7 +75,7 @@ function handle200Response() {
   if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
     window.location.href = '/dashboard';
   } else {
-    window.location.href = '/verify' + (redirectUri ? `?redirect=${redirectUri}` : '');
+    window.location.href = '/verify' + (redirectUri ? `?redirectUri=${redirectUri}` : '');
   }
 }
 
@@ -152,12 +152,12 @@ function redirect_login() {
   if (!redirectUrl || redirectUrl === 'null' || redirectUrl === 'undefined') {
     window.location.href = '/login';
   } else {
-  window.location.href = `/login?redirect=${redirectUrl}`;
+  window.location.href = `/login?redirectUri=${redirectUrl}`;
   }
 }
 
 
 function getRedirectUri() {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('redirect');
+  return urlParams.get('redirectUri');
 }

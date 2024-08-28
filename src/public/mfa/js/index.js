@@ -83,7 +83,7 @@ function handleError() {
 
 function getRedirectUri() {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('redirect');
+  return urlParams.get('redirectUri');
 }
 
 
