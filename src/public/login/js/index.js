@@ -127,8 +127,14 @@ function redirect_recovery() {
 
 function getRedirectUri() {
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('redirectUri');
+  const redirectUri = urlParams.get('redirectUri');
+  if (redirectUri) {
+    const queryString = window.location.search;
+    return queryString.substring(queryString.indexOf('redirectUri=') + 'redirectUri='.length);
+  }
+  return null;
 }
+
 
 function displayAlertError(message) {
   const alertBox = document.getElementById('alert-box');
