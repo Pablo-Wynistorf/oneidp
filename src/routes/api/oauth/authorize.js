@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
   try {
 
     if (!access_token || access_token === 'undefined') {
-      return res.redirect(`/login?redirect=${URL + req.originalUrl}`);
+      return res.redirect(`/login?redirectUri=${URL + req.originalUrl}`);
     }
 
     if (!client_id || client_id === 'undefined') {
@@ -34,14 +34,14 @@ router.get('/', async (req, res) => {
     jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
 
       if (error) {
-        return res.redirect(`/login?redirect=${URL + req.originalUrl}`);
+        return res.redirect(`/login?redirectUri=${URL + req.originalUrl}`);
       }
 
       const { userId, sid } = decoded;
       const user = await userDB.findOne({ userId, sid });
 
       if (!user) {
-        return res.redirect(`/login?redirect=${URL + req.originalUrl}`);
+        return res.redirect(`/login?redirectUri=${URL + req.originalUrl}`);
       }
 
       const oauth_client = await oAuthClientAppDB.findOne({ clientId: client_id });
