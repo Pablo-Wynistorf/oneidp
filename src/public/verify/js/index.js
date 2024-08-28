@@ -35,7 +35,7 @@ function verifyCode() {
 
 function handleResponse(response) {
   if (response.status === 200) {
-      window.location.href = '/dashboard';
+    handle200Response();
     }
     else if (response.status === 460) {
     return handle460Error();
@@ -43,6 +43,15 @@ function handleResponse(response) {
     window.location.href = '/login';
   } else {
     handleError();
+  }
+}
+
+function handle200Response() {
+  const redirectUri = getRedirectUri();
+  if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
+    window.location.href = '/dashboard';
+  } else {
+    window.location.href = redirectUri;
   }
 }
 
@@ -57,8 +66,8 @@ function handleError() {
 }
 
 function getRedirectUri() {
-  const redirectUri = window.location.search.split('redirect=')[1];
-  return redirectUri;
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('redirect');
 }
 
 

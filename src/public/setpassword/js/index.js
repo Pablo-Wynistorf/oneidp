@@ -88,28 +88,27 @@ function setNewPassword() {
   }
 }
 
-function removeResetCode() {
-  var pastDate = new Date(0);
-  document.cookie = "password_reset_code=; expires=" + pastDate.toUTCString() + "; path=/";
-  return null;
-}
-
 
 function handleResponse(response) {
   if (response.status === 200) {
-    return response.json().then(data => {
-      removeResetCode();
-      window.location.href = '/dashboard'
-    })
+    return handle200Response();
   } else if (response.status === 460) {
-    handle460Error();
+    return handle460Error();
   } else if (response.status === 461) {
-    handle461Error();
+    return handle461Error();
   } else {
-    handleError();
+    return handleError();
   }
 }
 
+function handle200Response() {
+  const redirectUri = getRedirectUri();
+  if (!redirectUri || redirectUri === '' || redirectUri === 'undefined') {
+    window.location.href = '/dashboard';
+  } else {
+    window.location.href = redirectUri;
+  }
+}
 
 function handle460Error() {
   document.getElementById('password').value = '';
@@ -121,7 +120,6 @@ function handle460Error() {
 }
 
 function handle461Error() {
-  removeResetCode();
   document.getElementById('recovery-code').value = '';
   const recoverButton = document.getElementById('recover-button');
   recoverButton.disabled = false;
@@ -131,7 +129,6 @@ function handle461Error() {
 }
 
 function handleError() {
-  removeResetCode();
   document.getElementById('password').value = '';
   document.getElementById('recovery-code').value = '';
   const recoverButton = document.getElementById('recover-button');
@@ -139,6 +136,12 @@ function handleError() {
   recoverButton.innerText = 'Set new account password';
   recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
   displayAlertError('Something went wrong')
+}
+
+
+function getRedirectUri() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('redirect');
 }
 
 

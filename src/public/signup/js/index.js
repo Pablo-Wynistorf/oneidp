@@ -52,10 +52,7 @@ function signup() {
 function handleResponse(response) {
   document.getElementById('signup-button').disabled = false;
   if (response.status === 200) {
-    return response.json().then((data) => {
-      const redirectUri = getRedirectUri();
-      window.location.href = '/verify' + (redirectUri ? `?redirect=${redirectUri}` : '');
-    });
+    handle200Response();
   } else if (response.status === 429) {
     handle429Error();
   } else if (response.status === 460) {
@@ -70,6 +67,15 @@ function handleResponse(response) {
     handle464Error()
   }else {
     handleError();
+  }
+}
+
+function handle200Response() {
+  const redirectUri = getRedirectUri();
+  if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
+    window.location.href = '/dashboard';
+  } else {
+    window.location.href = '/verify' + (redirectUri ? `?redirect=${redirectUri}` : '');
   }
 }
 
@@ -151,8 +157,7 @@ function redirect_login() {
 }
 
 
-
 function getRedirectUri() {
-  const redirectUri = window.location.search.split('redirect=')[1];
-  return redirectUri;
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('redirect');
 }

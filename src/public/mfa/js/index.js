@@ -21,30 +21,22 @@ function verifyCode() {
   const mfa_code = document.getElementById('mfa-code').value;
 
   if (mfa_code.length === 6) {
-    const redirectUri = getRedirectUri();
     fetch(`/api/auth/mfa/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ mfaVerifyCode: mfa_code, redirectUri })
+      body: JSON.stringify({ mfaVerifyCode: mfa_code })
     })
-      .then(response => handleResponse(response, { redirectUri }))
+      .then(response => handleResponse(response))
       .catch(handleError);
   }
 }
 
 
-function handleResponse(response, data) {
-  const redirectUri = data.redirectUri;
+function handleResponse(response) {
   if (response.status === 200) {
-    if (redirectUri === 'null') {
-      window.location.href = '/dashboard';
-    } else if (!redirectUri) {
-      window.location.href = '/dashboard';
-    } else {
-    window.location.href = redirectUri;
-    }
+    return handle200Response();
   } else if (response.status === 460) {
     return handle460Error();
   } else if (response.status === 461) {
@@ -53,6 +45,15 @@ function handleResponse(response, data) {
     return handle462Error();
   } else {
     handleError();
+  }
+}
+
+function handle200Response() {
+  const redirectUri = getRedirectUri();
+  if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
+    window.location.href = '/dashboard';
+  } else {
+    window.location.href = redirectUri;
   }
 }
 
@@ -81,8 +82,8 @@ function handleError() {
 }
 
 function getRedirectUri() {
-  const redirectUri = window.location.search.split('redirect=')[1];
-  return redirectUri;
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('redirect');
 }
 
 

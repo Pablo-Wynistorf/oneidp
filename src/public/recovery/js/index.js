@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   recoverButton.addEventListener('click', recover);
 });
 
-function recover() {
+async function recover() {
   const resetEmailInput = document.getElementById('email-field');
   const recoverButton = document.getElementById('recover-button');
   recoverButton.disabled = true;
@@ -32,7 +32,7 @@ function recover() {
     return;
   }
 
-  fetch(`/api/auth/user/resetpassword`, {
+  await fetch(`/api/auth/user/resetpassword`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -41,13 +41,22 @@ function recover() {
   })
     .then(response => {
       if (response.status === 200) {
-        return window.location.replace('/setpassword');
+        return handle200Response();
       } else if (response.status === 404) {
-        handle404Error();
+        return handle404Error();
       } else {
-        handleError();
+        return handleError();
       }
     });
+}
+
+function handle200Response() {
+  const redirectUri = getRedirectUri();
+  if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
+    window.location.href = '/setpassword';
+  } else {
+    window.location.href = `/setpassword?redirect=${redirectUri}`;
+  }
 }
 
 function handle404Error() {
@@ -68,6 +77,20 @@ function handleError() {
   recoverButton.innerText = 'Get recovery code';
   recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500');
   displayAlertError('Something went wrong');
+}
+
+function redirect_login() {
+  const redirectUri = getRedirectUri();
+  if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
+    window.location.href = '/login';
+  } else {
+    window.location.href = `/login?redirect=${redirectUri}`;
+  }
+}
+
+function getRedirectUri() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('redirect');
 }
 
 function displayAlertError(message) {

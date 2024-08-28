@@ -28,7 +28,6 @@ function login() {
 
   const username_or_email = usernameInput.value;
   const password = passwordInput.value;
-  const redirectUri = getRedirectUri();
 
   if (!username_or_email || !password) {
     displayAlertError('Error: All fields are required');
@@ -43,77 +42,93 @@ function login() {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ username_or_email, password, redirectUri })
+    body: JSON.stringify({ username_or_email, password })
   })
-    .then(response => handleResponse(response, { redirectUri }));
+    .then(response => handleResponse(response));
 }
 
 
-function handleResponse(response, data) {
-  const redirectUri = data.redirectUri;
+function handleResponse(response) {
   if (response.status === 200) {
-    if (redirectUri === 'null' || redirectUri === 'undefined') {
-      window.location.href = '/dashboard';
-    } else if (!redirectUri) {
-      window.location.href = '/dashboard';
-    } else {
-      window.location.href = redirectUri;
-    }
+    handle200Response();
   } else if (response.status === 461) {
     handle461Error();
   } else if (response.status === 462) {
     handle462Error();
   } else if (response.status === 463) {
-    handle463Error(redirectUri);
+    handle463Error();
   } else {
     handleError();
   }
 }
 
+
+function handle200Response() {
+  const redirectUri = getRedirectUri();
+  if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
+    window.location.href = '/dashboard';
+  } else {
+    window.location.href = redirectUri;
+  }
+}
+
 function handle461Error() {
-  displayAlertError('Email not verified')
-  window.location.href = '/verify';
+  displayAlertError('Email not verified');
+  const redirectUrl = getRedirectUri();
+    window.location.replace(`/verify?redirect=${redirectUrl}`);
 }
 
 function handle462Error() {
   const usernameInput = document.getElementById('username-email-field');
   const passwordInput = document.getElementById('password-field');
   const loginButton = document.getElementById('login-button');
+
   loginButton.disabled = false;
-  loginButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
-  loginButton.innerHTML = `Sign In`
+  loginButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500');
+  loginButton.innerHTML = 'Sign In';
+
   usernameInput.value = '';
   passwordInput.value = '';
   usernameInput.focus();
+
   displayAlertError('Username or password is incorrect');
 }
 
-
-function handle463Error(redirectUri) {
-  if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
-    return window.location.replace('/mfa')
+function handle463Error() {
+  const redirectUrl = getRedirectUri();
+  if (!redirectUrl || redirectUrl === 'null' || redirectUrl === 'undefined') {
+    window.location.href = '/mfa';
+  } else {
+    window.location.href = `/mfa?redirect=${redirectUrl}`;
   }
-  window.location.replace(`/mfa/?redirect=${redirectUri}`)
 }
 
 function handleError() {
-  displayAlertError('Something went wrong')
+  displayAlertError('Something went wrong');
 }
 
 function redirect_signup() {
-  const redirectUrl = getRedirectUri()
+  const redirectUrl = getRedirectUri();
   if (!redirectUrl || redirectUrl === 'null' || redirectUrl === 'undefined') {
     window.location.href = '/signup';
   } else {
-  window.location.href = `/signup?redirect=${redirectUrl}`;
+    window.location.href = `/signup?redirect=${redirectUrl}`;
+  }
+}
+
+function redirect_recovery() {
+  const redirectUrl = getRedirectUri();
+  if (!redirectUrl || redirectUrl === 'null' || redirectUrl === 'undefined') {
+    window.location.href = '/recovery';
+  } else {
+    window.location.href = `/recovery?redirect=${redirectUrl}`;
   }
 }
 
 function getRedirectUri() {
-  const redirectUri = window.location.search.split('redirect=')[1];
-  return redirectUri;
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get('redirect');
 }
-
 
 function displayAlertError(message) {
   const alertBox = document.getElementById('alert-box');

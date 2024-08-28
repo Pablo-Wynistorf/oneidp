@@ -70,7 +70,7 @@ const verifyToken = (req, res, next) => {
         res.clearCookie('password_reset_token');
         res.clearCookie('password_reset_code');
 
-        if (requestedPath === '/login' || requestedPath === '/signup' || requestedPath === '/recover' || requestedPath === '/setpassword' || requestedPath === '/verify' || requestedPath === '/') {
+        if (requestedPath === '/login' || requestedPath === '/signup' || requestedPath === '/recovery' || requestedPath === '/setpassword' || requestedPath === '/verify' || requestedPath === '/') {
           return res.redirect('/dashboard');
         }
 
@@ -104,7 +104,7 @@ app.use('/settings', verifyToken, express.static(path.join(__dirname, 'public/se
 app.use('/signup', existingToken, express.static(path.join(__dirname, 'public/signup')));
 app.use('/setpassword', express.static(path.join(__dirname, 'public/setpassword')));
 app.use('/verify', existingToken, express.static(path.join(__dirname, 'public/verify')));
-app.use('/recover', existingToken, express.static(path.join(__dirname, 'public/recover')));
+app.use('/recovery', existingToken, express.static(path.join(__dirname, 'public/recovery')));
 app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
 app.use('/oidc/apps', verifyToken, express.static(path.join(__dirname, 'public/oidc/apps')));
 app.use('/oidc/roles', verifyToken, express.static(path.join(__dirname, 'public/oidc/roles')));

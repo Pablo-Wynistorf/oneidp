@@ -17,7 +17,7 @@ ${process.env.JWT_PRIVATE_KEY}
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-  const { username_or_email, password, redirectUri } = req.body;
+  const { username_or_email, password } = req.body;
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 
   try {
@@ -33,7 +33,7 @@ router.post('/', async (req, res) => {
       return handleUnverifiedEmail(user, res);
     }
 
-    await handleLoginSuccess(user, res, redirectUri);
+    await handleLoginSuccess(user, res);
   } catch (error) {
     notifyError(error);
     return res.status(500).json({ error: 'Something went wrong, try again later' });
@@ -41,18 +41,35 @@ router.post('/', async (req, res) => {
 });
 
 const handleUnverifiedEmail = async (user, res) => {
-  const emailVerificationToken = jwt.sign({ userId: user.userId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
+  const emailVerificationToken = jwt.sign(
+    { userId: user.userId }, 
+    JWT_PRIVATE_KEY, 
+    { algorithm: 'RS256', expiresIn: '5m' }
+  );
+
   const newEmailVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-  await userDB.updateOne({ userId: user.userId }, { $set: { verifyCode: newEmailVerificationCode } });
+  await userDB.updateOne(
+    { userId: user.userId }, 
+    { $set: { verifyCode: newEmailVerificationCode } }
+  );
 
-  res.cookie('email_verification_token', emailVerificationToken, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
+  res.cookie('email_verification_token', emailVerificationToken, {
+    maxAge: 5 * 60 * 1000, 
+    httpOnly: true, 
+    path: '/'
+  });
+
   sendVerificationEmail(user.username, user.email, emailVerificationToken, newEmailVerificationCode);
   
-  return res.status(461).json({ success: true, message: 'Email not verified' });
+  return res.status(461).json({
+    success: true, 
+    message: 'Email not verified', 
+  });
 };
 
-const handleLoginSuccess = async (user, res, redirectUri) => {
+
+const handleLoginSuccess = async (user, res) => {
   const { userId, username, sid, mfaEnabled, oauthSid } = user;
 
   const newsid = sid || generateRandomString(15);
@@ -66,29 +83,25 @@ const handleLoginSuccess = async (user, res, redirectUri) => {
   }
 
   if (mfaEnabled) {
-    return handleMfaEnabled(userId, res, redirectUri);
+    return handleMfaEnabled(userId, res);
   }
 
   notifyLogin(username);
   const access_token = jwt.sign({ userId, sid: newsid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
   res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
 
-  return res.status(200).json({ success: true, redirectUri });
+  return res.status(200).json({ success: true });
 };
 
 
-const handleMfaEnabled = async (userId, res, redirectUri) => {
+const handleMfaEnabled = async (userId, res) => {
   const newMfaLoginSecret = generateRandomString(30);
   await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
 
   const mfaToken = jwt.sign({ userId, mfaLoginSecret: newMfaLoginSecret }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
   res.cookie('mfa_token', mfaToken, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
 
-  const response = { success: true, message: 'Redirecting to MFA site' };
-  if (redirectUri) {
-    response.redirectUri = redirectUri;
-  }
-
+  const response = { success: true, message: 'Redirecting to MFA site'};
   return res.status(463).json(response);
 };
 

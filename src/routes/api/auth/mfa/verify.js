@@ -20,7 +20,7 @@ ${process.env.JWT_PUBLIC_KEY}
 `.trim();
 
 router.post('/', async (req, res) => {
-  const { mfaVerifyCode, redirectUri } = req.body;
+  const { mfaVerifyCode } = req.body;
 
   const mfa_token = req.cookies.mfa_token;
 
@@ -63,7 +63,7 @@ router.post('/', async (req, res) => {
       notifyLogin(username);
       res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
       res.clearCookie('mfa_token');
-      return res.status(200).json({ success: true, redirectUri });
+      return res.status(200).json({ success: true });
     } else {
       return res.status(461).json({ success: false, error: 'Invalid verification code' });
     }
