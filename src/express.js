@@ -99,6 +99,7 @@ const existingToken = (req, res, next) => {
 // All express routes
 app.use('/css', express.static(path.join(__dirname, 'public/css')));
 app.use('/', existingToken, express.static(path.join(__dirname, 'public/homepage')));
+app.use('/impressum', express.static(path.join(__dirname, 'public/impressum')));
 app.use('/login', existingToken, express.static(path.join(__dirname, 'public/login')));
 app.use('/dashboard', verifyToken, express.static(path.join(__dirname, 'public/dashboard')));
 app.use('/settings', verifyToken, express.static(path.join(__dirname, 'public/settings')));
@@ -118,6 +119,12 @@ app.use('/api/auth/login', require('./routes/api/auth/login.js'));
 
 // Register as new user, store userdata in the database and send verification email
 app.use('/api/auth/signup', require('./routes/api/auth/signup.js'));
+
+// Continue with google
+app.use('/api/auth/google', require('./routes/api/auth/google.js'));
+
+// Continue with github
+app.use('/api/auth/github', require('./routes/api/auth/github.js'));
 
 // Handle logout
 app.use('/api/auth/logout', require('./routes/api/auth/logout.js'));

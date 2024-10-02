@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+
 function login() {
   const usernameInput = document.getElementById('username-email-field');
   const passwordInput = document.getElementById('password-field');

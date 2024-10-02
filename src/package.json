@@ -28,6 +28,9 @@
     "mongoose": "^8.1.1",
     "node-jose": "^2.2.0",
     "node-mailjet": "^6.0.5",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12",
+    "passport-google-oauth20": "^2.0.0",
     "path": "^0.12.7",
     "qrcode": "^1.5.3",
     "speakeasy": "^2.0.0"

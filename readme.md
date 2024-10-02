@@ -33,6 +33,10 @@ MJ_APIKEY_PUBLIC= # Enter the mailjet public api key
 MJ_APIKEY_PRIVATE= # Enter the mailjet private api key
 MJ_SENDER_EMAIL= # Enter the email address the verification codes should be sent from. You need to configure it in the mailjet dashboard. 
 DC_MONITORING_WEBHOOK_URL= # Enter the discord webhook url.
+GOOGLE_CLIENT_ID= # Enter the clientId for google oauth
+GOOGLE_CLIENT_SECRET= # Enter the clientSecret for google oauth
+GITHUB_CLIENT_ID= # Enter the clientId for github oauth
+GITHUB_CLIENT_SECRET= # Enter the clientSecret for github oauth
 ```
 
 3.) Its not recommended to use the mongodb in kubernetes. But if you want to, you just need to install these manifests. Make sure to add the values in the secrets.yaml to MONGO_INITDB_ROOT_USERNAME and MONGO_INITDB_ROOT_PASSWORD. 

@@ -82,6 +82,30 @@ spec:
               name: loginapp-secrets
               key: DC_MONITORING_WEBHOOK_URL
               optional: false
+        - name: GOOGLE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: GOOGLE_CLIENT_ID
+              optional: false
+        - name: GOOGLE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: GOOGLE_CLIENT_SECRET
+              optional: false
+        - name: GITHUB_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: GITHUB_CLIENT_ID
+              optional: false
+        - name: GITHUB_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: loginapp-secrets
+              key: GITHUB_CLIENT_SECRET
+              optional: false
 ---
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler

@@ -31,6 +31,7 @@ const userSchema = new Schema({
   username: String,
   password: String,
   email: String,
+  identityProvider: String,
   sid: String,
   oauthSid: String,
   verifyCode: String,
