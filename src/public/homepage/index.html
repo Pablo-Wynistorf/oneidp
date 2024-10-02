@@ -12,7 +12,6 @@
 </head>
 <body class="antialiased bg-body text-body font-body">
     <div class="">
-                
       <section x-data="{ mobileNavOpen: false }" class="pb-24 bg-neutral-900">
         <nav class="relative px-10 md:px-12 py-7 lg:py-4">
           <div class="flex items-center justify-between">
@@ -23,8 +22,9 @@
               <img class="h-10" src="images/oneidp-logo-white.png" alt="">
             </a>
             <div class="hidden lg:flex items-center gap-5">
-      <a class="inline-flex justify-center items-center text-center h-16 p-5 font-semibold tracking-tight text-lg text-white hover:text-white focus:text-white bg-transparent hover:bg-transparent focus:bg-transparent border border-transparent rounded-lg focus:ring-4 focus:ring-transparent transition duration-200" href="/login">Login</a><a class="inline-flex justify-center items-center text-center h-16 p-5 font-semibold tracking-tight text-xl text-white hover:text-neutral-900 focus:text-neutral-900 bg-transparent hover:bg-white focus:bg-white border border-white rounded-lg focus:ring-4 focus:ring-neutral-400 transition duration-200" href="/signup">Sign up free</a>
-      </div>
+              <a class="inline-flex justify-center items-center text-center h-16 p-5 font-semibold tracking-tight text-lg text-white hover:text-white focus:text-white bg-transparent hover:bg-transparent focus:bg-transparent border border-transparent rounded-lg focus:ring-4 focus:ring-transparent transition duration-200" href="/login">Login</a>
+              <a class="inline-flex justify-center items-center text-center h-16 p-5 font-semibold tracking-tight text-xl text-white hover:text-neutral-900 focus:text-neutral-900 bg-transparent hover:bg-white focus:bg-white border border-white rounded-lg focus:ring-4 focus:ring-neutral-400 transition duration-200" href="/signup">Sign up free</a>
+            </div>
           </div>
         </nav>
         <div :class="{'block': mobileNavOpen, 'hidden': !mobileNavOpen}" class="hidden fixed top-0 left-0 bottom-0 w-5/6 max-w-xs z-50">
@@ -42,8 +42,9 @@
                 </button>
               </div>
               <div class="flex flex-col items-center gap-2">
-      <a class="inline-flex justify-center items-center text-center w-full h-16 p-5 font-semibold tracking-tight text-lg text-white hover:text-white focus:text-white bg-transparent hover:bg-transparent focus:bg-transparent border border-transparent rounded-lg focus:ring-4 focus:ring-transparent transition duration-200" href="/login">Login</a><a class="inline-flex justify-center items-center text-center w-full h-16 p-5 font-semibold tracking-tight text-xl text-white hover:text-neutral-900 focus:text-neutral-900 bg-transparent hover:bg-white focus:bg-white border border-white rounded-lg focus:ring-4 focus:ring-neutral-400 transition duration-200" href="/signup">Sign up free</a>
-      </div>
+                <a class="inline-flex justify-center items-center text-center w-full h-16 p-5 font-semibold tracking-tight text-lg text-white hover:text-white focus:text-white bg-transparent hover:bg-transparent focus:bg-transparent border border-transparent rounded-lg focus:ring-4 focus:ring-transparent transition duration-200" href="/login">Login</a>
+                <a class="inline-flex justify-center items-center text-center w-full h-16 p-5 font-semibold tracking-tight text-xl text-white hover:text-neutral-900 focus:text-neutral-900 bg-transparent hover:bg-white focus:bg-white border border-white rounded-lg focus:ring-4 focus:ring-neutral-400 transition duration-200" href="/signup">Sign up free</a>
+              </div>
             </div>
           </nav>
         </div>
@@ -69,9 +70,7 @@
                   </div>
                 </div>
                 <a class="inline-flex items-center gap-3 group mr-auto" href="#">
-                  
                   <div>
-                    
                   </div>
                 </a>
               </div>
@@ -92,13 +91,21 @@
                     <img class="mx-auto w-36 object-cover sm:mr-0 lg:mx-auto xl:mr-0" src="images/free-rights-white.svg" alt="">
                   </div>
                 </div>
+                <a class="inline-flex items-center gap-3 group mr-auto" href="#">
+                  <div>
+                  </div>
+                </a>
               </div>
             </div>
           </div>
-          
         </div>
       </section>
+      <footer class="bg-neutral-900 text-white py-8">
+        <div class="container mx-auto text-center">
+          <p class="mb-2">© 2024 ONEIDP. All rights reserved.</p>
+          <p><a href="/privacy-policy" class="text-neutral-400 hover:text-white">Privacy Policy</a> | <a href="/imprint" class="text-neutral-400 hover:text-white">Imprint</a></p>
+        </div>
+      </footer>
     </div>
 </body>
 </html>
-

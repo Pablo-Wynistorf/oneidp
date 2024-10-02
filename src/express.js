@@ -99,7 +99,8 @@ const existingToken = (req, res, next) => {
 // All express routes
 app.use('/css', express.static(path.join(__dirname, 'public/css')));
 app.use('/', existingToken, express.static(path.join(__dirname, 'public/homepage')));
-app.use('/impressum', express.static(path.join(__dirname, 'public/impressum')));
+app.use('/imprint', express.static(path.join(__dirname, 'public/imprint')));
+app.use('/privacy-policy', express.static(path.join(__dirname, 'public/privacy-policy')));
 app.use('/login', existingToken, express.static(path.join(__dirname, 'public/login')));
 app.use('/dashboard', verifyToken, express.static(path.join(__dirname, 'public/dashboard')));
 app.use('/settings', verifyToken, express.static(path.join(__dirname, 'public/settings')));
