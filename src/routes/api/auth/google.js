@@ -6,6 +6,7 @@ const { userDB } = require('../../../database/database.js');
 
 const router = express.Router();
 
+const URL = process.env.URL;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const JWT_PRIVATE_KEY = `
@@ -17,7 +18,7 @@ ${process.env.JWT_PRIVATE_KEY}
 passport.use(new GoogleStrategy({
     clientID: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
-    callbackURL: '/api/auth/google/callback',
+    callbackURL: URL + '/api/auth/google/callback',
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
