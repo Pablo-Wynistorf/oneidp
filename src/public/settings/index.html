@@ -7,14 +7,14 @@
     <title>Settings</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.onedns.ch/attachment/1235206911368888380"></link>
+    <link rel="stylesheet" href="/css/tailwind/tailwind.min.css"></link>
     <link rel="icon" type="image/x-icon" href="img/favicon.ico">
 </head>
 
-<body class="bg-gray-800 text-gray-200">
+<body class="bg-gray-500 text-gray-300">
     <div class="flex flex-col md:flex-row min-h-screen">
         <!-- Sidebar -->
-        <div id="sidebar" class="w-full md:w-64 bg-gray-900 p-4 flex flex-col justify-between">
+        <div id="sidebar" class="w-full md:w-64 bg-gray-950 p-4 flex flex-col justify-between">
             <!-- Mobile Menu Button Container -->
             <div class="absolute top-0 right-0 mt-1 p-4 flex items-center space-x-2 md:hidden">
                 <img id="mobile-open-menu" src="svg/mobile-open-menu.svg" class="h-10 w-10 cursor-pointer transition-transform duration-300" alt="Mobile Menu">
@@ -25,26 +25,26 @@
                 <!-- Mobile and Desktop Title -->
                 <div class="flex items-center mt-1 mb-1 md:justify-start">
                     <img src="img/oneidp.png" class="w-10 h-10 ml-1" alt="Oneidp">
-                    <span class="text-xl font-semibold ml-4 hidden md:block">ONEIDP</span>
-                    <span class="text-xl font-semibold ml-4 md:hidden flex items-center">ONEIDP</span>
+                    <span class="text-xl font-semibold text-gray-100 ml-4 hidden md:block">ONEIDP</span>
+                    <span class="text-xl font-semibold text-gray-100 ml-4 md:hidden flex items-center">ONEIDP</span>
                 </div>
 
                 <!-- Navigation Items -->
                 <ul id="nav-items" class="space-y-2 md:block hidden mt-4">
                     <li>
-                        <a href="/dashboard" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
+                        <a href="/dashboard" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-600">
                             <img src="svg/dashboard.svg" class="w-6 h-6" alt="Dashboard">
                             <span class="ml-3">Dashboard</span>
                         </a>
                     </li>
                     <li>
-                        <a href="/oidc/apps" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
+                        <a href="/oidc/apps" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-600">
                             <img src="svg/oidc-apps.svg" class="w-6 h-6" alt="OIDC Apps">
                             <span class="ml-3">OIDC Apps</span>
                         </a>
                     </li>
                     <li>
-                        <a href="/oidc/roles" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
+                        <a href="/oidc/roles" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-600">
                             <img src="svg/oidc-roles.svg" class="w-6 h-6" alt="OIDC Roles">
                             <span class="ml-3">OIDC Roles</span>
                         </a>
@@ -56,13 +56,13 @@
             <div id="settings-logout-container" class="mt-2">
                 <ul class="space-y-2">
                     <li id="settings-item" class="hidden md:block">
-                        <a href="" class="flex items-center p-3 text-white bg-blue-700 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-blue-800">
+                        <a href="" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-600">
                             <img src="svg/settings.svg" class="w-6 h-6" alt="Settings">
                             <span class="ml-3">Settings</span>
                         </a>
                     </li>
                     <li id="logout-item" class="hidden md:block">
-                        <a href="" id="logout-button" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-800">
+                        <a href="" id="logout-button" class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-600">
                             <img src="svg/logout.svg" class="w-6 h-6" alt="Logout">
                             <span class="ml-3">Logout</span>
                         </a>
@@ -73,14 +73,14 @@
 
         <!-- Main Content -->
         <div class="flex-1 p-6 flex flex-col justify-between">
-            <div class="bg-slate-800 p-8 rounded-lg shadow-lg">
-                <h1 class="text-3xl font-semibold mb-6">Settings:</h1>
+            <div class="bg-gray-600 p-8 rounded-lg shadow-lg">
+                <h1 class="text-3xl font-semibold mb-6 text-gray-100">Settings:</h1>
                 <div class="space-y-6">
                     <!-- MFA and Change Password Sections -->
                     <div class="flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
                         <!-- MFA Section -->
                         <div id="mfa-section" class="flex-1 bg-gray-900 p-6 rounded-lg shadow-lg">
-                            <h2 class="text-2xl font-semibold mb-4">Multi-Factor Authentication</h2>
+                            <h2 class="text-2xl font-semibold mb-4 text-gray-100">Multi-Factor Authentication</h2>
                             <div id="mfa-box" class="flex items-center space-x-4">
                                 <!-- Content will be injected here by JavaScript -->
                             </div>
@@ -88,24 +88,24 @@
 
                         <!-- Change Password Section -->
                         <div id="change-password-section" class="flex-1 bg-gray-900 p-6 rounded-lg shadow-lg">
-                            <h2 class="text-2xl font-semibold mb-4">Change Password</h2>
+                            <h2 class="text-2xl font-semibold mb-4 text-gray-100">Change Password</h2>
                             <form id="change-password-form" class="space-y-4">
                                 <div>
                                     <label for="current-password-input" class="block text-sm font-medium text-gray-300">Current Password</label>
-                                    <input type="password" id="current-password-input" class="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-900 text-gray-200 placeholder-gray-500 focus:outline-none hover:border-white focus-within:border-green-500" required>
+                                    <input type="password" id="current-password-input" class="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-800 text-gray-200 placeholder-gray-500 focus:outline-none hover:border-white focus-within:border-green-500" required>
                                 </div>
                                 <div>
                                     <label for="new-password-input" class="block text-sm font-medium text-gray-300">New Password</label>
-                                    <input type="password" id="new-password-input" class="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-900 text-gray-200 placeholder-gray-500 focus:outline-none hover:border-white focus-within:border-green-500" required>
+                                    <input type="password" id="new-password-input" class="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-800 text-gray-200 placeholder-gray-500 focus:outline-none hover:border-white focus-within:border-green-500" required>
                                 </div>
-                                <button type="button" onclick="changePassword()" class="w-full px-4 py-2 bg-blue-700 text-white font-semibold rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500">Change Password</button>
+                                <button type="button" onclick="changePassword()" class="w-full px-4 py-2 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Change Password</button>
                             </form>
                         </div>
                     </div>
 
                     <!-- Logout All Sessions Button -->
                     <div>
-                        <button onclick="logout_everywhere()" class="w-full px-4 py-2 bg-red-700 text-white font-semibold rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500">Logout All Sessions</button>
+                        <button onclick="logout_everywhere()" class="w-full px-4 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500">Logout All Sessions</button>
                     </div>
                 </div>
             </div>
@@ -118,13 +118,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
-                <h2 class="text-xl font-semibold mb-4">Set up MFA</h2>
+                <h2 class="text-xl font-semibold mb-4 text-gray-100">Set up MFA</h2>
                 <img id="mfa-qr-code" src="" alt="MFA QR Code" class="mb-4 mx-auto">
                 <label for="mfa-code" class="block text-sm font-medium text-gray-300">Enter MFA Code</label>
-                <input type="text" id="mfa-code" class="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-900 text-gray-200 placeholder-gray-500 focus:outline-none hover:border-white focus-within:border-green-500" required maxlength="8">
+                <input type="text" id="mfa-code" class="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-800 text-gray-200 placeholder-gray-500 focus:outline-none hover:border-white focus-within:border-green-500" required maxlength="8">
             </div>
         </div>
-        
+
     </div>
     <script src="js/base.js"></script>
     <script src="js/navbar.js"></script>

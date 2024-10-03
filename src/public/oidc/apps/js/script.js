@@ -228,7 +228,7 @@ function delete_app(oauthClientAppId) {
 function handleResponse(response) {
   if (!response.ok) {
     if (response.status === 404) {
-      displayAlertError("Error: Data not found.");
+      return;
     } else if (response.status === 500) {
       displayAlertError("Error: Internal Server Error. Please try again later.");
     } else {
