@@ -9,7 +9,10 @@ For mail delievery we use mailjet. Create a account to get the api key. https://
 
 For alerting and log we use discord webhook. Create a channel in a discord server and get the webhook url. https://discord.com
 
-
+## Use the Provieder from a client
+You can use this provider with several librarys or build your own oidc client.
+Here are some examples on how to implement oneidp as oidc provider in you express applications:
+https://github.com/Pablo-Wynistorf/oneidp-client-demo
 
 
 # Deployment on Kubernetes:
