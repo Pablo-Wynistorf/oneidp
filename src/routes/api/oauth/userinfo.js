@@ -44,6 +44,7 @@ router.all('/', (req, res) => {
 
       if (!clientId || clientId === 'undefined') {
         return res.status(200).json({
+          sub: userId,
           userId,
           username: userData.username,
           email: userData.email,
@@ -62,6 +63,7 @@ router.all('/', (req, res) => {
       const roleNames = roleData.map((role) => role.oauthRoleName);
 
       res.status(200).json({
+        sub: userId,
         userId,
         username: userData.username,
         email: userData.email,
