@@ -5,25 +5,26 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-function logout() {
+async function logout() {
   try {
-    fetch(`/api/auth/logout`, {
+    const response = await fetch(`/api/auth/logout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-      }
-    })
-    .then(response => {
-      if (response.ok) {
-        window.location.href = '/login';
-      } else {
-        handleError();
-      }
-    })
+      },
+    });
+
+    if (response.ok) {
+      window.location.href = '/login';
+    } else {
+      handleError();
+    }
   } catch (error) {
+    console.error('Logout error:', error);
     handleError();
   }
 }
+
 
 function displayAlertSuccess(message) {
 new Noty({
