@@ -37,10 +37,14 @@ router.post('/', async (req, res) => {
     }
     const mfaEnabled = userData.mfaEnabled;
     const email = userData.email;
+    const identityProvider = userData.identityProvider;
+
+    if (identityProvider !== 'local') {
+      return res.status(460).json({ success: false, error: 'MFA is only available for users with local authentication' });
+    }
 
     if (mfaEnabled === true) {
-      const imageUrl = './img/qr-placeholder.jpg';
-      return res.status(460).json({ success: false, imageUrl, error: 'User has MFA already enabled' });
+      return res.status(460).json({ success: false, error: 'User has MFA already enabled' });
     }
 
     const mfaSecret = speakeasy.generateSecret({ length: 20 });

@@ -69,6 +69,7 @@ router.post('/', async (req, res) => {
       emailVerified: false,
       mfaEnabled: false,
       providerRoles: ['standardUser', 'oauthUser'],
+      identityProvider: 'local',
     });
 
     await newUser.save();

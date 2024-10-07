@@ -46,6 +46,10 @@ router.post('/', async (req, res) => {
       return res.redirect('/login');
     }
 
+    if (userData.identityProvider !== 'local') {
+      return res.status(460).json({ success: false, error: 'Password can only be changed for users with local authentication' });
+    }
+
     const passwordMatch = await bcrypt.compare(currentPassword, userData.password);
     if (!passwordMatch) {
       return res.status(461).json({ success: false, error: 'Incorrect current Password' });

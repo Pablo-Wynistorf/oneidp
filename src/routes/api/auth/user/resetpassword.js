@@ -26,7 +26,7 @@ router.post('/', async (req, res) => {
   const { email } = req.body;
 
   try {
-    const userData = await userDB.findOne({ email });
+    const userData = await userDB.findOne({ email, identityProvider: 'local' });
     if (!userData) {
       return res.status(404).json({ success: false, error: 'No account with this email' });
     }

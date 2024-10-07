@@ -40,7 +40,7 @@ passport.use(new GoogleStrategy({
           emailVerified: true,
           mfaEnabled: false,
           providerRoles: ['standardUser', 'oauthUser'],
-            identityProvider: 'google',
+          identityProvider: 'google',
           });
       
         await newUser.save();
