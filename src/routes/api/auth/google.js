@@ -68,8 +68,9 @@ passport.use(new GoogleStrategy({
 router.use(passport.initialize());
 
 router.get('/', (req, res, next) => {
-  const redirectUri = req.query.redirectUri;
-  const state = redirectUri ? encodeURIComponent(redirectUri) : '';
+  const { redirectUri, redirect_uri } = req.query;
+  const fullRedirectUri = redirectUri + '&redirect_uri=' + redirect_uri;
+  const state = fullRedirectUri ? Buffer.from(fullRedirectUri).toString('base64') : '';
   
   passport.authenticate('google', {
     scope: ['email', 'profile'],
@@ -80,10 +81,8 @@ router.get('/', (req, res, next) => {
 
 router.get('/callback', passport.authenticate('google', { session: false }), (req, res) => {
   const { access_token } = req.user;
-
-  let redirectUri = req.query.state || '/dashboard';
-
-  redirectUri = decodeURIComponent(redirectUri);
+  let redirectUri = req.query.state ? Buffer.from(req.query.state, 'base64').toString('utf-8') : '/dashboard';
+  
   res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
   res.redirect(redirectUri);
 });
