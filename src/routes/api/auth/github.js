@@ -31,7 +31,11 @@ passport.use(new GitHubStrategy({
         if (existingUserName) {
           username = `${username}_${generateRandomString(3)}`;
         }
-        
+
+        if (!profile.emails[0].value) {
+          return done(new Error('No email found in your GitHub account'), null);
+        }
+
         const newUser = new userDB({
           userId: profile.id,
           username: username,
