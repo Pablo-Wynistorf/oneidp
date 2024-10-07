@@ -151,7 +151,6 @@ router.post('/', async (req, res) => {
     return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token, expires_in: accessTokenValidity });
 
   } catch (error) {
-    console.log(error);
     notifyError(error);
     res.status(500).json({ error: 'Server Error', error_description: 'Something went wrong on our site. Please try again later' });
   }

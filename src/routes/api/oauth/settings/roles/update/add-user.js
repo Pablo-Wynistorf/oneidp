@@ -167,12 +167,10 @@ router.post('/', async (req, res) => {
 
         res.status(200).json({ success: true, message: 'User successfully added to role' });
       } catch (error) {
-        console.log(error);
         res.status(500).json({ error: 'Something went wrong, try again later' });
       }
     });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });

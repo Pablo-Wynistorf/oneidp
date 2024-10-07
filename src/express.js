@@ -34,69 +34,93 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 connectToDatabase();
 
-// Verify access token
-const verifyToken = (req, res, next) => {
+// Function to check if a route is public
+const isPublicRoute = (path) => {
+  const publicRoutes = ['/', '/login', '/signup', '/recovery', '/setpassword', '/verify', '/imprint', '/privacy-policy'];
+  return publicRoutes.includes(path.split('?')[0]);
+};
+
+// Function to check if a route is a static asset
+const isStaticAsset = (path) => {
+  const staticExtensions = ['.css', '.js', '.svg', '.png', '.jpg', '.jpeg', '.gif', '.ico'];
+  return staticExtensions.some(ext => path.endsWith(ext));
+};
+
+// Middleware to verify access token
+const verifyToken = async (req, res, next) => {
   const access_token = req.cookies.access_token;
-  const requestedPath = req.baseUrl;
+  const requestedPath = req.originalUrl;
 
-  if (access_token) {
-    jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
-      if (error) {
-        res.clearCookie('access_token');
-        if (requestedPath !== '/login') {
-          return res.redirect('/login');
-        }
-        return next();
-      }
+  if (isStaticAsset(requestedPath)) {
+    return next();
+  }
 
-      const userId = decoded.userId;
-      const sid = decoded.sid;
+  if (!access_token) {
+    return handleUnauthenticated(req, res, next, requestedPath);
+  }
 
-      try {
-        const userData = await userDB.findOne({ userId: userId, sid: sid });
-        if (!userData) {
-          res.clearCookie('access_token');
-          return res.redirect('/login');
-        }
+  try {
+    const decoded = jwt.verify(access_token, JWT_PUBLIC_KEY);
 
-        const now = Math.floor(Date.now() / 1000);
-        const tokenExpirationThreshold = now + (24 * 60 * 60);
-        if (decoded.exp < tokenExpirationThreshold) {
-          const newAccessToken = jwt.sign({ userId: userId, sid: sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
-          res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/'});
-        }
+    const userId = decoded.userId;
+    const sid = decoded.sid;
+    const userData = await userDB.findOne({ userId, sid });
 
-        res.clearCookie('email_verification_token');
-        res.clearCookie('password_reset_token');
-        res.clearCookie('password_reset_code');
+    if (!userData) {
+      return handleUnauthenticated(req, res, next, requestedPath);
+    }
 
-        if (requestedPath === '/login' || requestedPath === '/signup' || requestedPath === '/recovery' || requestedPath === '/setpassword' || requestedPath === '/verify' || requestedPath === '/') {
-          return res.redirect('/dashboard');
-        }
+    await handleTokenRenewalIfNeeded(decoded, userId, sid, res);
 
-        next();
-      } catch (error) {
-        res.clearCookie('access_token');
-        return res.redirect('/login');
-      }
-    });
-  } else {
-    return res.redirect('/login');
+    clearSensitiveCookies(res);
+
+    if (isPublicRoute(requestedPath)) {
+      return res.redirect('/dashboard');
+    }
+
+    next();
+  } catch (error) {
+    return handleUnauthenticated(req, res, next, requestedPath);
   }
 };
 
+// Function to handle token renewal
+const handleTokenRenewalIfNeeded = async (decoded, userId, sid, res) => {
+  const now = Math.floor(Date.now() / 1000);
+  const tokenExpirationThreshold = now + (24 * 60 * 60);
 
-// Handle existing access token
+  if (decoded.exp < tokenExpirationThreshold) {
+    const newAccessToken = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+    res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+  }
+};
+
+// Function to clear sensitive cookies
+const clearSensitiveCookies = (res) => {
+  res.clearCookie('email_verification_token');
+  res.clearCookie('password_reset_token');
+  res.clearCookie('password_reset_code');
+};
+
+// Handle unauthenticated users
+const handleUnauthenticated = (req, res, next, requestedPath) => {
+  res.clearCookie('access_token');
+  if (isPublicRoute(requestedPath)) {
+    return next();
+  }
+  return res.redirect('/login');
+};
+
+// Middleware to check if an access token exists
 const existingToken = (req, res, next) => {
   const access_token = req.cookies.access_token;
-    if (access_token) {
-      return verifyToken(req, res, next);
-    }
+  if (access_token) {
+    return verifyToken(req, res, next);
+  }
   next();
 };
 
-
-// All express routes
+// Express routes
 app.use('/css', express.static(path.join(__dirname, 'public/css')));
 app.use('/', existingToken, express.static(path.join(__dirname, 'public/homepage')));
 app.use('/imprint', express.static(path.join(__dirname, 'public/imprint')));

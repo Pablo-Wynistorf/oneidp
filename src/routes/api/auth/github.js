@@ -61,12 +61,25 @@ passport.use(new GitHubStrategy({
 
 router.use(passport.initialize());
 
-router.get('/', passport.authenticate('github', { scope: ['user:email'] }));
+router.get('/', (req, res, next) => {
+  const redirectUri = req.query.redirectUri;
+  const state = redirectUri ? encodeURIComponent(redirectUri) : '';
+  
+  passport.authenticate('github', {
+    scope: ['user:email'],
+    state: state,
+  })(req, res, next);
+});
 
+// Callback route after GitHub authentication
 router.get('/callback', passport.authenticate('github', { session: false }), (req, res) => {
   const { access_token } = req.user;
+  
+  let redirectUri = req.query.state || '/dashboard';
+  redirectUri = decodeURIComponent(redirectUri);
+  
   res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
-  res.redirect('/dashboard');
+  res.redirect(redirectUri);
 });
 
 const generateRandomString = length => [...Array(length)].map(() => Math.random().toString(36)[2]).join('');

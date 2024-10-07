@@ -67,13 +67,28 @@ passport.use(new GoogleStrategy({
 
 router.use(passport.initialize());
 
-router.get('/', passport.authenticate('google', { scope: ['email', 'profile'] }));
+router.get('/', (req, res, next) => {
+  const redirectUri = req.query.redirectUri;
+  const state = redirectUri ? encodeURIComponent(redirectUri) : '';
+  
+  passport.authenticate('google', {
+    scope: ['email', 'profile'],
+    state: state,
+  })(req, res, next);
+});
+
 
 router.get('/callback', passport.authenticate('google', { session: false }), (req, res) => {
   const { access_token } = req.user;
-    res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
-    res.redirect('/dashboard');
+
+  let redirectUri = req.query.state || '/dashboard';
+
+  redirectUri = decodeURIComponent(redirectUri);
+  res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+  res.redirect(redirectUri);
 });
+
+
 
 
 const generateRandomString = length => [...Array(length)].map(() => Math.random().toString(36)[2]).join('');

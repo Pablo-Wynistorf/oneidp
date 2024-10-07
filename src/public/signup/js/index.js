@@ -156,6 +156,24 @@ function redirect_login() {
   }
 }
 
+function handleGitHubAuth() {
+  const redirectUri = getRedirectUri();
+  if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
+    window.location.href = '/api/auth/github';
+  } else {
+    window.location.href = `/api/auth/github?redirectUri=${redirectUri}`;
+  }
+}
+
+function handleGoogleAuth() {
+  const redirectUri = getRedirectUri();
+  if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
+    window.location.href = '/api/auth/google';
+  } else {
+    window.location.href = `/api/auth/google?redirectUri=${redirectUri}`;
+  }
+}
+
 
 function getRedirectUri() {
   const urlParams = new URLSearchParams(window.location.search);
