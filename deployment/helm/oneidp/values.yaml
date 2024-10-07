@@ -1,0 +1,30 @@
+replicaCount: 3
+
+image:
+  repository: pablo06/oneidp
+  pullPolicy: Always
+  tag: latest
+
+service:
+  type: ClusterIP
+  port: 8080
+
+hpa:
+  minReplicas: 5
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+env:
+  URL: ""
+  DATABASE_URI: "mongodb://root:password@oneidp-mongodb-svc.oneidp.svc:27017/"
+  API_PORT: ""
+  JWT_PUBLIC_KEY: ""
+  JWT_PRIVATE_KEY: ""
+  MJ_APIKEY_PUBLIC: ""
+  MJ_APIKEY_PRIVATE: ""
+  MJ_SENDER_EMAIL: ""
+  DC_MONITORING_WEBHOOK_URL: ""
+  GOOGLE_CLIENT_ID: ""
+  GOOGLE_CLIENT_SECRET: ""
+  GITHUB_CLIENT_ID: ""
+  GITHUB_CLIENT_SECRET: ""

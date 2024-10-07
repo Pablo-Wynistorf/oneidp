@@ -1,3 +1,4 @@
 /src/node_modules/
 /src/.env
 /deployment/secrets-with-credentials.yaml
+/deployment/helm/oneidp/values-with-credentials.yaml
