@@ -22,7 +22,7 @@ router.post('/', async (req, res) => {
 
   try {
     const user = await userDB.findOne(
-      emailRegex.test(username_or_email) ? { email: username_or_email } : { username: username_or_email, identityProvider: 'local' }
+      emailRegex.test(username_or_email) ? { email: username_or_email, identityProvider: 'local' } : { username: username_or_email, identityProvider: 'local' }
     );
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
