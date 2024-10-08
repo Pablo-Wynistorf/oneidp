@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 
   document.addEventListener("click", function(event) {
-    const editButton = event.target.closest(".edit-button");
+    const editButton = event.target.closest(".edit-roles-button");
     if (editButton) {
       const appId = editButton.id.split("-")[1];
       window.location.href = `/oidc/roles/?oauthAppId=${appId}`;
@@ -88,8 +88,11 @@ function displayOAuthApps(data) {
       <div class="flex justify-between items-center mb-4">
         <h4 class="text-lg font-semibold">${app.oauthAppName}</h4>
         <div class="flex space-x-3">
-          <a class="edit-button cursor-pointer" id="app-${app.oauthClientAppId}">
-            <img src="./svg/edit.svg" alt="Edit Icon" class="w-5 h-5 hover:opacity-75">
+          <a class="edit-app-button cursor-pointer" id="app-${app.oauthClientAppId}">
+            <img src="./svg/edit-app.svg" alt="Edit Icon" class="w-5 h-5 hover:opacity-75">
+          </a>
+          <a class="edit-roles-button cursor-pointer" id="app-${app.oauthClientAppId}">
+            <img src="./svg/edit-roles.svg" alt="Edit Icon" class="w-5 h-5 hover:opacity-75">
           </a>
           <a class="delete-button cursor-pointer" id="${app.oauthClientAppId}">
             <img src="./svg/trash.svg" alt="Trash Icon" class="w-5 h-5 hover:opacity-75">
@@ -150,8 +153,11 @@ function create_app() {
           <div class="flex justify-between items-center mb-4">
             <h4 class="text-lg font-semibold">${data.oauthAppName}</h4>
             <div class="flex space-x-3">
-              <a class="edit-button cursor-pointer" id="app-${data.oauthClientAppId}">
-                <img src="./svg/edit.svg" alt="Edit Icon" class="w-5 h-5 hover:opacity-75">
+              <a class="edit-app-button cursor-pointer" id="app-${data.oauthClientAppId}">
+                <img src="./svg/edit-app.svg" alt="Edit Icon" class="w-5 h-5 hover:opacity-75">
+              </a>
+              <a class="edit-roles-button cursor-pointer" id="app-${data.oauthClientAppId}">
+                <img src="./svg/edit-roles.svg" alt="Edit Icon" class="w-5 h-5 hover:opacity-75">
               </a>
               <a class="delete-button cursor-pointer" id="${data.oauthClientAppId}">
                 <img src="./svg/trash.svg" alt="Delete Icon" class="w-5 h-5 hover:opacity-75">
@@ -223,6 +229,86 @@ function delete_app(oauthClientAppId) {
     displayAlertError("An unexpected error occurred.");
   }
 }
+
+
+document.addEventListener("DOMContentLoaded", function () {
+  const editAppModal = document.getElementById("edit-app-modal");
+  const closeEditModalButton = document.getElementById("close-edit-modal");
+
+  document.addEventListener("click", function (event) {
+      const editAppButton = event.target.closest(".edit-app-button");
+      const oauthAppBox = event.target.closest(".oauth-app-box");
+      if (editAppButton && oauthAppBox) {
+          const appId = editAppButton.id.split("-")[1];
+
+          const appName = oauthAppBox.querySelector("h4").textContent;
+          const redirectUri = oauthAppBox.querySelector("p:nth-of-type(4)").textContent.split(": ")[1];
+          const accessTokenValidity = oauthAppBox.querySelector("p:nth-of-type(5)").textContent.split(": ")[1];
+          
+          openEditAppModal(appId, appName, redirectUri, accessTokenValidity);
+      }
+  });
+
+  closeEditModalButton.addEventListener("click", function () {
+      editAppModal.close();
+  });
+
+  function openEditAppModal(appId, appName, redirectUri, accessTokenValidity) {
+      document.getElementById("edit-app-id").value = appId;
+      document.getElementById("edit-appname").value = appName;
+      document.getElementById("edit-redirecturl").value = redirectUri;
+      document.getElementById("edit-access-token-validity").value = accessTokenValidity;
+
+      editAppModal.showModal();
+  }
+});
+
+document.getElementById("edit-app-form").addEventListener("submit", async function (event) {
+  const editAppModal = document.getElementById("edit-app-modal");
+  event.preventDefault();
+
+  const oauthClientAppId = document.getElementById("edit-app-id").value;
+  const oauthAppName = document.getElementById("edit-appname").value;
+  const redirectUri = document.getElementById("edit-redirecturl").value;
+  const accessTokenValidity = document.getElementById("edit-access-token-validity").value;
+
+  try {
+      const response = await fetch("/api/oauth/settings/apps/edit", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+              oauthClientAppId,
+              oauthAppName,
+              redirectUri,
+              accessTokenValidity
+          }),
+      });
+
+      if (!response.ok) {
+          displayAlertError("Error: Failed to save changes. Please check your inputs.");
+          return;
+      }
+
+      const updatedAppBox = document.getElementById(oauthClientAppId);
+      if (updatedAppBox) {
+          updatedAppBox.querySelector("h4").textContent = oauthAppName;
+          updatedAppBox.querySelector("p:nth-of-type(4)").innerHTML = `<strong>Redirect URI:</strong> ${redirectUri}`;
+          updatedAppBox.querySelector("p:nth-of-type(5)").innerHTML = `<strong>Access Token Validity:</strong> ${accessTokenValidity}`;
+      }
+
+      displayAlertSuccess("Changes saved successfully");
+      editAppModal.close();
+  } catch (error) {
+      console.error("Error saving changes:", error);
+      displayAlertError("An unexpected error occurred while saving changes.");
+  }
+});
+
+
+
+
 
 // Handle responses for error messages
 function handleResponse(response) {

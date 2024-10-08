@@ -200,6 +200,9 @@ app.use('/api/oauth/settings/apps/add', require('./routes/api/oauth/settings/app
 // Add oauth delete app
 app.use('/api/oauth/settings/apps/delete', require('./routes/api/oauth/settings/apps/delete.js'));
 
+// Edit oauth app
+app.use('/api/oauth/settings/apps/edit', require('./routes/api/oauth/settings/apps/edit.js'));
+
 // Get oauth app roles
 app.use('/api/oauth/settings/roles/get', require('./routes/api/oauth/settings/roles/get.js'));
 
