@@ -69,14 +69,24 @@ router.use(passport.initialize());
 
 router.get('/', (req, res, next) => {
   const { redirectUri, redirect_uri } = req.query;
-  const fullRedirectUri = redirectUri + '&redirect_uri=' + redirect_uri;
-  const state = fullRedirectUri ? Buffer.from(fullRedirectUri).toString('base64') : '';
+
+  let fullRedirectUri = '';
+  let state = '';
+  
+  if (redirectUri) {
+    fullRedirectUri = redirectUri;
+    if (redirect_uri) {
+      fullRedirectUri += '&redirect_uri=' + redirect_uri;
+    }
+    state = Buffer.from(fullRedirectUri).toString('base64');
+  }
   
   passport.authenticate('google', {
     scope: ['email', 'profile'],
     state: state,
   })(req, res, next);
 });
+
 
 
 router.get('/callback', passport.authenticate('google', { session: false }), (req, res) => {
