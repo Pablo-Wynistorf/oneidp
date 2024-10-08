@@ -24,7 +24,7 @@ function signup() {
 
   signupButton.disabled = true;
   signupButton.innerText = '';
-  signupButton.classList.add('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  signupButton.classList.add('flex', 'justify-center', 'items-center', 'text-gray-500')
   signupButton.innerHTML = `<img src="/signup/images/spinner.svg" width="24" height="24" />`;
 
   if (!username || !password || !email) {

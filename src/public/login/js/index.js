@@ -24,7 +24,7 @@ function login() {
 
   loginButton.disabled = true;
   loginButton.innerText = '';
-  loginButton.classList.add('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  loginButton.classList.add('flex', 'justify-center', 'items-center', 'text-gray-500')
   loginButton.innerHTML = `<img src="/login/images/spinner.svg" width="24" height="24" />`
 
   const username_or_email = usernameInput.value;

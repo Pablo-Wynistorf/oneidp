@@ -61,7 +61,7 @@ function setNewPassword() {
   const recoverButton = document.getElementById('recover-button');
   recoverButton.disabled = true;
   recoverButton.innerText = '';
-  recoverButton.classList.add('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  recoverButton.classList.add('flex', 'justify-center', 'items-center', 'text-gray-500')
   recoverButton.innerHTML = `<img src="/signup/images/spinner.svg" width="24" height="24" />`;
 
   if (!password || password === '' || password === 'undefined' || !recoveryCode || recoveryCode === '' || recoveryCode === 'undefined') {
