@@ -51,7 +51,6 @@ passport.use(new GitHubStrategy({
         const newUser = new userDB({
           userId: profile.id,
           username: username,
-          sid: newSid,
           email: profile.emails[0].value,
           emailVerified: true,
           mfaEnabled: false,
@@ -62,7 +61,7 @@ passport.use(new GitHubStrategy({
         await newUser.save();
       }
 
-      const access_token = await jwt.sign({ userId: profile.id, sid: existingUser ? existingUser.sid : newSid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+      const access_token = await jwt.sign({ userId: profile.id, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
 
       return done(null, { access_token });
     } catch (error) {

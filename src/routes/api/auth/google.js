@@ -61,7 +61,7 @@ passport.use(new GoogleStrategy({
       }
 
       if (existingUser) {
-        const access_token = await jwt.sign({ userId: profile.id, sid: existingUser.sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+        const access_token = await jwt.sign({ userId: profile.id, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
         return done(null, { access_token });
       }
 
