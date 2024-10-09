@@ -26,14 +26,14 @@ router.post('/', (req, res) => {
 
     const { userId, sid } = decoded;
 
-    await clearUserSession(userId, sid);
+    await endUserSession(userId, sid);
   });
 
   res.clearCookie('access_token');
   return res.status(200).json({ success: true });
 });
 
-async function clearUserSession(userId, sid) {
+async function endUserSession(userId, sid) {
   const redisKeyPattern = `psid:${userId}:${sid}`;
   
   try {

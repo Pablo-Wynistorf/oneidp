@@ -72,6 +72,17 @@ router.post('/', async (req, res) => {
       }
 
     } else if (grant_type === 'authorization_code') {
+      if (!clientSecret) {
+        const authorizationHeader = req.headers.authorization;
+        if (authorizationHeader) {
+          const authorizationHeaderBase64 = authorizationHeader.split(' ')[1];
+          let authorizationHeaderDecoded = Buffer.from(authorizationHeaderBase64, 'base64').toString('utf-8');
+          clientId = authorizationHeaderDecoded.split(':')[0];
+          clientSecret = authorizationHeaderDecoded.split(':')[1];
+        } else {
+          return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid request, client_secret missing' });
+        }
+      }
       if (code_verifier) {
         const redisKey = `ac:${code}`;
         const session = await redisCache.hGetAll(redisKey);
@@ -104,17 +115,6 @@ router.post('/', async (req, res) => {
         }
 
       } else {
-        if (!clientSecret) {
-          const authorizationHeader = req.headers.authorization;
-          if (authorizationHeader) {
-            const authorizationHeaderBase64 = authorizationHeader.split(' ')[1];
-            let authorizationHeaderDecoded = Buffer.from(authorizationHeaderBase64, 'base64').toString('utf-8');
-            clientId = authorizationHeaderDecoded.split(':')[0];
-            clientSecret = authorizationHeaderDecoded.split(':')[1];
-          } else {
-            return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid request, client_secret missing' });
-          }
-        }
 
         if (!clientId || !clientSecret) {
           return res.status(400).json({ error: 'Invalid Request', error_description: 'client_id and client_secret are required for standard authorization code flow' });
@@ -165,7 +165,7 @@ router.post('/', async (req, res) => {
     await redisCache.expire(redisKey, accessTokenValidity);
 
     const oauth_access_token = jwt.sign({ userId, osid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: accessTokenValidity, keyid: JWK_PUBLIC_KEY.kid });
-    const oauth_id_token = jwt.sign({ userId, username, email, roles: roleNames, mfaEnabled, iss: URL, sub: userId, aud: clientId, nonce }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h', keyid: JWK_PUBLIC_KEY.kid });
+    const oauth_id_token = jwt.sign({ userId, username, email, roles: roleNames, mfaEnabled, iss: URL, sub: userId, aud: clientId, nonce, osid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h', keyid: JWK_PUBLIC_KEY.kid });
     const oauth_refresh_token = jwt.sign({ userId, osid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '20d', keyid: JWK_PUBLIC_KEY.kid });
 
     return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token, expires_in: accessTokenValidity });

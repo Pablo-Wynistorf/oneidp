@@ -65,7 +65,7 @@ router.post('/', async (req, res) => {
 
     await userDB.updateOne({ userId }, { $set: { password: hashedPassword } });
 
-    await clearUserSessions(userId);
+    await endUserSessions(userId);
 
     const newSid = await generateRandomString(15);
     const device = req.headers['user-agent'];
@@ -90,8 +90,8 @@ router.post('/', async (req, res) => {
   });
 });
 
-async function clearUserSessions(userId) {
-  const redisKeyPattern = `psid:${userId}:*`;
+async function endUserSessions(userId) {
+  const redisKeyPattern = `*:${userId}:*`;
   
   try {
       const sessions = await redisCache.keys(redisKeyPattern);

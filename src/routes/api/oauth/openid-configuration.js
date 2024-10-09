@@ -10,6 +10,8 @@ router.get('/', (req, res) => {
     authorization_endpoint: `${URL}/api/oauth/authorize`,
     token_endpoint: `${URL}/api/oauth/token`,
     userinfo_endpoint: `${URL}/api/oauth/userinfo`,
+    end_session_endpoint: `${URL}/api/oauth/logout`,
+    revocation_endpoint: `${URL}/api/oauth/revoke`,
     jwks_uri: `${URL}/.well-known/jwks.json`,
     response_types_supported: ['code', 'token', 'id_token', 'code token', 'code id_token', 'token id_token', 'code token id_token'],
     subject_types_supported: ['public'],

@@ -32,7 +32,7 @@ router.post('/', async (req, res) => {
     const password_reset_code = Math.floor(100000 + Math.random() * 900000).toString();
 
     await userDB.updateOne({ userId }, { $set: { resetCode: password_reset_code } });
-    await clearUserSessions(userId);
+    await endUserSessions(userId);
 
     try {
       sendRecoveryEmail(username, email, password_reset_token, password_reset_code, res);
@@ -50,8 +50,8 @@ router.post('/', async (req, res) => {
 module.exports = router;
 
 
-async function clearUserSessions(userId) {
-  const redisKeyPattern = `psid:${userId}:*`;
+async function endUserSessions(userId) {
+  const redisKeyPattern = `*:${userId}:*`;
   
   try {
       const sessions = await redisCache.keys(redisKeyPattern);

@@ -231,20 +231,26 @@ app.use('/api/oauth/settings/roles/update/bulk-update', require('./routes/api/oa
 // Delete oauth app role
 app.use('/api/oauth/settings/roles/delete', require('./routes/api/oauth/settings/roles/delete.js'));
 
-// Oauth2 authorize endpoint
+// Oauth authorize endpoint
 app.use('/api/oauth/authorize', require('./routes/api/oauth/authorize.js'));
 
 // Oauth Token endpoint
 app.use('/api/oauth/token', require('./routes/api/oauth/token.js'));
 
-// Added userinfo endpoint
+// Oauth Userinfo endpoint
 app.use('/api/oauth/userinfo', require('./routes/api/oauth/userinfo.js'));
 
-// Added check_token endpoint
+// Oauth check_token endpoint
 app.use('/api/oauth/check_token', require('./routes/api/oauth/check_token.js'));
 
+// Oauth Logout endpoint
+app.use('/api/oauth/logout', require('./routes/api/oauth/logout.js'));
+
+// Oauth Revocation endpoint
+app.use('/api/oauth/revoke', require('./routes/api/oauth/revoke.js'));
+
 // OIDC Discovery endpoint
-app.use('/.well-known/openid-configuration', require('./routes/api/oauth/openid-info.js'));
+app.use('/.well-known/openid-configuration', require('./routes/api/oauth/openid-configuration.js'));
 
 // jwks Discovery endpoint
 app.use('/.well-known/jwks.json', require('./routes/api/oauth/jwks-info.js'));

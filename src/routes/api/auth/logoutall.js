@@ -34,15 +34,15 @@ router.post('/', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Access Token is invalid' });
     }
 
-    await clearUserSessions(userId);
+    await endUserSessions(userId);
 
     res.clearCookie('access_token');
     res.status(200).json({ success: true });
   });
 });
 
-async function clearUserSessions(userId) {
-  const redisKeyPattern = `psid:${userId}:*`;
+async function endUserSessions(userId) {
+  const redisKeyPattern = `*:${userId}:*`;
   
   try {
       const sessions = await redisCache.keys(redisKeyPattern);
