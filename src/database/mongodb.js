@@ -40,10 +40,6 @@ const userSchema = new Schema({
   emailVerified: Boolean,
   providerRoles: Array,
   oauthClientAppIds: Array,
-  oauthAuthorizationCode: String,
-  nonce: String,
-  codeChallenge: String,
-  codeChallengeMethod: String
 }, {
   timestamps: true
 });

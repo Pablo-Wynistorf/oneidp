@@ -65,26 +65,14 @@ router.post('/', async (req, res) => {
 
       const redisKey = `osid:${userId}:${osid}`;
       const session = await redisCache.hGetAll(redisKey);
-  
+
       if (Object.keys(session).length === 0) {
         res.clearCookie('refresh_token');
         return res.status(401).json({ success: false, error: 'Refresh Token invalid' });
       }
 
     } else if (grant_type === 'authorization_code') {
-      if (!clientSecret) {
-        const authorizationHeader = req.headers.authorization;
-        if (authorizationHeader) {
-          const authorizationHeaderBase64 = authorizationHeader.split(' ')[1];
-          let authorizationHeaderDecoded = Buffer.from(authorizationHeaderBase64, 'base64').toString('utf-8');
-          clientId = authorizationHeaderDecoded.split(':')[0];
-          clientSecret = authorizationHeaderDecoded.split(':')[1];
-        } else {
-          return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid request, client_secret missing' });
-        }
-      }
-
-      if (code_verifier) {        
+      if (code_verifier) {
         const redisKey = `ac:${code}`;
         const session = await redisCache.hGetAll(redisKey);
 
@@ -109,13 +97,25 @@ router.post('/', async (req, res) => {
           return res.status(400).json({ error: 'Invalid Request', error_description: 'Unsupported code_challenge_method' });
         }
 
-        oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
+        oauth_client = await oAuthClientAppDB.findOne({ clientId });
 
         if (!oauth_client) {
           return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or client_secret provided' });
         }
 
       } else {
+        if (!clientSecret) {
+          const authorizationHeader = req.headers.authorization;
+          if (authorizationHeader) {
+            const authorizationHeaderBase64 = authorizationHeader.split(' ')[1];
+            let authorizationHeaderDecoded = Buffer.from(authorizationHeaderBase64, 'base64').toString('utf-8');
+            clientId = authorizationHeaderDecoded.split(':')[0];
+            clientSecret = authorizationHeaderDecoded.split(':')[1];
+          } else {
+            return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid request, client_secret missing' });
+          }
+        }
+
         if (!clientId || !clientSecret) {
           return res.status(400).json({ error: 'Invalid Request', error_description: 'client_id and client_secret are required for standard authorization code flow' });
         }
@@ -139,7 +139,6 @@ router.post('/', async (req, res) => {
         await redisCache.del(redisKey);
       }
     }
-
     oauth_user = await userDB.findOne({ userId });
     const username = oauth_user.username;
     const email = oauth_user.email;
@@ -156,12 +155,13 @@ router.post('/', async (req, res) => {
     const roleNames = roleData.map(role => role.oauthRoleName);
 
     osid = await generateRandomString(15);
-    
     const timestamp = Math.floor(Date.now() / 1000);
+
     const redisKey = `osid:${userId}:${osid}`;
-  
+
     await redisCache.hSet(redisKey, {
-      timestamp,
+      oauthClientAppId: oauth_client.oauthClientAppId,
+      createdAt: timestamp,
     })
     await redisCache.expire(redisKey, accessTokenValidity);
 
