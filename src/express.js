@@ -71,7 +71,7 @@ const verifyToken = async (req, res, next) => {
     const redisKey = `psid:${userId}:${sid}`;
     const session = await redisCache.hGetAll(redisKey);
 
-    if (!session) {
+    if (Object.keys(session).length === 0) {
       return handleUnauthenticated(req, res, next, requestedPath);
     }
 

@@ -66,7 +66,7 @@ router.post('/', async (req, res) => {
       const redisKey = `osid:${userId}:${osid}`;
       const session = await redisCache.hGetAll(redisKey);
   
-      if (!session) {
+      if (Object.keys(session).length === 0) {
         res.clearCookie('refresh_token');
         return res.status(401).json({ success: false, error: 'Refresh Token invalid' });
       }
@@ -88,7 +88,7 @@ router.post('/', async (req, res) => {
         const redisKey = `ac:${code}`;
         const session = await redisCache.hGetAll(redisKey);
 
-        if (!session) {
+        if (Object.keys(session).length === 0) {
           return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid authorization code provided' });
         }
 
@@ -129,7 +129,7 @@ router.post('/', async (req, res) => {
         const redisKey = `ac:${code}`;
         const session = await redisCache.hGetAll(redisKey);
 
-        if (!session) {
+        if (Object.keys(session).length === 0) {
           console.log('no session')
           return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid authorization code provided' });
         }

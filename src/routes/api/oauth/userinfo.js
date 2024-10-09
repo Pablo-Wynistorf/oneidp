@@ -41,7 +41,7 @@ router.all('/', (req, res) => {
       const redisKey = `psid:${userId}:${sid}`;
       const session = await redisCache.hGetAll(redisKey);
   
-      if (!session) {
+      if (Object.keys(session).length === 0) {
         res.clearCookie('access_token');
         return res.status(401).json({ success: false, error: 'Access Token is invalid' });
       }
