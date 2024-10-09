@@ -37,6 +37,7 @@ router.post('/', async (req, res) => {
     let oauth_user;
     let userId;
     let osid;
+    let orsid;
     let clientId = client_id;
     let clientSecret = client_secret;
     let nonce;
@@ -54,7 +55,7 @@ router.post('/', async (req, res) => {
       }
 
       userId = decodedRefreshToken.userId;
-      osid = decodedRefreshToken.osid;
+      orsid = decodedRefreshToken.orsid;
       clientId = decodedRefreshToken.clientId;
 
       oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
@@ -63,7 +64,7 @@ router.post('/', async (req, res) => {
         return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or invalid refresh_token provided' });
       }
 
-      const redisKey = `osid:${userId}:${osid}`;
+      const redisKey = `orsid:${userId}:${orsid}`;
       const session = await redisCache.hGetAll(redisKey);
 
       if (Object.keys(session).length === 0) {
@@ -154,19 +155,33 @@ router.post('/', async (req, res) => {
     const roleNames = roleData.map(role => role.oauthRoleName);
 
     osid = await generateRandomString(15);
+    orsid = await generateRandomString(15);
     const timestamp = Math.floor(Date.now() / 1000);
 
-    const redisKey = `osid:${userId}:${osid}`;
+    const osidRedisKey = `osid:${userId}:${osid}`;
 
-    await redisCache.hSet(redisKey, {
+    await redisCache.hSet(osidRedisKey, {
       oauthClientAppId: oauth_client.oauthClientAppId,
       createdAt: timestamp,
     })
-    await redisCache.expire(redisKey, accessTokenValidity);
+    await redisCache.expire(osidRedisKey, accessTokenValidity);
+
+
+    if (grant_type === 'refresh_token') {
+      const oauth_access_token = jwt.sign({ userId, osid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: accessTokenValidity, keyid: JWK_PUBLIC_KEY.kid });
+      return res.json({ access_token: oauth_access_token, expires_in: accessTokenValidity });
+    }
+
+    const orsidRedisKey = `orsid:${userId}:${orsid}`;
+    await redisCache.hSet(orsidRedisKey, {
+      oauthClientAppId: oauth_client.oauthClientAppId,
+      createdAt: timestamp,
+    })
+    await redisCache.expire(orsidRedisKey, 20 * 24 * 60 * 60);
 
     const oauth_access_token = jwt.sign({ userId, osid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: accessTokenValidity, keyid: JWK_PUBLIC_KEY.kid });
     const oauth_id_token = jwt.sign({ userId, username, email, roles: roleNames, mfaEnabled, iss: URL, sub: userId, aud: clientId, nonce, osid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h', keyid: JWK_PUBLIC_KEY.kid });
-    const oauth_refresh_token = jwt.sign({ userId, osid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '20d', keyid: JWK_PUBLIC_KEY.kid });
+    const oauth_refresh_token = jwt.sign({ userId, orsid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '20d', keyid: JWK_PUBLIC_KEY.kid });
 
     return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token, expires_in: accessTokenValidity });
 
