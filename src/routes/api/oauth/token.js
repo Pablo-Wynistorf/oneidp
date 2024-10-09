@@ -130,7 +130,6 @@ router.post('/', async (req, res) => {
         const session = await redisCache.hGetAll(redisKey);
 
         if (Object.keys(session).length === 0) {
-          console.log('no session')
           return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid authorization code provided' });
         }
         userId = session.userId;
