@@ -6,7 +6,7 @@ const { URL } = process.env;
 const { notifyError } = require('../../../../notify/notifications.js');
 
 
-const { userDB } = require('../../../../database/database.js');
+const { userDB } = require('../../../../database/mongodb.js');
 
 const router = express.Router();
 

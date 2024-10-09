@@ -10,7 +10,9 @@ require('dotenv').config();
 const { 
   connectToDatabase, 
   userDB, 
-} = require('./database/database.js');
+} = require('./database/mongodb.js');
+
+const { connectToRedis } = require('./database/redis.js');
 
 const API_PORT = process.env.API_PORT;
 
@@ -33,6 +35,7 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 connectToDatabase();
+connectToRedis();
 
 // Function to check if a route is public
 const isPublicRoute = (path) => {

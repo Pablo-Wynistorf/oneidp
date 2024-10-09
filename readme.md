@@ -26,9 +26,10 @@ git clone https://github.com/Pablo-Wynistorf/loginapp.git && cd loginapp
 
 ```bash
 URL= # Add the url of your application. Format: http://login.example.com, https://login.example.com
-DATABASE_URI= # Add the MongoDB database uri. Format: mongodb+srv://username:password@db-host.example.com, mongodb://username:password@db-host.example.com
+MONGODB_URI= # Add the MongoDB database uri. Format: mongodb+srv://username:password@db-host.example.com, mongodb://username:password@db-host.example.com
 MONGO_INITDB_USERNAME_PASSWORD=  # Add the MongoDB database initdb username
 MONGO_INITDB_ROOT_PASSWORD= # Add the MongoDB database initdb password
+REDIS_URI= # Add the Redis Cache uri
 API_PORT= # Enter the api port you want to use. 
 JWT_PUBLIC_KEY=
 JWT_PRIVATE_KEY=

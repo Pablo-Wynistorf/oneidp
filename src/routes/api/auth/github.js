@@ -2,7 +2,7 @@ const express = require('express');
 const passport = require('passport');
 const GitHubStrategy = require('passport-github2').Strategy;
 const jwt = require('jsonwebtoken');
-const { userDB } = require('../../../database/database.js');
+const { userDB } = require('../../../database/mongodb.js');
 
 const router = express.Router();
 

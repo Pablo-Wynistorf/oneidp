@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
-const { userDB, oAuthRolesDB } = require('../../../../../database/database.js');
+const { userDB, oAuthRolesDB } = require('../../../../../database/mongodb.js');
 
 const router = express.Router();
 

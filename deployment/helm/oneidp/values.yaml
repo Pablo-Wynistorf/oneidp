@@ -16,7 +16,8 @@ hpa:
 
 env:
   URL: ""
-  DATABASE_URI: "mongodb://root:password@oneidp-mongodb-svc.oneidp.svc:27017/"
+  MONGODB_URI: "mongodb://root:password@oneidp-mongodb-svc.oneidp.svc:27017/"
+  REDIS_URI: "redis://default:3MbRmGHMNzewJWJX9mG3bdFC7ZwcSKie@redis-16728.c250.eu-central-1-1.ec2.redns.redis-cloud.com:16728"
   API_PORT: ""
   JWT_PUBLIC_KEY: ""
   JWT_PRIVATE_KEY: ""

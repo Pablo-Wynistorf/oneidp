@@ -6,7 +6,7 @@ const { MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE, MJ_SENDER_EMAIL } = process.env;
 const { URL } = process.env;
 const { notifyError, notifyLogin } = require('../../../notify/notifications');
 
-const { userDB } = require('../../../database/database.js');
+const { userDB } = require('../../../database/mongodb.js');
 
 const JWT_PRIVATE_KEY = `
 -----BEGIN PRIVATE KEY-----
