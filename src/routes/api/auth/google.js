@@ -3,6 +3,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const jwt = require('jsonwebtoken');
 const { userDB } = require('../../../database/mongodb.js');
+const redisCache = require('../../../database/redis.js');
 
 const router = express.Router();
 
@@ -25,7 +26,17 @@ passport.use(new GoogleStrategy({
       let existingUser = await userDB.findOne({ userId: profile.id });
       let username = profile.emails[0].value.split('@')[0];
       let existingUserName = await userDB.findOne({ username: username });
-      const newSid = await generateRandomString(15);
+
+      const sid = await generateRandomString(15);
+      
+      const timestamp = Math.floor(Date.now() / 1000);
+      const redisKey = `psid:${profile.id}:${sid}`;
+    
+      await redisCache.hSet(redisKey, {
+        identityProvider: 'google',
+        createdAt: timestamp,
+      })
+      await redisCache.expire(redisKey, 48 * 60 * 60);
 
       if (!existingUser) {
         if (existingUserName) {
@@ -39,7 +50,6 @@ passport.use(new GoogleStrategy({
         const newUser = new userDB({
           userId: profile.id,
           username: username,
-          sid: newSid,
           email: profile.emails[0].value,
           emailVerified: true,
           mfaEnabled: false,
@@ -55,9 +65,7 @@ passport.use(new GoogleStrategy({
         return done(null, { access_token });
       }
 
-      const access_token = await jwt.sign({ userId: profile.id, sid: newSid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
-
-
+      const access_token = await jwt.sign({ userId: profile.id, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
       return done(null, { access_token });
     } catch (error) {
       return done(error, null);
@@ -98,8 +106,9 @@ router.get('/callback', passport.authenticate('google', { session: false }), (re
 });
 
 
+async function generateRandomString(length) {
+  return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
+}
 
-
-const generateRandomString = length => [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
 
 module.exports = router;

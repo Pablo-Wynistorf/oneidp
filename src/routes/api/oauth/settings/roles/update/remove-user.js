@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const { userDB, oAuthRolesDB, oAuthClientAppDB } = require('../../../../../../database/mongodb.js');
+const redisCache = require('../../../../../../database/redis.js');
 
 const router = express.Router();
 
@@ -83,7 +84,7 @@ router.post('/', async (req, res) => {
   }
 
   if (!access_token) {
-    return res.status(400).json({ success: false, error: 'No authentication provided' });
+    return res.status(400).json({ success: false, error: 'No Access Token provided' });
   }
 
   jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
@@ -95,19 +96,21 @@ router.post('/', async (req, res) => {
     const sid = decoded.sid;
 
     try {
-      const userData = await userDB.findOne({ userId: userIdFromToken, sid });
-      if (!userData) {
+      const redisKey = `psid:${userIdFromToken}:${sid}`;
+      const session = await redisCache.hGetAll(redisKey);
+  
+      if (!session) {
         res.clearCookie('access_token');
-        return res.redirect('/login');
+        return res.status(401).json({ success: false, error: 'Access Token is invalid' });
       }
 
-      const userAccess = await userDB.findOne({ userId: userIdFromToken, sid, providerRoles: 'oauthUser' });
+      const userAccess = await userDB.findOne({ userId: userIdFromToken, providerRoles: 'oauthUser' });
 
       if (!userAccess) {
         return res.status(460).json({ success: false, error: 'User has no permissions to manage oauth apps' });
       }
 
-      let oauthApps = userData.oauthClientAppIds || [];
+      let oauthApps = userAccess.oauthClientAppIds || [];
       if (!Array.isArray(oauthApps)) {
         return res.status(400).json({ success: false, error: 'Invalid format for oauthApps' });
       }

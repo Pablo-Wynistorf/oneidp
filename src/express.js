@@ -12,7 +12,7 @@ const {
   userDB, 
 } = require('./database/mongodb.js');
 
-const { connectToRedis } = require('./database/redis.js');
+const redisCache = require('./database/redis.js');
 
 const API_PORT = process.env.API_PORT;
 
@@ -35,7 +35,7 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 connectToDatabase();
-connectToRedis();
+
 
 // Function to check if a route is public
 const isPublicRoute = (path) => {
@@ -67,9 +67,11 @@ const verifyToken = async (req, res, next) => {
 
     const userId = decoded.userId;
     const sid = decoded.sid;
-    const userData = await userDB.findOne({ userId, sid });
 
-    if (!userData) {
+    const redisKey = `psid:${userId}:${sid}`;
+    const session = await redisCache.hGetAll(redisKey);
+
+    if (!session) {
       return handleUnauthenticated(req, res, next, requestedPath);
     }
 
@@ -93,6 +95,8 @@ const handleTokenRenewalIfNeeded = async (decoded, userId, sid, res) => {
   const tokenExpirationThreshold = now + (24 * 60 * 60);
 
   if (decoded.exp < tokenExpirationThreshold) {
+    const redisKey = `psid:${userId}:${sid}`;
+    await redisCache.expire(redisKey, 48 * 60 * 60);
     const newAccessToken = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
     res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
   }

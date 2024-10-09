@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { userDB, oAuthClientAppDB } = require('../../../database/mongodb.js');
+const { oAuthClientAppDB } = require('../../../database/mongodb.js');
+const redisCache = require('../../../database/redis.js');
 const { notifyError } = require('../../../notify/notifications.js');
 
 const router = express.Router();
@@ -38,9 +39,10 @@ router.get('/', async (req, res) => {
       }
 
       const { userId, sid } = decoded;
-      const user = await userDB.findOne({ userId, sid });
-
-      if (!user) {
+      const redisKey = `psid:${userId}:${sid}`;
+      const session = await redisCache.hGetAll(redisKey);
+  
+      if (!session) {
         return res.redirect(`/login?redirectUri=${URL + req.originalUrl}`);
       }
 
@@ -56,14 +58,17 @@ router.get('/', async (req, res) => {
         return res.status(405).json({ error: 'Invalid Request', error_description: 'Provided redirect_uri not allowed' });
       }
       
-      let authorizationCode;
-      let existingAuthorizationCode;
-      do {
-        authorizationCode = [...Array(35)].map(() => Math.random().toString(36)[2]).join('');
-        existingAuthorizationCode = await userDB.findOne({ oauthAuthorizationCode: authorizationCode });
-      } while (existingAuthorizationCode);
-      
-      await userDB.updateOne({ userId }, { $set: { oauthAuthorizationCode: authorizationCode, nonce: nonce, codeChallenge: code_challenge, codeChallengeMethod: code_challenge_method } });
+      const authorizationCode = await generateRandomString(32);
+
+      const authorizationRedisKey = `ac:${authorizationCode}`;
+
+      await redisCache.hSet(authorizationRedisKey, {
+        userId,
+        nonce,
+        codeChallenge: code_challenge,
+        codeChallengeMethod: code_challenge_method
+      });
+      await redisCache.expire(authorizationRedisKey, 20);
 
       if (!state || state === 'undefined') {
         const redirectUri = `${redirect_uri}?code=${authorizationCode}`;
@@ -74,9 +79,14 @@ router.get('/', async (req, res) => {
       return res.redirect(redirectUri);
     });
   } catch (error) {
+    console.log(error)
     notifyError(error);
     res.status(500).json({ error: 'Server Error', error_description: 'Something went wrong on our site. Please try again later' });
   }
 });
+
+async function generateRandomString(length) {
+  return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
+}
 
 module.exports = router;

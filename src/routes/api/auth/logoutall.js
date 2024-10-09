@@ -2,7 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { notifyError } = require('../../../notify/notifications');
 
-const { userDB } = require('../../../database/mongodb.js');
+const redisCache = require('../../../database/redis.js');
 
 const router = express.Router();
 
@@ -26,16 +26,35 @@ router.post('/', async (req, res) => {
     const userId = decoded.userId;
     const sid = decoded.sid;
 
-    const userData = await userDB.findOne({ userId: userId, sid: sid });
-    if (!userData) {
+    const redisKey = `psid:${userId}:${sid}`;
+    const session = await redisCache.hGetAll(redisKey);
+
+    if (!session) {
       res.clearCookie('access_token');
-      return res.redirect('/login');
+      return res.status(401).json({ success: false, error: 'Access Token is invalid' });
     }
 
-    await userDB.updateOne({ userId }, { $unset: { sid: 1, oauthSid: 1 } });
+    await clearUserSessions(userId);
 
+    res.clearCookie('access_token');
     res.status(200).json({ success: true });
   });
 });
+
+async function clearUserSessions(userId) {
+  const redisKeyPattern = `psid:${userId}:*`;
+  
+  try {
+      const sessions = await redisCache.keys(redisKeyPattern);
+      
+      if (sessions.length > 0) {
+          await redisCache.del(sessions);
+      } else {
+        return;
+      }
+  } catch (error) {
+      console.error('Error removing sessions:', error);
+  }
+};
 
 module.exports = router;

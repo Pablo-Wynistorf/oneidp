@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { notifyError } = require('../../../../notify/notifications.js');
 
 const { userDB } = require('../../../../database/mongodb.js');
+const redisCache = require('../../../../database/redis.js');
 
 const router = express.Router();
 
@@ -40,18 +41,36 @@ router.post('/', async (req, res) => {
       return res.status(460).json({ success: false, error: 'Wrong verification code entered' });
     }
 
-    const sid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
-    const oauthSid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
 
     await userDB.updateOne({ userId }, {
-      $set: { sid: sid, oauthSid: oauthSid, emailVerified: true },
+      $set: { emailVerified: true },
       $unset: { verifyCode: 1 }
     });
 
-    const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+    const sid = await generateRandomString(15);
+    const device = req.headers['user-agent'];
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const platform = device.match(/(Windows|Linux|Macintosh|iPhone|iPad|Android)/i);
+    
+    const timestamp = Math.floor(Date.now() / 1000);
+    const redisKey = `psid:${userId}:${sid}`;
+  
+    await redisCache.hSet(redisKey, {
+      deviceType: platform[0],
+      ipAddr: ip,
+      createdAt: timestamp,
+    })
+    await redisCache.expire(redisKey, 48 * 60 * 60);
+
+    const access_token = jwt.sign({ userId: userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
     res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
     return res.status(200).json({ success: true });
   });
 });
+
+async function generateRandomString(length) {
+  return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
+}
+
 
 module.exports = router;

@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { userDB } = require('../../../database/mongodb.js');
+const redisCache = require('../../../database/redis.js');
 const { notifyError } = require('../../../notify/notifications.js');
 require('dotenv').config();
 
@@ -34,13 +34,15 @@ router.post('/', async (req, res) => {
         return res.status(401).json({ success: false, description: 'Access Token invalid' });
       }
 
-      const { userId, oauthSid } = decoded;
+      const { userId, osid } = decoded;
 
       try {
-        const userData = await userDB.findOne({ userId, oauthSid });
-
-        if (!userData) {
-          return res.status(401).json({ success: false, description: 'Access Token is invalid' });
+        const redisKey = `osid:${userId}:${osid}`;
+        const session = await redisCache.hGetAll(redisKey);
+    
+        if (!session) {
+          res.clearCookie('access_token');
+          return res.status(401).json({ success: false, error: 'Access Token is invalid' });
         }
 
         res.status(200).json({ success: true, description: 'Access Token is valid' });

@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const { userDB, oAuthClientAppDB } = require('../../../../../database/mongodb.js');
+const redisCache = require('../../../../../database/redis.js');
 
 const router = express.Router();
 
@@ -44,13 +45,15 @@ router.post('/', async (req, res) => {
       const sid = decoded.sid;
 
       try {
-        const userData = await userDB.findOne({ userId, sid });
-        if (!userData) {
+        const redisKey = `psid:${userId}:${sid}`;
+        const session = await redisCache.hGetAll(redisKey);
+    
+        if (!session) {
           res.clearCookie('access_token');
-          return res.redirect('/login');
+          return res.status(401).json({ success: false, error: 'Access Token is invalid' });
         }
 
-        const userAccess = await userDB.findOne({ userId, sid, providerRoles: 'oauthUser' });
+        const userAccess = await userDB.findOne({ userId, providerRoles: 'oauthUser' });
 
         if (!userAccess) {
           return res.status(465).json({ error: 'User does not have access to create oauth apps' });

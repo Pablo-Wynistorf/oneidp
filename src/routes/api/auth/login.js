@@ -7,6 +7,7 @@ const { URL } = process.env;
 const { notifyError, notifyLogin } = require('../../../notify/notifications');
 
 const { userDB } = require('../../../database/mongodb.js');
+const redisCache = require('../../../database/redis.js');
 
 const JWT_PRIVATE_KEY = `
 -----BEGIN PRIVATE KEY-----
@@ -33,8 +34,9 @@ router.post('/', async (req, res) => {
       return handleUnverifiedEmail(user, res);
     }
 
-    await handleLoginSuccess(user, res);
+    await handleLoginSuccess(user, req, res);
   } catch (error) {
+    console.log(error)
     notifyError(error);
     return res.status(500).json({ error: 'Something went wrong, try again later' });
   }
@@ -69,33 +71,40 @@ const handleUnverifiedEmail = async (user, res) => {
 };
 
 
-const handleLoginSuccess = async (user, res) => {
-  const { userId, username, sid, mfaEnabled, oauthSid } = user;
-
-  const newsid = sid || generateRandomString(15);
-  const newoAuthSid = sid ? oauthSid : generateRandomString(15);
-
-  if (!sid || !oauthSid) {
-    await userDB.updateOne(
-      { userId },
-      { $set: { sid: newsid, oauthSid: newoAuthSid } }
-    );
-  }
+const handleLoginSuccess = async (user, req, res) => {
+  const { userId, username, mfaEnabled } = user;
 
   if (mfaEnabled) {
     return handleMfaEnabled(userId, res);
   }
 
   notifyLogin(username);
-  const access_token = jwt.sign({ userId, sid: newsid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+
+  const sid = await generateRandomString(15);
+  const device = req.headers['user-agent'];
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const platform = device.match(/(Windows|Linux|Macintosh|iPhone|iPad|Android)/i);
+  
+  const timestamp = Math.floor(Date.now() / 1000);
+  const redisKey = `psid:${userId}:${sid}`;
+
+  await redisCache.hSet(redisKey, {
+    deviceType: platform[0],
+    ipAddr: ip,
+    createdAt: timestamp,
+  })
+  await redisCache.expire(redisKey, 48 * 60 * 60);
+
+  const access_token = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
   res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
 
   return res.status(200).json({ success: true });
 };
 
 
+
 const handleMfaEnabled = async (userId, res) => {
-  const newMfaLoginSecret = generateRandomString(30);
+  const newMfaLoginSecret = await generateRandomString(30);
   await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
 
   const mfaToken = jwt.sign({ userId, mfaLoginSecret: newMfaLoginSecret }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
@@ -105,7 +114,10 @@ const handleMfaEnabled = async (userId, res) => {
   return res.status(463).json(response);
 };
 
-const generateRandomString = length => [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
+async function generateRandomString(length) {
+  return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
+}
+
 
 function sendVerificationEmail(username, email, email_verification_token, new_email_verification_code) {
   const mailjetConnect = mailjet.apiConnect(MJ_APIKEY_PUBLIC, MJ_APIKEY_PRIVATE);

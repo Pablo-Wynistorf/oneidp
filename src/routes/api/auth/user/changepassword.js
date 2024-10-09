@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { notifyError } = require('../../../../notify/notifications.js');
 
 const { userDB } = require('../../../../database/mongodb.js');
+const redisCache = require('../../../../database/redis.js');
 
 const router = express.Router();
 
@@ -40,11 +41,15 @@ router.post('/', async (req, res) => {
     const userId = decoded.userId;
     const sid = decoded.sid;
 
-    const userData = await userDB.findOne({ userId: userId, sid: sid });
-    if (!userData) {
+    const redisKey = `psid:${userId}:${sid}`;
+    const session = await redisCache.hGetAll(redisKey);
+
+    if (!session) {
       res.clearCookie('access_token');
-      return res.redirect('/login');
+      return res.status(401).json({ success: false, error: 'Access Token is invalid' });
     }
+
+    const userData = await userDB.findOne({ userId });
 
     if (userData.identityProvider !== 'local') {
       return res.status(460).json({ success: false, error: 'Password can only be changed for users with local authentication' });
@@ -57,16 +62,51 @@ router.post('/', async (req, res) => {
 
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    const newsid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
-    const newOauthSid = [...Array(15)].map(() => Math.random().toString(36)[2]).join('');
 
-    await userDB.updateOne({ userId }, { $set: { password: hashedPassword, sid: newsid, oauthSid: newOauthSid } });
+    await userDB.updateOne({ userId }, { $set: { password: hashedPassword } });
 
-    const newAccessToken = jwt.sign({ userId: userId, sid: newsid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+    await clearUserSessions(userId);
+
+    const newSid = await generateRandomString(15);
+    const device = req.headers['user-agent'];
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const platform = device.match(/(Windows|Linux|Macintosh|iPhone|iPad|Android)/i);
+    
+    const timestamp = Math.floor(Date.now() / 1000);
+    const newredisKey = `psid:${userId}:${newSid}`;
+  
+    await redisCache.hSet(newredisKey, {
+      deviceType: platform[0],
+      ipAddr: ip,
+      createdAt: timestamp,
+    })
+    await redisCache.expire(newredisKey, 48 * 60 * 60);
+    
+
+    const newAccessToken = jwt.sign({ userId: userId, sid: newSid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
 
     res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
     res.status(200).json({ success: true });
   });
 });
+
+async function clearUserSessions(userId) {
+  const redisKeyPattern = `psid:${userId}:*`;
+  
+  try {
+      const sessions = await redisCache.keys(redisKeyPattern);
+      
+      if (sessions.length > 0) {
+          await redisCache.del(sessions);
+      } else {
+      }
+  } catch (error) {
+      console.error('Error removing sessions:', error);
+  }
+};
+
+async function generateRandomString(length) {
+  return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
+}
 
 module.exports = router;

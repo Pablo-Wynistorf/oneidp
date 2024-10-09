@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { userDB, oAuthClientAppDB, oAuthRolesDB } = require('../../../database/mongodb.js');
+const redisCache = require('../../../database/redis.js');
 const { notifyError } = require('../../../notify/notifications.js');
 require('dotenv').config();
 
@@ -27,7 +28,7 @@ ${process.env.JWT_PUBLIC_KEY}
 const URL = process.env.URL;
 
 router.post('/', async (req, res) => {
-  const { grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri } = req.body;
+  const { grant_type, code, client_id, client_secret, refresh_token, code_verifier } = req.body;
 
   const JWK_PUBLIC_KEY = getJWKPublicKey();
 
@@ -35,9 +36,10 @@ router.post('/', async (req, res) => {
     let oauth_client;
     let oauth_user;
     let userId;
-    let oauthSid;
+    let osid;
     let clientId = client_id;
     let clientSecret = client_secret;
+    let nonce;
 
     if (grant_type !== 'authorization_code' && grant_type !== 'refresh_token') {
       return res.status(400).json({ error: 'Unsupported grant_type. Only authorization_code and refresh_token are supported' });
@@ -52,7 +54,7 @@ router.post('/', async (req, res) => {
       }
 
       userId = decodedRefreshToken.userId;
-      oauthSid = decodedRefreshToken.oauthSid;
+      osid = decodedRefreshToken.osid;
       clientId = decodedRefreshToken.clientId;
 
       oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
@@ -61,10 +63,12 @@ router.post('/', async (req, res) => {
         return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or invalid refresh_token provided' });
       }
 
-      oauth_user = await userDB.findOne({ userId, oauthSid });
-
-      if (!oauth_user) {
-        return res.status(401).json({ error: 'Unauthorized', error_description: 'User not found or session has expired' });
+      const redisKey = `osid:${userId}:${osid}`;
+      const session = await redisCache.hGetAll(redisKey);
+  
+      if (!session) {
+        res.clearCookie('refresh_token');
+        return res.status(401).json({ success: false, error: 'Refresh Token invalid' });
       }
 
     } else if (grant_type === 'authorization_code') {
@@ -80,15 +84,21 @@ router.post('/', async (req, res) => {
         }
       }
 
-      if (code_verifier) {
-        oauth_user = await userDB.findOne({ oauthAuthorizationCode: code });
+      if (code_verifier) {        
+        const redisKey = `ac:${code}`;
+        const session = await redisCache.hGetAll(redisKey);
 
-        if (!oauth_user) {
+        if (!session) {
           return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid authorization code provided' });
         }
 
-        const code_challenge_method = oauth_user.codeChallengeMethod;
-        const code_challenge = oauth_user.codeChallenge;
+        userId = session.userId;
+        nonce = session.nonce;
+
+        await redisCache.del(redisKey);
+
+        const code_challenge_method = session.codeChallengeMethod;
+        const code_challenge = session.codeChallenge;
 
         if (code_challenge_method === 'S256') {
           const generatedCodeChallenge = crypto.createHash('sha256').update(code_verifier).digest('base64url');
@@ -105,8 +115,6 @@ router.post('/', async (req, res) => {
           return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or client_secret provided' });
         }
 
-        await userDB.findOneAndUpdate({ oauthAuthorizationCode: code }, { $unset: { nonce: 1, oauthAuthorizationCode: 1, codeChallenge: 1, codeChallengeMethod: 1 } });
-
       } else {
         if (!clientId || !clientSecret) {
           return res.status(400).json({ error: 'Invalid Request', error_description: 'client_id and client_secret are required for standard authorization code flow' });
@@ -118,22 +126,25 @@ router.post('/', async (req, res) => {
           return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid client_id or client_secret provided' });
         }
 
-        oauth_user = await userDB.findOneAndUpdate({ oauthAuthorizationCode: code }, { $unset: { oauthAuthorizationCode: 1 } });
+        const redisKey = `ac:${code}`;
+        const session = await redisCache.hGetAll(redisKey);
 
-        if (!oauth_user) {
+        if (!session) {
+          console.log('no session')
           return res.status(401).json({ error: 'Unauthorized', error_description: 'Invalid authorization code provided' });
         }
-      }
+        userId = session.userId;
+        nonce = session.nonce;
 
-      userId = oauth_user.userId;
-      oauthSid = oauth_user.oauthSid;
+        await redisCache.del(redisKey);
+      }
     }
 
+    oauth_user = await userDB.findOne({ userId });
     const username = oauth_user.username;
     const email = oauth_user.email;
     const mfaEnabled = oauth_user.mfaEnabled;
     const accessTokenValidity = oauth_client.accessTokenValidity;
-    const nonce = oauth_user.nonce;
 
     const roleData = await oAuthRolesDB.find({
       $or: [
@@ -144,16 +155,31 @@ router.post('/', async (req, res) => {
 
     const roleNames = roleData.map(role => role.oauthRoleName);
 
-    const oauth_access_token = jwt.sign({ userId, oauthSid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: accessTokenValidity, keyid: JWK_PUBLIC_KEY.kid });
+    osid = osid || await generateRandomString(15);
+    
+    const timestamp = Math.floor(Date.now() / 1000);
+    const redisKey = `osid:${userId}:${osid}`;
+  
+    await redisCache.hSet(redisKey, {
+      timestamp,
+    })
+    await redisCache.expire(redisKey, accessTokenValidity);
+
+    const oauth_access_token = jwt.sign({ userId, osid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: accessTokenValidity, keyid: JWK_PUBLIC_KEY.kid });
     const oauth_id_token = jwt.sign({ userId, username, email, roles: roleNames, mfaEnabled, iss: URL, sub: userId, aud: clientId, nonce }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h', keyid: JWK_PUBLIC_KEY.kid });
-    const oauth_refresh_token = jwt.sign({ userId, oauthSid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '20d', keyid: JWK_PUBLIC_KEY.kid });
+    const oauth_refresh_token = jwt.sign({ userId, osid, clientId, iss: URL, sub: userId, aud: clientId }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '20d', keyid: JWK_PUBLIC_KEY.kid });
 
     return res.json({ access_token: oauth_access_token, id_token: oauth_id_token, refresh_token: oauth_refresh_token, expires_in: accessTokenValidity });
 
   } catch (error) {
     notifyError(error);
+    console.log(error)
     res.status(500).json({ error: 'Server Error', error_description: 'Something went wrong on our site. Please try again later' });
   }
 });
+
+async function generateRandomString(length) {
+  return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
+}
 
 module.exports = router;

@@ -7,6 +7,7 @@ const { notifyError } = require('../../../../notify/notifications.js');
 
 
 const { userDB } = require('../../../../database/mongodb.js');
+const redisCache = require('../../../../database/redis.js');
 
 const router = express.Router();
 
@@ -14,12 +15,6 @@ const JWT_PRIVATE_KEY = `
 -----BEGIN PRIVATE KEY-----
 ${process.env.JWT_PRIVATE_KEY}
 -----END PRIVATE KEY-----
-`.trim();
-
-const JWT_PUBLIC_KEY = `
------BEGIN PUBLIC KEY-----
-${process.env.JWT_PUBLIC_KEY}
------END PUBLIC KEY-----
 `.trim();
 
 router.post('/', async (req, res) => {
@@ -37,6 +32,7 @@ router.post('/', async (req, res) => {
     const password_reset_code = Math.floor(100000 + Math.random() * 900000).toString();
 
     await userDB.updateOne({ userId }, { $set: { resetCode: password_reset_code } });
+    await clearUserSessions(userId);
 
     try {
       sendRecoveryEmail(username, email, password_reset_token, password_reset_code, res);
@@ -52,6 +48,23 @@ router.post('/', async (req, res) => {
 });
 
 module.exports = router;
+
+
+async function clearUserSessions(userId) {
+  const redisKeyPattern = `psid:${userId}:*`;
+  
+  try {
+      const sessions = await redisCache.keys(redisKeyPattern);
+      
+      if (sessions.length > 0) {
+          await redisCache.del(sessions);
+      } else {
+      }
+  } catch (error) {
+      console.error('Error removing sessions:', error);
+  }
+};
+
 
 
 // Send the password recovery email

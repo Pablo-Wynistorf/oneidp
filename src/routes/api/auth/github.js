@@ -3,6 +3,7 @@ const passport = require('passport');
 const GitHubStrategy = require('passport-github2').Strategy;
 const jwt = require('jsonwebtoken');
 const { userDB } = require('../../../database/mongodb.js');
+const redisCache = require('../../../database/redis.js');
 
 const router = express.Router();
 
@@ -25,7 +26,18 @@ passport.use(new GitHubStrategy({
       let existingUser = await userDB.findOne({ userId: profile.id });
       let username = profile.username;
       let existingUserName = await userDB.findOne({ username: username });
-      const newSid = await generateRandomString(15);
+
+      const sid = await generateRandomString(15);
+      
+      const timestamp = Math.floor(Date.now() / 1000);
+      const redisKey = `psid:${profile.id}:${sid}`;
+    
+      await redisCache.hSet(redisKey, {
+        identityProvider: 'github',
+        createdAt: timestamp,
+      })
+      await redisCache.expire(redisKey, 48 * 60 * 60);
+
 
       if (!existingUser) {
         if (existingUserName) {
@@ -90,6 +102,9 @@ router.get('/callback', passport.authenticate('github', { session: false }), (re
   res.redirect(redirectUri);
 });
 
-const generateRandomString = length => [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
+async function generateRandomString(length) {
+  return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
+}
+
 
 module.exports = router;

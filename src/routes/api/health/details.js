@@ -1,5 +1,6 @@
 const express = require('express');
 const { userDB, oAuthClientAppDB, oAuthRolesDB } = require('../../../database/mongodb.js');
+const redisCache = require('../../../database/redis.js');
 const { notifyError } = require('../../../notify/notifications.js');
 const jwt = require('jsonwebtoken');
 
@@ -29,11 +30,15 @@ router.get('/', async (req, res) => {
       const sid = decoded.sid;
 
       try {
-        userInfo = await userDB.findOne({ userId, sid });
-
-        if (!userInfo) {
-          return res.status(401).json({ error: 'Invalid access token' });
+        const redisKey = `psid:${userId}:${sid}`;
+        const session = await redisCache.hGetAll(redisKey);
+    
+        if (!session) {
+          res.clearCookie('access_token');
+          return res.status(401).json({ success: false, error: 'Access Token is invalid' });
         }
+
+        userInfo = await userDB.findOne({ userId });
 
         if (userInfo.username !== 'admin') {
           return res.status(401).json({ error: 'User has no access to this resource' });
