@@ -61,13 +61,16 @@ router.get('/', async (req, res) => {
       const authorizationCode = await generateRandomString(32);
 
       const authorizationRedisKey = `ac:${authorizationCode}`;
+      
+      await redisCache.hSet(authorizationRedisKey, Object.fromEntries(
+        Object.entries({
+          userId: userId,
+          nonce: nonce,
+          codeChallenge: code_challenge,
+          codeChallengeMethod: code_challenge_method,
+        }).filter(([_, value]) => value !== undefined)
+      ));
 
-      await redisCache.hSet(authorizationRedisKey, {
-        userId,
-        nonce,
-        codeChallenge: code_challenge,
-        codeChallengeMethod: code_challenge_method
-      });
       await redisCache.expire(authorizationRedisKey, 20);
 
       if (!state || state === 'undefined') {
@@ -79,7 +82,6 @@ router.get('/', async (req, res) => {
       return res.redirect(redirectUri);
     });
   } catch (error) {
-    console.log(error)
     notifyError(error);
     res.status(500).json({ error: 'Server Error', error_description: 'Something went wrong on our site. Please try again later' });
   }

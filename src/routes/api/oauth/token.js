@@ -173,7 +173,6 @@ router.post('/', async (req, res) => {
 
   } catch (error) {
     notifyError(error);
-    console.log(error)
     res.status(500).json({ error: 'Server Error', error_description: 'Something went wrong on our site. Please try again later' });
   }
 });
