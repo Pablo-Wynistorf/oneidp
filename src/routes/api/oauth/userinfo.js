@@ -34,11 +34,18 @@ router.all('/', (req, res) => {
       return res.status(401).json({ success: false, error: 'Access Token is invalid' });
     }
 
-    const { userId, clientId, sid } = tokenData;
+    const { userId, clientId, sid, osid } = tokenData;
 
     try {
-      
-      const redisKey = `psid:${userId}:${sid}`;
+
+      let redisKey;
+
+      if (sid) {
+        redisKey = `psid:${userId}:${sid}`;
+      } else if (osid) {
+        redisKey = `osid:${userId}:${osid}`;
+      }
+
       const session = await redisCache.hGetAll(redisKey);
   
       if (Object.keys(session).length === 0) {

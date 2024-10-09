@@ -155,7 +155,7 @@ router.post('/', async (req, res) => {
 
     const roleNames = roleData.map(role => role.oauthRoleName);
 
-    osid = osid || await generateRandomString(15);
+    osid = await generateRandomString(15);
     
     const timestamp = Math.floor(Date.now() / 1000);
     const redisKey = `osid:${userId}:${osid}`;
