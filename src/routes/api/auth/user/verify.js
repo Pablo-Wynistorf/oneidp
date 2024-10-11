@@ -56,8 +56,8 @@ router.post('/', async (req, res) => {
     const redisKey = `psid:${userId}:${sid}`;
   
     await redisCache.hSet(redisKey, {
-      deviceType: platform[0],
-      ipAddr: ip,
+      deviceType: platform ? platform[0] : 'Unknown',
+      ipAddr: ip || 'Unknown',
       createdAt: timestamp,
     })
     await redisCache.expire(redisKey, 48 * 60 * 60);
