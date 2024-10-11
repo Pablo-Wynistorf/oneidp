@@ -99,7 +99,7 @@
         
 
         <div class="flex-1 p-6 md:ml-64">
-            <div class="bg-gray-600 p-8 rounded-lg shadow-lg">
+            <div class="bg-gray-600 p-4 rounded-lg shadow-lg">
                 <div class="text-center mb-6">
                     <h2 class="text-3xl font-semibold text-gray-100">ONEDNS OAUTH APPS</h2>
                 </div>
@@ -116,41 +116,40 @@
                             <input type="number" id="access-token-validity-field" class="w-full p-3 bg-gray-900 text-gray-100 rounded-lg" placeholder="Access Token validity in seconds: 720" required>
                         </div>
                         <div class="form-group">
-                            <button type="submit" id="create-app-button" class="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold mb-8" onclick="create_app()">Create Application</button>
+                            <button type="submit" id="create-app-button" class="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold mt-2 mb-2" onclick="create_app()">Create Application</button>
                         </div>
-                        <div class="bg-gray-900 p-8 rounded-lg shadow-lg space-y-4 max-w-full overflow-hidden break-all font-semibold">
-                            <p class="text-gray-100">OpenID Connect Base URL: <span id="oidc-url" class="font-normal text-gray-100"></span>
-                                <span class="inline-flex items-center">
-                                    <img id="oidc-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="w-5 h-5 cursor-pointer ml-2">
-                                </span>
-                            </p>
-                            <p class="text-gray-100">Authorization URL: <span id="authorization-url" class="font-normal text-gray-100"></span>
-                                <span class="inline-flex items-center">
-                                    <img id="authorization-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="w-5 h-5 cursor-pointer ml-2">
-                                </span>
-                            </p>
-                            <p class="text-gray-100">Token URL: <span id="token-url" class="font-normal text-gray-100"></span>
-                                <span class="inline-flex items-center">
-                                    <img id="token-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="w-5 h-5 cursor-pointer ml-2">
-                                </span>
-                            </p>
-                            <p class="text-gray-100">Token Check URL: <span id="token-check-url" class="font-normal text-gray-100"></span>
-                                <span class="inline-flex items-center">
-                                    <img id="token-check-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="w-5 h-5 cursor-pointer ml-2">
-                                </span>
-                            </p>
-                            <p class="text-gray-100">Userinfo URL: <span id="userinfo-url" class="font-normal text-gray-100"></span>
-                                <span class="inline-flex items-center">
-                                    <img id="userinfo-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="w-5 h-5 cursor-pointer ml-2">
-                                </span>
-                            </p>
-                            <p class="text-gray-100">Refresh Token Validity: <span class="font-normal text-gray-100">20 Days</span></p>
-                        </div>
-                        
                     </div>
                 </div>
             </div>
-            <div id="oauth-apps-container" class="block max-w-full overflow-hidden text-ellipsis p-4 mt-6"></div>
+            <div class="bg-gray-900 p-8 mt-4 rounded-lg shadow-lg space-y-4 max-w-full overflow-hidden break-all font-semibold">
+                <p class="text-gray-100">OpenID Connect Base URL: <span id="oidc-url" class="font-normal text-gray-100"></span>
+                    <span class="inline-flex items-center">
+                        <img id="oidc-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="w-5 h-5 cursor-pointer ml-2">
+                    </span>
+                </p>
+                <p class="text-gray-100">Authorization URL: <span id="authorization-url" class="font-normal text-gray-100"></span>
+                    <span class="inline-flex items-center">
+                        <img id="authorization-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="w-5 h-5 cursor-pointer ml-2">
+                    </span>
+                </p>
+                <p class="text-gray-100">Token URL: <span id="token-url" class="font-normal text-gray-100"></span>
+                    <span class="inline-flex items-center">
+                        <img id="token-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="w-5 h-5 cursor-pointer ml-2">
+                    </span>
+                </p>
+                <p class="text-gray-100">Token Check URL: <span id="token-check-url" class="font-normal text-gray-100"></span>
+                    <span class="inline-flex items-center">
+                        <img id="token-check-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="w-5 h-5 cursor-pointer ml-2">
+                    </span>
+                </p>
+                <p class="text-gray-100">Userinfo URL: <span id="userinfo-url" class="font-normal text-gray-100"></span>
+                    <span class="inline-flex items-center">
+                        <img id="userinfo-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="w-5 h-5 cursor-pointer ml-2">
+                    </span>
+                </p>
+                <p class="text-gray-100">Refresh Token Validity: <span class="font-normal text-gray-100">20 Days</span></p>
+            </div>
+            <div id="oauth-apps-container" class="block max-w-full overflow-hidden text-ellipsis p-1 mt-6"></div>
         </div>
     </div>
 
