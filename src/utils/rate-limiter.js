@@ -1,32 +1,23 @@
 const redisCache = require('../database/redis.js');
+const crypto = require('crypto');
 
 const rateLimiter = (maxRequests, windowMs) => {
     return async (req, res, next) => {
         const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        const currentTime = Date.now();
         const route = req.originalUrl;
-        const key = `rateLimit:${ip}:${route}`;
+        const hash = crypto.createHash('md5').update(`${ip}:${route}`).digest('hex').substring(0, 6);
+        const key = `r:${hash}`;
+
         try {
-            const data = await redisCache.get(key);
+            const currentCount = await redisCache.incr(key);
 
-            let rateLimitData;
-            if (data) {
-                rateLimitData = JSON.parse(data);
-            } else {
-                rateLimitData = { count: 0, start: currentTime };
+            if (currentCount === 1) {
+                await redisCache.expire(key, windowMs / 1000);
             }
 
-            if (currentTime - rateLimitData.start < windowMs) {
-                if (rateLimitData.count >= maxRequests) {
-                    return res.status(429).json({ message: 'Too many requests from this IP for this route, please try again later.' });
-                }
-                rateLimitData.count += 1;
-            } else {
-                rateLimitData = { count: 1, start: currentTime };
+            if (currentCount > maxRequests) {
+                return res.status(429).json({ message: 'Too many requests from this IP for this route, please try again later.' });
             }
-
-            await redisCache.set(key, JSON.stringify(rateLimitData));
-            await redisCache.expire(key, windowMs / 1000);
 
             next(); 
         } catch (err) {
