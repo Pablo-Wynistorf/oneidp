@@ -7,10 +7,7 @@ const path = require('path');
 
 require('dotenv').config();
 
-const { 
-  connectToDatabase, 
-  userDB, 
-} = require('./database/mongodb.js');
+const { connectToDatabase } = require('./database/mongodb.js');
 
 const redisCache = require('./database/redis.js');
 
@@ -67,6 +64,7 @@ const verifyToken = async (req, res, next) => {
 
     const userId = decoded.userId;
     const sid = decoded.sid;
+    const exp = decoded.exp;
 
     const redisKey = `psid:${userId}:${sid}`;
     const session = await redisCache.hGetAll(redisKey);
@@ -75,7 +73,7 @@ const verifyToken = async (req, res, next) => {
       return handleUnauthenticated(req, res, next, requestedPath);
     }
 
-    await handleTokenRenewalIfNeeded(decoded, userId, sid, res);
+    await handleTokenRenewalIfNeeded(userId, sid, exp, req, res);
 
     clearSensitiveCookies(res);
 
@@ -90,13 +88,30 @@ const verifyToken = async (req, res, next) => {
 };
 
 // Function to handle token renewal
-const handleTokenRenewalIfNeeded = async (decoded, userId, sid, res) => {
+const handleTokenRenewalIfNeeded = async (userId, sid, exp, req, res) => {
   const now = Math.floor(Date.now() / 1000);
   const tokenExpirationThreshold = now + (24 * 60 * 60);
 
-  if (decoded.exp < tokenExpirationThreshold) {
-    const redisKey = `psid:${userId}:${sid}`;
-    await redisCache.expire(redisKey, 48 * 60 * 60);
+  if (exp < tokenExpirationThreshold) {
+
+    const oldRedisKey = `psid:${userId}:${sid}`;
+    await redisCache.del(oldRedisKey);
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const device = req.headers['user-agent'];
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const platform = device.match(/(Windows|Linux|Macintosh|iPhone|iPad|Android)/i);
+
+    const newSid = await generateRandomString(15);
+    const newRedisKey = `psid:${userId}:${newSid}`;
+
+    await redisCache.hSet(newRedisKey, {
+      deviceType: platform[0],
+      ipAddr: ip,
+      createdAt: timestamp,
+    })
+
+    await redisCache.expire(newRedisKey, 48 * 60 * 60);
     const newAccessToken = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
     res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
   }
@@ -260,6 +275,11 @@ app.use('/api/health', require('./routes/api/health/health.js'));
 
 // Check details of the application
 app.use('/api/health/details', require('./routes/api/health/details.js'));
+
+// Generate a random String
+async function generateRandomString(length) {
+  return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
+}
 
 // Start the api
 app.listen(API_PORT, () => {
