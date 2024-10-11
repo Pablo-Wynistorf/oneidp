@@ -11,7 +11,10 @@ const { connectToDatabase } = require('./database/mongodb.js');
 
 const redisCache = require('./database/redis.js');
 
+const rateLimiter = require('./utils/rate-limiter.js');
+
 const API_PORT = process.env.API_PORT;
+const URL = process.env.URL;
 
 const JWT_PRIVATE_KEY = `
 -----BEGIN PRIVATE KEY-----
@@ -26,7 +29,12 @@ ${process.env.JWT_PUBLIC_KEY}
 `.trim();
 
 const app = express();
-app.use(cors());
+
+const corsOptions = {
+  origin: [URL]
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -158,126 +166,57 @@ app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
 app.use('/oidc/apps', verifyToken, express.static(path.join(__dirname, 'public/oidc/apps')));
 app.use('/oidc/roles', verifyToken, express.static(path.join(__dirname, 'public/oidc/roles')));
 
-// Login to the account, if account not verified, resend verification email.
-app.use('/api/auth/token/check', require('./routes/api/auth/token/check.js'));
-
-// Login to the account, if account not verified, resend verification email.
-app.use('/api/auth/login', require('./routes/api/auth/login.js'));
-
-// Register as new user, store userdata in the database and send verification email
-app.use('/api/auth/signup', require('./routes/api/auth/signup.js'));
-
-// Continue with google
-app.use('/api/auth/google', require('./routes/api/auth/google.js'));
-
-// Continue with github
-app.use('/api/auth/github', require('./routes/api/auth/github.js'));
-
-// Handle logout
-app.use('/api/auth/logout', require('./routes/api/auth/logout.js'));
-
-// Handle logout and change session id. (Invalidate access token)
-app.use('/api/auth/logoutall', require('./routes/api/auth/logoutall.js'));
-
-// Verify the mfa code
-app.use('/api/auth/mfa/verify', require('./routes/api/auth/mfa/verify.js'));
-
-// Get the mfa qr code
-app.use('/api/auth/mfa/setup', require('./routes/api/auth/mfa/setup.js'));
-
-// Mfa setup verify
-app.use('/api/auth/mfa/setup/verify', require('./routes/api/auth/mfa/setup/verify.js'));
-
-// Disable MFA
-app.use('/api/auth/mfa/disable', require('./routes/api/auth/mfa/disable.js'));
 
 
+// Authentication Endpoints
+app.use('/api/auth/token/check', rateLimiter(20, 60 * 1000), require('./routes/api/auth/token/check.js')); // 20 requests per minute
+app.use('/api/auth/login', rateLimiter(10, 60 * 1000), require('./routes/api/auth/login.js')); // 10 requests per minute
+app.use('/api/auth/signup', rateLimiter(5, 60 * 1000), require('./routes/api/auth/signup.js')); // 5 requests per minute
+app.use('/api/auth/google', rateLimiter(10, 60 * 1000), require('./routes/api/auth/google.js')); // 10 requests per minute
+app.use('/api/auth/github', rateLimiter(10, 60 * 1000), require('./routes/api/auth/github.js')); // 10 requests per minute
+app.use('/api/auth/logout', rateLimiter(10, 60 * 1000), require('./routes/api/auth/logout.js')); // 10 requests per minute
+app.use('/api/auth/logoutall', rateLimiter(10, 60 * 1000), require('./routes/api/auth/logoutall.js')); // 10 requests per minute
+app.use('/api/auth/mfa/verify', rateLimiter(10, 60 * 1000), require('./routes/api/auth/mfa/verify.js')); // 10 requests per minute
+app.use('/api/auth/mfa/setup', rateLimiter(5, 60 * 1000), require('./routes/api/auth/mfa/setup.js')); // 5 requests per minute
+app.use('/api/auth/mfa/setup/verify', rateLimiter(5, 60 * 1000), require('./routes/api/auth/mfa/setup/verify.js')); // 5 requests per minute
+app.use('/api/auth/mfa/disable', rateLimiter(5, 60 * 1000), require('./routes/api/auth/mfa/disable.js')); // 5 requests per minute
+app.use('/api/auth/user/verify', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/verify.js')); // 5 requests per minute
+app.use('/api/auth/user/confirmationlink', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/confirmationlink.js')); // 5 requests per minute
+app.use('/api/auth/user/setresettokens', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/setresettokens.js')); // 5 requests per minute
+app.use('/api/auth/user/changepassword', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/changepassword.js')); // 5 requests per minute
+app.use('/api/auth/user/resetpassword', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/resetpassword.js')); // 5 requests per minute
+app.use('/api/auth/user/setpassword', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/setpassword.js')); // 5 requests per minute
+app.use('/api/auth/user/session', rateLimiter(20, 60 * 1000), require('./routes/api/auth/user/session.js')); // 20 requests per minute
 
-// Verify user with verification code and token, and later generate access tokens
-app.use('/api/auth/user/verify', require('./routes/api/auth/user/verify.js'));
+// OAuth Settings Endpoints
+app.use('/api/oauth/settings/apps/get', rateLimiter(30, 60 * 1000), require('./routes/api/oauth/settings/apps/get.js')); // 20 requests per minute
+app.use('/api/oauth/settings/apps/add', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/apps/add.js')); // 10 requests per minute
+app.use('/api/oauth/settings/apps/delete', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/apps/delete.js')); // 10 requests per minute
+app.use('/api/oauth/settings/apps/edit', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/apps/edit.js')); // 10 requests per minute
+app.use('/api/oauth/settings/roles/get', rateLimiter(30, 60 * 1000), require('./routes/api/oauth/settings/roles/get.js')); // 20 requests per minute
+app.use('/api/oauth/settings/roles/get-users', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/roles/get-users.js')); // 10 requests per minute
+app.use('/api/oauth/settings/roles/add', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/roles/add.js')); // 10 requests per minute
+app.use('/api/oauth/settings/roles/update/remove-user', rateLimiter(30, 60 * 1000), require('./routes/api/oauth/settings/roles/update/remove-user.js')); // 30 requests per minute
+app.use('/api/oauth/settings/roles/update/add-user', rateLimiter(30, 60 * 1000), require('./routes/api/oauth/settings/roles/update/add-user.js')); // 30 requests per minute
+app.use('/api/oauth/settings/roles/update/bulk-update', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/roles/update/bulk-update.js')); // 10 requests per minute
+app.use('/api/oauth/settings/roles/delete', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/roles/delete.js')); // 10 requests per minute
 
-// Verify user with verification code and token with the verificationlink, and later generate access tokens
-app.use('/api/auth/user/confirmationlink', require('./routes/api/auth/user/confirmationlink.js'));
+// OAuth Endpoints
+app.use('/api/oauth/authorize', rateLimiter(1, 1000), require('./routes/api/oauth/authorize.js')); // 1 request per second
+app.use('/api/oauth/token', rateLimiter(1, 1000), require('./routes/api/oauth/token.js')); // 1 request per second
+app.use('/api/oauth/userinfo', rateLimiter(30, 60 * 1000), require('./routes/api/oauth/userinfo.js')); // 30 requests per minute
+app.use('/api/oauth/check_token', rateLimiter(20, 60 * 1000), require('./routes/api/oauth/check_token.js')); // 20 requests per minute
+app.use('/api/oauth/logout', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/logout.js')); // 10 requests per minute
+app.use('/api/oauth/revoke', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/revoke.js')); // 10 requests per minute
 
-// Convert link into usable password_reset_code and password_reset_token cookies
-app.use('/api/auth/user/setresettokens', require('./routes/api/auth/user/setresettokens.js'));
+// OIDC Discovery Endpoints
+app.use('/.well-known/openid-configuration', require('./routes/api/oauth/openid-configuration.js')); // No limit (public endpoint)
+app.use('/.well-known/jwks.json', require('./routes/api/oauth/jwks-info.js')); // No limit (public endpoint)
 
-// Handle password change, define new session id, store passwordhash in database and issue new access token. 
-app.use('/api/auth/user/changepassword', require('./routes/api/auth/user/changepassword.js'));
+// Health Check Endpoints
+app.use('/api/health', require('./routes/api/health/health.js')); // No limit (public endpoint)
+app.use('/api/health/details', rateLimiter(10, 60 * 1000), require('./routes/api/health/details.js')); // 10 requests per minute
 
-// Make a password reset request and send recovery code. 
-app.use('/api/auth/user/resetpassword', require('./routes/api/auth/user/resetpassword.js'));
-
-// Set new password with recoverycode and recoverytoken. 
-app.use('/api/auth/user/setpassword', require('./routes/api/auth/user/setpassword.js'));
-
-// Get active provider sessions
-app.use('/api/auth/user/session', require('./routes/api/auth/user/session.js'));
-
-
-
-// Get oauth apps
-app.use('/api/oauth/settings/apps/get', require('./routes/api/oauth/settings/apps/get.js'));
-
-// Add oauth app
-app.use('/api/oauth/settings/apps/add', require('./routes/api/oauth/settings/apps/add.js'));
-
-// Add oauth delete app
-app.use('/api/oauth/settings/apps/delete', require('./routes/api/oauth/settings/apps/delete.js'));
-
-// Edit oauth app
-app.use('/api/oauth/settings/apps/edit', require('./routes/api/oauth/settings/apps/edit.js'));
-
-// Get oauth app roles
-app.use('/api/oauth/settings/roles/get', require('./routes/api/oauth/settings/roles/get.js'));
-
-// Get oauth app role users
-app.use('/api/oauth/settings/roles/get-users', require('./routes/api/oauth/settings/roles/get-users.js'));
-
-// Add oauth app role
-app.use('/api/oauth/settings/roles/add', require('./routes/api/oauth/settings/roles/add.js'));
-
-// Delete userids from oauth app role
-app.use('/api/oauth/settings/roles/update/remove-user', require('./routes/api/oauth/settings/roles/update/remove-user.js'));
-
-// Add userid to oauth app role
-app.use('/api/oauth/settings/roles/update/add-user', require('./routes/api/oauth/settings/roles/update/add-user.js'));
-
-// Add userid to oauth app role
-app.use('/api/oauth/settings/roles/update/bulk-update', require('./routes/api/oauth/settings/roles/update/bulk-update.js'));
-
-// Delete oauth app role
-app.use('/api/oauth/settings/roles/delete', require('./routes/api/oauth/settings/roles/delete.js'));
-
-// Oauth authorize endpoint
-app.use('/api/oauth/authorize', require('./routes/api/oauth/authorize.js'));
-
-// Oauth Token endpoint
-app.use('/api/oauth/token', require('./routes/api/oauth/token.js'));
-
-// Oauth Userinfo endpoint
-app.use('/api/oauth/userinfo', require('./routes/api/oauth/userinfo.js'));
-
-// Oauth check_token endpoint
-app.use('/api/oauth/check_token', require('./routes/api/oauth/check_token.js'));
-
-// Oauth Logout endpoint
-app.use('/api/oauth/logout', require('./routes/api/oauth/logout.js'));
-
-// Oauth Revocation endpoint
-app.use('/api/oauth/revoke', require('./routes/api/oauth/revoke.js'));
-
-// OIDC Discovery endpoint
-app.use('/.well-known/openid-configuration', require('./routes/api/oauth/openid-configuration.js'));
-
-// jwks Discovery endpoint
-app.use('/.well-known/jwks.json', require('./routes/api/oauth/jwks-info.js'));
-
-// Check the health of the application
-app.use('/api/health', require('./routes/api/health/health.js'));
-
-// Check details of the application
-app.use('/api/health/details', require('./routes/api/health/details.js'));
 
 // Generate a random String
 async function generateRandomString(length) {
