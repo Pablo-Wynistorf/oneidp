@@ -14,7 +14,7 @@
 <body class="bg-gray-500 text-gray-300">
     <div class="flex flex-col md:flex-row min-h-screen">
         <!-- Sidebar -->
-        <div id="sidebar" class="w-full md:w-64 bg-gray-950 p-4 flex flex-col justify-between">
+        <div id="sidebar" class="w-full md:w-64 bg-gray-950 p-4 flex flex-col md:fixed top-0 bottom-0 left-0">
             <!-- Mobile Menu Button Container -->
             <div class="absolute top-0 right-0 mt-1 p-4 flex items-center space-x-2 md:hidden">
                 <img id="mobile-open-menu" src="svg/mobile-open-menu.svg" class="h-10 w-10 cursor-pointer transition-transform duration-300" alt="Mobile Menu">
@@ -72,7 +72,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 p-6 flex flex-col justify-between">
+        <div class="flex-1 p-6 md:ml-64">
             <div class="bg-gray-600 p-8 rounded-lg shadow-lg">
                 <h1 class="text-3xl font-semibold mb-6 text-gray-100">Settings:</h1>
                 <div class="space-y-6">
@@ -122,7 +122,7 @@
             </div>
         </div>
 
-        <div id="mfa-modal" class="hidden fixed inset-0 z-50 overflow-auto bg-gray-900 bg-opacity-75 flex items-center justify-center">
+        <div id="mfa-modal" class="hidden fixed inset-0 z-50 overflow-auto bg-gray-900 bg-opacity-75 items-center justify-center">
             <div class="bg-gray-800 p-8 rounded-lg shadow-lg relative text-center">
                 <button id="close-mfa-modal" class="absolute top-0 right-0 mt-2 mr-2 text-gray-400 hover:text-gray-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

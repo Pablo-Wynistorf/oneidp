@@ -42,8 +42,12 @@ router.get('/', async (req, res) => {
       const sessions = await Promise.all(
         sessionKeys.map(async (key) => {
           const sessionData = await redisCache.hGetAll(key);
-          key = key.split(':')[2];
-          return { sessionId: key, sessionData: sessionData };
+          const sessionId = key.split(':')[2];
+          return { 
+            sessionId, 
+            currentSession: sessionId === sid ? "true" : "false",
+            sessionData 
+          };
         })
       );
 
@@ -54,6 +58,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Application has encountered an error:', details: error.toString() });
   }
 });
+
 
 
 router.delete('/', async (req, res) => {
