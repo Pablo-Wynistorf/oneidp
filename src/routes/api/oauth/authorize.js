@@ -39,10 +39,11 @@ router.get('/', async (req, res) => {
       }
 
       const { userId, sid } = decoded;
+
       const redisKey = `psid:${userId}:${sid}`;
-      const session = await redisCache.hGetAll(redisKey);
+      const session = await redisCache.keys(redisKey);
   
-      if (Object.keys(session).length === 0) {
+      if (session.length === 0) {
         return res.redirect(`/login?redirectUri=${URL + req.originalUrl}`);
       }
 

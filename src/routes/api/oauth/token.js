@@ -65,11 +65,11 @@ router.post('/', async (req, res) => {
       }
 
       const redisKey = `orsid:${userId}:${orsid}`;
-      const session = await redisCache.hGetAll(redisKey);
-
-      if (Object.keys(session).length === 0) {
+      const session = await redisCache.keys(redisKey);
+  
+      if (session.length === 0) {
         res.clearCookie('refresh_token');
-        return res.status(401).json({ success: false, error: 'Refresh Token invalid' });
+        return res.status(401).json({ success: false, error: 'Refresh Token is invalid' });
       }
 
     } else if (grant_type === 'authorization_code') {

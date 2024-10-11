@@ -67,9 +67,9 @@ const verifyToken = async (req, res, next) => {
     const exp = decoded.exp;
 
     const redisKey = `psid:${userId}:${sid}`;
-    const session = await redisCache.hGetAll(redisKey);
+    const session = await redisCache.keys(redisKey);
 
-    if (Object.keys(session).length === 0) {
+    if (session.length === 0) {
       return handleUnauthenticated(req, res, next, requestedPath);
     }
 
@@ -210,6 +210,9 @@ app.use('/api/auth/user/resetpassword', require('./routes/api/auth/user/resetpas
 
 // Set new password with recoverycode and recoverytoken. 
 app.use('/api/auth/user/setpassword', require('./routes/api/auth/user/setpassword.js'));
+
+// Get active provider sessions
+app.use('/api/auth/user/session', require('./routes/api/auth/user/session.js'));
 
 
 
