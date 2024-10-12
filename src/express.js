@@ -181,7 +181,7 @@ app.use('/api/auth/mfa/setup', rateLimiter(5, 60 * 1000), require('./routes/api/
 app.use('/api/auth/mfa/setup/verify', rateLimiter(5, 60 * 1000), require('./routes/api/auth/mfa/setup/verify.js')); // 5 requests per minute
 app.use('/api/auth/mfa/disable', rateLimiter(5, 60 * 1000), require('./routes/api/auth/mfa/disable.js')); // 5 requests per minute
 app.use('/api/auth/user/confirmationlink', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/confirmationlink.js')); // 5 requests per minute
-app.use('/api/auth/user/setresettokens', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/setresettokens.js')); // 5 requests per minute
+app.use('/api/auth/user/setresettoken', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/setresettoken.js')); // 5 requests per minute
 app.use('/api/auth/user/changepassword', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/changepassword.js')); // 5 requests per minute
 app.use('/api/auth/user/resetpassword', rateLimiter(1, 60 * 1000), require('./routes/api/auth/user/resetpassword.js')); // 1 request per 60 seconds
 app.use('/api/auth/user/setpassword', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/setpassword.js')); // 5 requests per minute
