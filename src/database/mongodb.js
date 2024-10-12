@@ -33,7 +33,6 @@ const userSchema = new Schema({
   email: String,
   identityProvider: String,
   mfaSecret: String,
-  mfaLoginSecret: String,
   mfaEnabled: Boolean,
   emailVerified: Boolean,
   providerRoles: Array,

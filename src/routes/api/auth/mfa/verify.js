@@ -26,30 +26,29 @@ router.post('/', async (req, res) => {
   const mfa_token = req.cookies.mfa_token;
 
   if (!mfa_token) {
-    return res.status(462).json({ success: false, error: 'Access Token not found' });
+    return res.status(462).json({ success: false, error: 'MFA token not found' });
   }
 
     jwt.verify(mfa_token, JWT_PUBLIC_KEY, async (error, decoded) => {
       if (error) {
-        return res.redirect('/login');
+        return res.status(463).json({ success: false, error: 'MFA token is invalid' });
       }
 
     const userId = decoded.userId;
-    const mfaLoginSecret = decoded.mfaLoginSecret;
-    const userData = await userDB.findOne({ userId: userId, mfaLoginSecret: mfaLoginSecret });
+    const mfaSid = decoded.mfaSid;
 
-    if (!userData) {
+    const redisKey = `pmfa:${userId}:${mfaSid}`;
+    const session = await redisCache.keys(redisKey);
+
+    if (session.length === 0) {
       res.clearCookie('mfa_token');
-      return res.redirect('/login');
+      return res.status(463).json({ success: false, error: 'MFA Token is invalid' });
     }
 
-    const mfaEnabled = userData.mfaEnabled;
+    const userData = await userDB.findOne({ userId });
+
     const mfaSecret = userData.mfaSecret;
     const username = userData.username;
-
-    if (mfaEnabled !== true) {
-      return res.status(460).json({ error: 'User has MFA not enabled' });
-    }
 
     const verified = speakeasy.totp.verify({
       secret: mfaSecret,
@@ -67,6 +66,9 @@ router.post('/', async (req, res) => {
       
       const timestamp = Math.floor(Date.now() / 1000);
       const redisKey = `psid:${userId}:${sid}`;
+      const redisMfaKey = `pmfa:${userId}:${mfaSid}`;
+
+      await redisCache.del(redisMfaKey);
     
       await redisCache.hSet(redisKey, {
         deviceType: platform ? platform[0] : 'Unknown',

@@ -24,7 +24,7 @@ router.post('/', async (req, res) => {
       emailRegex.test(username_or_email) ? { email: username_or_email, identityProvider: 'local' } : { username: username_or_email, identityProvider: 'local' }
     );
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user || !(bcrypt.compare(password, user.password))) {
       return res.status(462).json({ success: false, error: 'Invalid username or password' });
     }
 
@@ -107,10 +107,26 @@ const handleLoginSuccess = async (user, req, res) => {
 
 
 const handleMfaEnabled = async (userId, res) => {
-  const newMfaLoginSecret = await generateRandomString(30);
-  await userDB.updateOne({ userId }, { $set: { mfaLoginSecret: newMfaLoginSecret } });
+  const mfaSid = await generateRandomString(15);
 
-  const mfaToken = jwt.sign({ userId, mfaLoginSecret: newMfaLoginSecret }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
+  const timestamp = Math.floor(Date.now() / 1000);
+  const oldRedisKey = `pmfa:${userId}:*`;
+  const redisKey = `pmfa:${userId}:${mfaSid}`;
+
+  const oldMfaKey = await redisCache.keys(oldRedisKey);
+    
+  if (oldMfaKey.length > 0) {
+      await redisCache.del(oldMfaKey);
+  }
+
+  await redisCache.hSet(redisKey, {
+    createdAt: timestamp,
+  })
+  
+  await redisCache.expire(redisKey, 5 * 60);
+  
+
+  const mfaToken = jwt.sign({ userId, mfaSid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
   res.cookie('mfa_token', mfaToken, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
 
   const response = { success: true, message: 'Redirecting to MFA site'};
