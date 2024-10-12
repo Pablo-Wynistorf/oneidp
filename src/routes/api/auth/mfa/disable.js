@@ -43,8 +43,7 @@ router.post('/', async (req, res) => {
       return res.status(462).json({ success: false, error: 'MFA is not enabled' });
     }
 
-    await userDB.updateOne({ userId }, { $unset: { mfaSecret: 1, mfaLoginSecret: 1 } });
-    await userDB.updateOne({ userId }, { $set: { mfaEnabled: false } });
+    await userDB.updateOne({ userId }, { $set: { mfaEnabled: false }, $unset: { mfaSecret: 1 } });
 
     return res.status(200).json({ success: true, message: 'MFA has been successfully disabled' });
   });
