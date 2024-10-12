@@ -431,7 +431,7 @@ function sendRecoveryEmail(username, email, password_reset_token, res) {
                                                                     <tr>
                                                                         <td align="center"
                                                                             style="padding:0;Margin:0;padding-bottom:20px;font-size:0px">
-                                                                            <img src="https://fhdpsnf.stripocdn.email/content/guids/CABINET_3bf445647bf148ea2b1fc360e57786d8004e1fceac3a148a9c74ee199cf09947/images/loginapp.png"
+                                                                            <img src="https://cdn.onedns.ch/attachment/1294692124641464361"
                                                                                 alt="Logo"
                                                                                 style="display:block;font-size:12px;border:0;outline:none;text-decoration:none"
                                                                                 title="Logo" class="img-7899"
@@ -476,7 +476,7 @@ function sendRecoveryEmail(username, email, password_reset_token, res) {
                                                                     <tr>
                                                                         <td align="center"
                                                                             style="padding:0;Margin:0;padding-top:10px;padding-bottom:10px;font-size:0px">
-                                                                            <img src="https://fhdpsnf.stripocdn.email/content/guids/CABINET_67e080d830d87c17802bd9b4fe1c0912/images/55191618237638326.png"
+                                                                            <img src="https://cdn.onedns.ch/attachment/1294692308423544953"
                                                                                 alt=""
                                                                                 style="display:block;font-size:14px;border:0;outline:none;text-decoration:none"
                                                                                 width="100" height="72"></td>
@@ -1061,7 +1061,7 @@ function sendVerificationEmail(username, email, email_verification_token) {
                                                                     <tr>
                                                                         <td align="center"
                                                                             style="padding:0;Margin:0;padding-bottom:20px;font-size:0px">
-                                                                            <img src="https://fhdpsnf.stripocdn.email/content/guids/CABINET_3bf445647bf148ea2b1fc360e57786d8004e1fceac3a148a9c74ee199cf09947/images/loginapp.png"
+                                                                            <img src="https://cdn.onedns.ch/attachment/1294692124641464361"
                                                                                 alt="Logo"
                                                                                 style="display:block;font-size:12px;border:0;outline:none;text-decoration:none"
                                                                                 title="Logo" class="img-7899"
@@ -1106,7 +1106,7 @@ function sendVerificationEmail(username, email, email_verification_token) {
                                                                     <tr>
                                                                         <td align="center"
                                                                             style="padding:0;Margin:0;padding-top:10px;padding-bottom:10px;font-size:0px">
-                                                                            <img src="https://fhdpsnf.stripocdn.email/content/guids/CABINET_67e080d830d87c17802bd9b4fe1c0912/images/55191618237638326.png"
+                                                                            <img src="https://cdn.onedns.ch/attachment/1294692308423544953"
                                                                                 alt=""
                                                                                 style="display:block;font-size:14px;border:0;outline:none;text-decoration:none"
                                                                                 width="100" height="72"></td>
