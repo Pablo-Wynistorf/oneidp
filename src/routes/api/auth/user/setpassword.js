@@ -21,12 +21,13 @@ ${process.env.JWT_PUBLIC_KEY}
 `.trim();
 
 router.post('/', async (req, res) => {
-  const { password, password_reset_code } = req.body;
+  const { password } = req.body;
 
   const password_reset_token = req.cookies.password_reset_token;
 
   if (!password_reset_token) {
-    return res.status(400).json({ success: false, error: 'Reset Token not found' });
+    console.log('Reset Token not found');
+    return res.status(461).json({ success: false, error: 'Reset Token not found' });
   }
 
   try {
@@ -38,18 +39,25 @@ router.post('/', async (req, res) => {
 
     jwt.verify(password_reset_token, JWT_PUBLIC_KEY, async (error, decoded) => {
       if (error) {
-        return res.status(401).json({ error: 'Invalid password reset token' });
+        res.clearCookie('password_reset_token');
+        return res.status(461).json({ success: false, error: 'Reset token invalid' });
       }
 
       const userId = decoded.userId;
+      const pprSid = decoded.pprSid;
 
-      const userReset = await userDB.findOne({ userId: userId, resetCode: password_reset_code });
-      if (!userReset) {
-        return res.status(461).json({ error: 'Wrong recovery code entered' });
+      const providerPasswordResetRedisKey = `ppr:${userId}:${pprSid}`;
+      const session = await redisCache.keys(providerPasswordResetRedisKey);
+  
+      if (session.length === 0) {
+        console.log('Session not found');
+        res.clearCookie('password_reset_token');
+        return res.status(461).json({ success: false, error: 'Reset token invalid' });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      await redisCache.del(providerPasswordResetRedisKey);
 
       const sid = await generateRandomString(15);
       const device = req.headers['user-agent'];
@@ -67,7 +75,7 @@ router.post('/', async (req, res) => {
       await redisCache.expire(redisKey, 48 * 60 * 60);
 
 
-      await userDB.updateOne({ userId }, { $set: { password: hashedPassword, $unset: { resetCode: 1 } } });
+      await userDB.updateOne({ userId }, { $set: { password: hashedPassword } });
       const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
       res.clearCookie('password_reset_token');
       res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
@@ -75,6 +83,7 @@ router.post('/', async (req, res) => {
     });
 
   } catch (error) {
+    console.log(error);
     notifyError(error);
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }

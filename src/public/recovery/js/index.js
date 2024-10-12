@@ -1,6 +1,14 @@
+
 document.addEventListener('DOMContentLoaded', () => {
   const emailField = document.getElementById('email-field');
   const recoverButton = document.getElementById('recover-button');
+  const modal = document.getElementById('modal');
+  const countdownElement = document.getElementById('countdown');
+  const resendEmailButton = document.getElementById('resend-email');
+  const redirectLoginButton = document.getElementById('redirect-login');
+
+  let countdown;
+  let countdownValue = 30;
 
   emailField.focus();
 
@@ -12,72 +20,118 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   recoverButton.addEventListener('click', recover);
+  resendEmailButton.addEventListener('click', resendEmail);
+  redirectLoginButton.addEventListener('click', redirect_login);
+
+  async function recover() {
+    const resetEmailInput = emailField.value.trim();
+    if (resetEmailInput === '') {
+      alert('Please enter your email address.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth/user/resetpassword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: resetEmailInput }),
+      });
+
+      if (response.ok) {
+        openModal();
+      } else {
+        const errorMessage = await response.text();
+        showError(errorMessage);
+      }
+    } catch (error) {
+      showError('An error occurred. Please try again later.');
+    }
+  }
+
+  function openModal() {
+    modal.classList.remove('hidden');
+    startCountdown();
+  }
+
+  function startCountdown() {
+    countdownValue = 60;
+    countdownElement.textContent = countdownValue;
+    resendEmailButton.disabled = true;
+    resendEmailButton.classList.add('bg-gray-300');
+    resendEmailButton.classList.remove('hover:bg-blue-600');
+    resendEmailButton.classList.add('cursor-not-allowed');
+
+    countdown = setInterval(() => {
+      countdownValue--;
+      countdownElement.textContent = countdownValue;
+
+      if (countdownValue <= 0) {
+        clearInterval(countdown);
+        resendEmailButton.classList.remove('bg-gray-300');
+        resendEmailButton.classList.add('hover:bg-blue-600');
+        resendEmailButton.classList.remove('cursor-not-allowed');
+        resendEmailButton.disabled = false;
+      }
+    }, 1000);
+  }
+
+  async function resendEmail() {
+    const resetEmailInput = emailField.value.trim();
+    if (resetEmailInput === '') {
+      alert('Please enter your email address.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth/user/resetpassword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: resetEmailInput }),
+      });
+
+      if (response.ok) {
+        countdownValue = 30; // Reset countdown value
+        countdownElement.textContent = countdownValue;
+        clearInterval(countdown); // Clear previous countdown
+        startCountdown(); // Start a new countdown
+      } else {
+        const errorMessage = await response.text();
+        showError(errorMessage);
+      }
+    } catch (error) {
+      showError('An error occurred. Please try again later.');
+    }
+  }
+
+function redirect_login() {
+    const redirectUri = getRedirectUri();
+    if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
+      window.location.href = '/login';
+    } else {
+      window.location.href = `/login?redirectUri=${redirectUri}`;
+    }
+}
+
+  function showError(message) {
+    const alertMessage = document.getElementById('alert-message');
+    alertMessage.textContent = message;
+    document.getElementById('alert-box').classList.remove('hidden');
+  }
 });
 
-async function recover() {
-  const resetEmailInput = document.getElementById('email-field');
-  const recoverButton = document.getElementById('recover-button');
-  recoverButton.disabled = true;
-  const email = resetEmailInput.value;
 
-  recoverButton.innerText = '';
-  recoverButton.classList.add('flex', 'justify-center', 'items-center', 'text-gray-500');
-  recoverButton.innerHTML = `<img src="/signup/images/spinner.svg" width="24" height="24" />`;
 
-  if (email === '' || email === null || email === undefined) {
-    recoverButton.disabled = false;
-    recoverButton.innerText = 'Get recovery code';
-    recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500');
-    displayAlertError('Enter your email address to get a recovery code.');
-    return;
-  }
 
-  await fetch(`/api/auth/user/resetpassword`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email })
-  })
-    .then(response => {
-      if (response.status === 200) {
-        return handle200Response();
-      } else if (response.status === 404) {
-        return handle404Error();
-      } else {
-        return handleError();
-      }
-    });
-}
 
-function handle200Response() {
-  const redirectUri = getRedirectUri();
-  if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
-    window.location.href = '/setpassword';
-  } else {
-    window.location.href = `/setpassword?redirectUri=${redirectUri}`;
-  }
-}
 
-function handle404Error() {
-  const resetEmailInput = document.getElementById('email-field');
-  const recoverButton = document.getElementById('recover-button');
-  resetEmailInput.value = '';
-  recoverButton.disabled = false;
-  recoverButton.innerText = 'Get recovery code';
-  recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500');
-  displayAlertError('No account found with that email address.');
-}
 
-function handleError() {
-  const resetEmailInput = document.getElementById('email-field');
-  const recoverButton = document.getElementById('recover-button');
-  resetEmailInput.value = '';
-  recoverButton.disabled = false;
-  recoverButton.innerText = 'Get recovery code';
-  recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500');
-  displayAlertError('Something went wrong');
-}
+
+
+
 
 function redirect_login() {
   const redirectUri = getRedirectUri();

@@ -73,7 +73,7 @@ function handleResponse(response) {
 function handle200Response() {
   const redirectUri = getRedirectUri();
   if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
-    window.location.href = '/dashboard';
+    window.location.href = '/verify';
   } else {
     window.location.href = '/verify' + (redirectUri ? `?redirectUri=${redirectUri}` : '');
   }

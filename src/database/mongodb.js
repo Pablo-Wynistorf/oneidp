@@ -32,8 +32,6 @@ const userSchema = new Schema({
   password: String,
   email: String,
   identityProvider: String,
-  verifyCode: String,
-  resetCode: String,
   mfaSecret: String,
   mfaLoginSecret: String,
   mfaEnabled: Boolean,

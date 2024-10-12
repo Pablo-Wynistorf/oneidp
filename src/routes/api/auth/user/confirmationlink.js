@@ -19,8 +19,8 @@ ${process.env.JWT_PUBLIC_KEY}
 -----END PUBLIC KEY-----
 `.trim();
 
-router.all('/:email_verification_token/:email_verification_code', async (req, res) => {
-  const { email_verification_token, email_verification_code } = req.params;
+router.get('/:email_verification_token', async (req, res) => {
+  const { email_verification_token } = req.params;
   
   jwt.verify(email_verification_token, JWT_PUBLIC_KEY, async (error, decoded) => {
       if (error) {
@@ -28,15 +28,17 @@ router.all('/:email_verification_token/:email_verification_code', async (req, re
       }
 
     const userId = decoded.userId;
-    const verifyCode = email_verification_code;
+    const pevSid  = decoded.pevSid;
 
-    const existingUserId = await userDB.findOne({ userId, verifyCode });
+    const providerEmailVerificationRedisKey = `pev:${userId}:${pevSid}`;
+    const session = await redisCache.keys(providerEmailVerificationRedisKey);
 
-    if (!existingUserId) {
-      return res.status(460).json({ success: false, error: 'Wrong verification code entered' });
+    if (session.length === 0) {
+      return res.redirect('/login');
     }
 
-    await userDB.updateOne({ userId }, { $set: { emailVerified: true }, $unset: { verifyCode: 1 }});
+    await userDB.updateOne({ userId }, { $set: { emailVerified: true }});
+    await redisCache.del(providerEmailVerificationRedisKey);
 
     const sid = await generateRandomString(15);
     const device = req.headers['user-agent'];

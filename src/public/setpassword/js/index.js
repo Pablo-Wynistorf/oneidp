@@ -1,25 +1,8 @@
 addEventListener('DOMContentLoaded', () => {
-  ingestCode();
-  const recoveryCode = document.getElementById('recovery-code');
-  recoveryCode.focus();
-
   const passwordField = document.getElementById('password');
 
   const recoverButton = document.getElementById('recover-button');
   recoverButton.addEventListener('click', setNewPassword);
-
-  recoveryCode.addEventListener('input', function() {
-    if (this.value.length === 6) {
-      if (this.value.match(/^[0-9]+$/)) {
-        passwordField.focus();
-      } else {
-        displayAlertError('Please enter a valid recovery code');
-        this.value = '';
-      }
-    } else if (this.value.length > 6) {
-      this.value = this.value.slice(0, 6);
-    }
-  });
 
   document.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
@@ -29,34 +12,9 @@ addEventListener('DOMContentLoaded', () => {
   });
 });
 
-function getCookie(name) {
-  const cookieArray = document.cookie.split(';');
-  for (const cookie of cookieArray) {
-    const [cookieName, cookieValue] = cookie.trim().split('=');
-    if (cookieName === name) {
-      return cookieValue;
-    }
-  }
-  return null;
-}
-
-
-function ingestCode() {
-  const password_reset_code = getCookie('password_reset_code');
-  if (password_reset_code) {
-    const recoveryCode = document.getElementById('recovery-code');
-    recoveryCode.value = password_reset_code;
-    const passwordField = document.getElementById('password');
-    passwordField.focus();
-    recoveryCode.disabled = true;
-  }
-}
-
 function setNewPassword() {
   const passwordinput = document.getElementById('password');
-  const recoveryCodeInput = document.getElementById('recovery-code');
   const password = passwordinput.value;
-  const recoveryCode = recoveryCodeInput.value;
 
   const recoverButton = document.getElementById('recover-button');
   recoverButton.disabled = true;
@@ -64,10 +22,10 @@ function setNewPassword() {
   recoverButton.classList.add('flex', 'justify-center', 'items-center', 'text-gray-500')
   recoverButton.innerHTML = `<img src="/signup/images/spinner.svg" width="24" height="24" />`;
 
-  if (!password || password === '' || password === 'undefined' || !recoveryCode || recoveryCode === '' || recoveryCode === 'undefined') {
+  if (!password || password === '' || password === 'undefined') {
     const recoverButton = document.getElementById('recover-button');
     recoverButton.disabled = false;
-    recoverButton.innerText = 'Set new account password';
+    recoverButton.innerText = 'Set new password';
     recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
     displayAlertError('All fields are required');
     return;
@@ -79,7 +37,7 @@ function setNewPassword() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ password, password_reset_code: recoveryCode })
+      body: JSON.stringify({ password })
     })
     .then(handleResponse)
     .catch(handleError);
@@ -114,26 +72,25 @@ function handle460Error() {
   document.getElementById('password').value = '';
   const recoverButton = document.getElementById('recover-button');
   recoverButton.disabled = false;
-  recoverButton.innerText = 'Set new account password';
+  recoverButton.innerText = 'Set new password';
   recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
   displayAlertError('Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character')
 }
 
 function handle461Error() {
-  document.getElementById('recovery-code').value = '';
+  document.getElementById('password').value = '';
   const recoverButton = document.getElementById('recover-button');
   recoverButton.disabled = false;
-  recoverButton.innerText = 'Set new account password';
+  recoverButton.innerText = 'Set new password';
   recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
-  displayAlertError('Wrong recovery code entered')
+  window.location.href = '/recovery';
 }
 
 function handleError() {
   document.getElementById('password').value = '';
-  document.getElementById('recovery-code').value = '';
   const recoverButton = document.getElementById('recover-button');
   recoverButton.disabled = false;
-  recoverButton.innerText = 'Set new account password';
+  recoverButton.innerText = 'Set new password';
   recoverButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
   displayAlertError('Something went wrong')
 }
@@ -148,7 +105,6 @@ function getRedirectUri() {
   }
   return null;
 }
-
 
 
 function displayAlertError(message) {

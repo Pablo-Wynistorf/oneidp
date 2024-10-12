@@ -44,7 +44,7 @@ connectToDatabase();
 
 // Function to check if a route is public
 const isPublicRoute = (path) => {
-  const publicRoutes = ['/', '/login', '/signup', '/recovery', '/setpassword', '/verify', '/imprint', '/privacy-policy'];
+  const publicRoutes = ['/', '/login/', '/signup/', '/recovery/', '/setpassword/', '/verify/'];
   return publicRoutes.includes(path.split('?')[0]);
 };
 
@@ -180,11 +180,10 @@ app.use('/api/auth/mfa/verify', rateLimiter(10, 60 * 1000), require('./routes/ap
 app.use('/api/auth/mfa/setup', rateLimiter(5, 60 * 1000), require('./routes/api/auth/mfa/setup.js')); // 5 requests per minute
 app.use('/api/auth/mfa/setup/verify', rateLimiter(5, 60 * 1000), require('./routes/api/auth/mfa/setup/verify.js')); // 5 requests per minute
 app.use('/api/auth/mfa/disable', rateLimiter(5, 60 * 1000), require('./routes/api/auth/mfa/disable.js')); // 5 requests per minute
-app.use('/api/auth/user/verify', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/verify.js')); // 5 requests per minute
 app.use('/api/auth/user/confirmationlink', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/confirmationlink.js')); // 5 requests per minute
 app.use('/api/auth/user/setresettokens', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/setresettokens.js')); // 5 requests per minute
 app.use('/api/auth/user/changepassword', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/changepassword.js')); // 5 requests per minute
-app.use('/api/auth/user/resetpassword', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/resetpassword.js')); // 5 requests per minute
+app.use('/api/auth/user/resetpassword', rateLimiter(1, 60 * 1000), require('./routes/api/auth/user/resetpassword.js')); // 1 request per 60 seconds
 app.use('/api/auth/user/setpassword', rateLimiter(5, 60 * 1000), require('./routes/api/auth/user/setpassword.js')); // 5 requests per minute
 app.use('/api/auth/user/session', rateLimiter(20, 60 * 1000), require('./routes/api/auth/user/session.js')); // 20 requests per minute
 
