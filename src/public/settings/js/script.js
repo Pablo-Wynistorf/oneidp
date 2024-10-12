@@ -64,6 +64,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((data) => {
         if (data.success) {
           mfaQrCode.src = data.imageUrl;
+          mfaActivationCode = data.mfaActivationCode;
         } else {
           handleError();
         }
@@ -116,6 +117,18 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch(() => handleError());
   }
 });
+
+let mfaActivationCode;
+
+function copyMfaActivationCode() {
+  const textArea = document.createElement("textarea");
+  textArea.value = mfaActivationCode;
+  document.body.appendChild(textArea);
+  textArea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textArea);
+  displayAlertSuccess("Activation code copied to clipboard.");
+}
 
 document
   .getElementById("close-mfa-modal")

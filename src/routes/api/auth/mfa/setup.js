@@ -64,11 +64,13 @@ router.post('/', async (req, res) => {
       encoding: 'base64'
     });
 
+    const mfaActivationCode = qrCodeUrl.split('secret=')[1].split('&')[0];
+
     qrcode.toDataURL(qrCodeUrl, (err, imageUrl) => {
       if (err) {
         res.status(500).json({ error: 'Something went wrong, try again later' });
       } else {
-        res.status(200).json({ success: true, imageUrl, secret: mfaSecret.ascii });
+        res.status(200).json({ success: true, imageUrl, mfaActivationCode });
       }
     });
   });
