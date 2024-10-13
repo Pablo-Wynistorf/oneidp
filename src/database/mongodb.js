@@ -47,7 +47,6 @@ const oAuthClientSchema = new Schema({
   clientSecret: String,
   redirectUri: String,
   accessTokenValidity: Number,
-  oauthRoleIds: Array,
   owner: String,
 }, {
   timestamps: true

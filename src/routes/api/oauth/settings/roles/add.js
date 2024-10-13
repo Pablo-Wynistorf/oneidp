@@ -89,8 +89,6 @@ router.post('/', async (req, res) => {
 
         await newOauthRole.save();
 
-        await oAuthClientAppDB.updateOne({ oauthClientAppId }, { $push: { oauthRoleIds: oauthRoleId } });
-
         res.status(200).json({ success: true, message: 'OAuth role has been successfully added' });
       } catch (error) {
         res.status(500).json({ error: 'Something went wrong, try again later' });

@@ -58,7 +58,6 @@ router.post('/', async (req, res) => {
     }
 
     await oAuthRolesDB.deleteOne({ oauthRoleId });
-    await oAuthClientAppDB.updateOne({ oauthClientAppId }, { $pull: { oauthRoleIds: oauthRoleId } });
 
     res.status(200).json({ success: true, message: 'OAuth role has been successfully deleted' });
   });
