@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
-const { userDB, oAuthRolesDB } = require('../../../../../../database/mongodb.js');
+const { userDB, oAuthRolesDB, oAuthClientAppDB } = require('../../../../../../database/mongodb.js');
 const redisCache = require('../../../../../../database/redis.js');
 
 const router = express.Router();
@@ -59,14 +59,15 @@ router.post('/', async (req, res) => {
       return res.status(460).json({ error: 'User has no permissions to manage oauth apps' });
     }
 
-    let oauthApps = userAccess.oauthClientAppIds || [];
+    const oauthApps = await oAuthClientAppDB.find({ owner: userId });
 
     if (oauthApps.length === 0) {
       return res.status(404).json({ error: 'No OAuth apps found for this user' });
     }
 
-    if (!oauthApps.includes(oauthClientAppId)) {
-      return res.status(461).json({ error: 'User does not have access to this oauth app' });
+    const userApp = oauthApps.find(app => app.oauthClientAppId === oauthClientAppId);
+    if (!userApp) {
+      return res.status(461).json({ error: 'User does not have access to this app' });
     }
 
     const existingRole = await oAuthRolesDB.findOne({ oauthRoleId, oauthClientAppId, owner: userId });

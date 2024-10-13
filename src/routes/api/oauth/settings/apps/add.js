@@ -87,10 +87,10 @@ router.post('/', async (req, res) => {
           clientSecret,
           redirectUri,
           accessTokenValidity,
+          owner: userId,
         });
 
         await newoauthClientApp.save();
-        await userDB.updateOne({ userId }, { $push: { oauthClientAppIds: oauthClientAppId } });
 
         res.status(200).json({
           success: true,

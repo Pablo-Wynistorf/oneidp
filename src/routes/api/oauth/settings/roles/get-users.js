@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
-const { userDB, oAuthRolesDB } = require('../../../../../database/mongodb.js');
+const { userDB, oAuthRolesDB, oAuthClientAppDB} = require('../../../../../database/mongodb.js');
 const redisCache = require('../../../../../database/redis.js');
 
 const router = express.Router();
@@ -38,7 +38,7 @@ router.post('/', async (req, res) => {
       return res.status(403).json({ error: 'User does not have access to manage OAuth apps' });
     }
 
-    let oauthApps = userAccess.oauthClientAppIds || [];
+    const oauthApps = await oAuthClientAppDB.find({ owner: userId });
 
     if (!Array.isArray(oauthApps)) {
       return res.status(400).json({ error: 'Invalid format for oauthClientAppIds' });
@@ -48,8 +48,9 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'No OAuth apps found for this user' });
     }
 
-    if (!oauthApps.includes(oauthClientAppId)) {
-      return res.status(403).json({ error: 'User does not have access to this OAuth app' });
+    const userApp = oauthApps.find(app => app.oauthClientAppId === oauthClientAppId);
+    if (!userApp) {
+      return res.status(465).json({ error: 'User does not have access to this app' });
     }
 
     const oauthRolesData = await oAuthRolesDB.findOne({ oauthRoleId });

@@ -40,26 +40,16 @@ router.get('/', async (req, res) => {
         const userAccess = await userDB.findOne({ userId, providerRoles: 'oauthUser' });
 
         if (!userAccess) {
-          return res.status(465).json({ error: 'User does not have access to create oauth apps' });
+          return res.status(465).json({ error: 'User does not have access to get oauth apps' });
         }
 
-        let oauthApps = userAccess.oauthClientAppIds || [];
-
-        if (!Array.isArray(oauthApps)) {
-          return res.status(400).json({ error: 'Invalid format for oauthApps' });
-        }
+        const oauthApps = await oAuthClientAppDB.find({ owner: userId });
 
         if (oauthApps.length === 0) {
           return res.status(404).json({ error: 'No OAuth apps found for this user' });
         }
 
-        const oauthAppsData = await oAuthClientAppDB.find({ oauthClientAppId: { $in: oauthApps } }).exec();
-
-        if (!oauthAppsData || oauthAppsData.length === 0) {
-          return res.status(404).json({ error: 'No OAuth apps found' });
-        }
-
-        const organizedData = oauthAppsData.map(app => ({
+        const organizedData = oauthApps.map(app => ({
           oauthAppName: app.oauthAppName,
           clientId: app.clientId,
           clientSecret: app.clientSecret,
@@ -70,10 +60,12 @@ router.get('/', async (req, res) => {
 
         res.json({ oauthApps: organizedData });
       } catch (error) {
+        console.log(error);
         res.status(500).json({ error: 'Something went wrong, try again later' });
       }
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });

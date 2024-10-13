@@ -36,7 +36,6 @@ const userSchema = new Schema({
   mfaEnabled: Boolean,
   emailVerified: Boolean,
   providerRoles: Array,
-  oauthClientAppIds: Array,
 }, {
   timestamps: true
 });
@@ -49,6 +48,7 @@ const oAuthClientSchema = new Schema({
   redirectUri: String,
   accessTokenValidity: Number,
   oauthRoleIds: Array,
+  owner: String,
 }, {
   timestamps: true
 });

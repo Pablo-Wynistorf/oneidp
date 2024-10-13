@@ -45,16 +45,21 @@ router.post('/', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Access Token is invalid' });
     }
 
-    const userData = await userDB.findOne({ userId });
+    const userAccess = await userDB.findOne({ userId, providerRoles: 'oauthUser' });
 
-    let oauthApps = userData.oauthClientAppIds || [];
+    if (!userAccess) {
+      return res.status(465).json({ error: 'User does not have access to edit oauth apps' });
+    }
+
+    const oauthApps = await oAuthClientAppDB.find({ owner: userId });
 
     if (oauthApps.length === 0) {
       return res.status(404).json({ error: 'No OAuth apps found for this user' });
     }
 
-    if (oauthApps.indexOf(oauthClientAppId) === -1) {
-      return res.status(461).json({ error: 'User does not have access to this oauth app' });
+    const userApp = oauthApps.find(app => app.oauthClientAppId === oauthClientAppId);
+    if (!userApp) {
+      return res.status(465).json({ error: 'User does not have access to edit this app' });
     }
 
     await oAuthClientAppDB.updateOne({ oauthClientAppId }, {

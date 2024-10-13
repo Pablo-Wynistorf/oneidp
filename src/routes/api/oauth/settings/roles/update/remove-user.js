@@ -110,13 +110,15 @@ router.post('/', async (req, res) => {
         return res.status(460).json({ success: false, error: 'User has no permissions to manage oauth apps' });
       }
 
-      let oauthApps = userAccess.oauthClientAppIds || [];
+      const oauthApps = await oAuthClientAppDB.find({ owner: userIdFromToken });
+
       if (!Array.isArray(oauthApps)) {
         return res.status(400).json({ success: false, error: 'Invalid format for oauthApps' });
       }
 
-      if (!oauthApps.includes(oauthClientAppId)) {
-        return res.status(461).json({ success: false, error: 'User does not have access to this oauth app' });
+      const userApp = oauthApps.find(app => app.oauthClientAppId === oauthClientAppId);
+      if (!userApp) {
+        return res.status(465).json({ error: 'User does not have access to this app' });
       }
 
       const role = await oAuthRolesDB.findOne({ oauthRoleId, oauthClientAppId });
