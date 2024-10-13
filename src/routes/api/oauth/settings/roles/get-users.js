@@ -22,7 +22,7 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const decoded = jwt.verify(accessToken, JWT_PUBLIC_KEY);
+    const decoded = jwt.verify(accessToken, JWT_PUBLIC_KEY, { algorithms: ['RS256'] });
     const { userId, sid } = decoded;
 
     const redisKey = `psid:${userId}:${sid}`;

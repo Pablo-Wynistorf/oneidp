@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
       return res.status(460).json({ success: false, error: 'Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character' });
     }
 
-    jwt.verify(password_reset_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+    jwt.verify(password_reset_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] }, async (error, decoded) => {
       if (error) {
         res.clearCookie('password_reset_token');
         return res.status(461).json({ success: false, error: 'Reset token invalid' });

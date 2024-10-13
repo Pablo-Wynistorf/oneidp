@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
     }
 
     let userInfo;
-    jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+    jwt.verify(access_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] }, async (error, decoded) => {
       if (error) {
         return res.redirect('/login');
       }

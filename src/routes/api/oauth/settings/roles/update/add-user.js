@@ -93,7 +93,7 @@ router.post('/', async (req, res) => {
       return res.status(200).json({ success: true, message: 'User successfully added to role' });
     }
 
-    jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+    jwt.verify(access_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] }, async (error, decoded) => {
       if (error) {
         return res.redirect('/login');
       }

@@ -13,7 +13,7 @@ ${process.env.JWT_PUBLIC_KEY}
 
 router.post('/', async (req, res) => {
   const { access_token } = req.body;
-  jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+  jwt.verify(access_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] }, async (error, decoded) => {
     if (error) {
       res.clearCookie('access_token');
       return res.status(401).json({ success: false, error: 'Access Token is invalid' });

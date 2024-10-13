@@ -22,7 +22,7 @@ ${process.env.JWT_PUBLIC_KEY}
 router.get('/:email_verification_token', async (req, res) => {
   const { email_verification_token } = req.params;
   
-  jwt.verify(email_verification_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+  jwt.verify(email_verification_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] }, async (error, decoded) => {
       if (error) {
         return res.redirect('/login');
       }

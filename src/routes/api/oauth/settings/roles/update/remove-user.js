@@ -87,7 +87,7 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ success: false, error: 'No Access Token provided' });
   }
 
-  jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+  jwt.verify(access_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] }, async (error, decoded) => {
     if (error) {
       return res.redirect('/login');
     }

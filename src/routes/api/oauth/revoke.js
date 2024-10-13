@@ -28,7 +28,7 @@ router.post('/', (req, res) => {
   }
 
 
-  jwt.verify(token, JWT_PUBLIC_KEY, async (error, decoded) => {
+  jwt.verify(token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] }, async (error, decoded) => {
     if (error) {
       return res.status(400).json({ error: 'invalid_token', error_description: 'Invalid token provided' });
     }

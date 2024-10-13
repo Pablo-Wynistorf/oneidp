@@ -29,7 +29,7 @@ router.post('/', async (req, res) => {
     return res.status(462).json({ success: false, error: 'MFA token not found' });
   }
 
-    jwt.verify(mfa_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+    jwt.verify(mfa_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] }, async (error, decoded) => {
       if (error) {
         return res.status(463).json({ success: false, error: 'MFA token is invalid' });
       }

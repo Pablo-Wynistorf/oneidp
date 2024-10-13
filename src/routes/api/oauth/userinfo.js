@@ -29,7 +29,7 @@ router.all('/', (req, res) => {
     }
   }
 
-  jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, tokenData) => {
+  jwt.verify(access_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] }, async (error, tokenData) => {
     if (error) {
       return res.status(401).json({ success: false, error: 'Access Token is invalid' });
     }

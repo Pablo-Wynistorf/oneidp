@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: 'Invalid Request', error_description: 'No redirect_uri provided' });
     }    
 
-    jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+    jwt.verify(access_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] }, async (error, decoded) => {
 
       if (error) {
         return res.redirect(`/login?redirectUri=${URL + req.originalUrl}`);

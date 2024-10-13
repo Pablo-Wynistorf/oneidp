@@ -18,7 +18,7 @@ router.post('/', (req, res) => {
     return res.status(200).json({ success: true });
   }
 
-  jwt.verify(access_token, JWT_PUBLIC_KEY, async (error, decoded) => {
+  jwt.verify(access_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] }, async (error, decoded) => {
     if (error) {
       res.clearCookie('access_token');
       return res.status(200).json({ success: true });
