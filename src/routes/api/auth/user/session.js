@@ -100,7 +100,11 @@ router.delete('/', async (req, res) => {
         sessionKeys.map(async (key) => {
           const sessionData = await redisCache.hGetAll(key);
           key = key.split(':')[2];
-          return { sessionId: key, sessionData: sessionData };
+          return { 
+            sessionId, 
+            currentSession: sessionId === sid ? "true" : "false",
+            sessionData 
+          };
         })
       );
 
