@@ -87,7 +87,7 @@ router.delete('/', async (req, res) => {
       }
 
       const endSessionRedisPattern = `psid:${userId}:${sessionId}`;
-      const endSessionSuccess =  await redisCache.del(endSessionRedisPattern);
+      const endSessionSuccess = await redisCache.del(endSessionRedisPattern);
 
       if (!endSessionSuccess) {
         return res.status(400).json({ success: false, error: 'Session not found' });
@@ -99,10 +99,10 @@ router.delete('/', async (req, res) => {
       const sessions = await Promise.all(
         sessionKeys.map(async (key) => {
           const sessionData = await redisCache.hGetAll(key);
-          key = key.split(':')[2];
+          const currentSessionId = key.split(':')[2];
           return { 
-            sessionId, 
-            currentSession: sessionId === sid ? "true" : "false",
+            sessionId: currentSessionId, 
+            currentSession: currentSessionId === sid ? "true" : "false",
             sessionData 
           };
         })
