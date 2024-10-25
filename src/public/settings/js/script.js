@@ -134,6 +134,7 @@ document
   .getElementById("close-mfa-modal")
   .addEventListener("click", function () {
     document.getElementById("mfa-modal").classList.add("hidden");
+    document.getElementById("mfa-qr-code").src = "img/qr-code.png";
   });
 
 function changePassword() {

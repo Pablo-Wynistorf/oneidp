@@ -525,3 +525,60 @@ document.getElementById('create-role-submit').addEventListener('click', async ()
     displayAlertError("Error: " + error.message);
   }
 });
+
+
+let timeout;
+
+document.getElementById('userid_or_username').addEventListener('input', function() {
+    const query = this.value;
+
+    // Clear the timeout if it exists
+    clearTimeout(timeout);
+
+    // Set a new timeout to wait before making the API call
+    timeout = setTimeout(async () => {
+        if (query.length > 0) {
+            try {
+                const response = await fetch(`/api/oauth/users/search?query=${encodeURIComponent(query)}`);
+                const users = await response.json();
+                if (response.ok) {
+                    showUserSuggestions(users);
+                } else {
+                    console.error('Error fetching users:', users.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        } else {
+            clearUserSuggestions();
+        }
+    }, 300); // Wait 300ms after the user stops typing
+});
+
+function showUserSuggestions(users) {
+  const suggestionBox = document.getElementById('user-suggestions');
+  suggestionBox.innerHTML = '';
+
+  // Access the `userName` array inside the `users` object
+  if (users.userName && Array.isArray(users.userName)) {
+      users.userName.forEach(username => {
+          const suggestionItem = document.createElement('div');
+          suggestionItem.classList.add('p-2', 'cursor-pointer', 'hover:bg-gray-700', 'text-white');
+          suggestionItem.textContent = username;
+          suggestionItem.addEventListener('click', () => {
+              document.getElementById('userid_or_username').value = username;
+              clearUserSuggestions();
+          });
+          suggestionBox.appendChild(suggestionItem);
+      });
+  }
+
+  suggestionBox.classList.remove('hidden');
+}
+
+
+function clearUserSuggestions() {
+    const suggestionBox = document.getElementById('user-suggestions');
+    suggestionBox.innerHTML = '';
+    suggestionBox.classList.add('hidden');
+}

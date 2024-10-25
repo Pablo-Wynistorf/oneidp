@@ -35,5 +35,10 @@
     "qrcode": "^1.5.3",
     "redis": "^4.7.0",
     "speakeasy": "^2.0.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14"
   }
 }
