@@ -203,9 +203,9 @@ app.use('/api/oauth/settings/roles/delete', rateLimiter(10, 60 * 1000), require(
 // OAuth Endpoints
 app.use('/api/oauth/authorize', rateLimiter(1, 1000), require('./routes/api/oauth/authorize.js')); // 1 request per second
 app.use('/api/oauth/token', rateLimiter(1, 1000), require('./routes/api/oauth/token.js')); // 1 request per second
-app.use('/api/oauth/userinfo', rateLimiter(100, 60 * 1000), require('./routes/api/oauth/userinfo.js')); // 100 requests per minute
+app.use('/api/oauth/userinfo', rateLimiter(20, 10 * 1000), require('./routes/api/oauth/userinfo.js')); // 20 requests per 10 seconds
 app.use('/api/oauth/users', rateLimiter(30, 60 * 1000), require('./routes/api/oauth/users.js')); // 30 requests per minute
-app.use('/api/oauth/check_token', rateLimiter(100, 60 * 1000), require('./routes/api/oauth/check_token.js')); // 100 requests per minute
+app.use('/api/oauth/check_token', rateLimiter(20, 10 * 1000), require('./routes/api/oauth/check_token.js')); // 20 requests per 10 seconds
 app.use('/api/oauth/logout', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/logout.js')); // 10 requests per minute
 app.use('/api/oauth/revoke', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/revoke.js')); // 10 requests per minute
 
