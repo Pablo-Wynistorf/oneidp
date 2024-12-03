@@ -7,8 +7,7 @@ function connectToDatabase() {
   mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    tlsAllowInvalidCertificates: false,
-    tlsInsecure: false,
+    tlsInsecure: true,
     serverSelectionTimeoutMS: 5000,
   })
     .then(() => console.log('Connected to MongoDB'))
