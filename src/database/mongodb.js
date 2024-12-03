@@ -4,13 +4,20 @@ require('dotenv').config();
 const { MONGODB_URI } = process.env;
 
 function connectToDatabase() {
-  mongoose.connect(MONGODB_URI)
+  mongoose.connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    tlsAllowInvalidCertificates: false,
+    tlsInsecure: false,
+    serverSelectionTimeoutMS: 5000,
+  })
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => {
       console.error('MongoDB connection error:', err);
-      setTimeout(connectToDatabase, 5000);
+      setTimeout(connectToDatabase, 5000); // Retry after 5 seconds
     });
 }
+
 
 const db = mongoose.connection;
 
