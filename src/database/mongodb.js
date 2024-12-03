@@ -14,7 +14,7 @@ function connectToDatabase() {
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => {
       console.error('MongoDB connection error:', err);
-      setTimeout(connectToDatabase, 5000); // Retry after 5 seconds
+      setTimeout(connectToDatabase, 5000);
     });
 }
 
