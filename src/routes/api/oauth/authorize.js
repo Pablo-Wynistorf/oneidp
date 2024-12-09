@@ -17,6 +17,7 @@ ${process.env.JWT_PUBLIC_KEY}
 router.get('/', async (req, res) => {
   const { client_id, redirect_uri, state, nonce, code_challenge_method, code_challenge } = req.query;
   const access_token = req.cookies.access_token;
+  let scope = req.query.scope;
 
   try {
 
@@ -31,6 +32,19 @@ router.get('/', async (req, res) => {
     if (!redirect_uri || redirect_uri === 'undefined') {
       return res.status(400).json({ error: 'Invalid Request', error_description: 'No redirect_uri provided' });
     }    
+
+    if (!scope || scope === 'undefined') {
+      scope = 'openid';
+    }
+
+    const allowedScopes = ['openid', 'profile', 'email', 'offline_access'];
+
+    if (!allowedScopes.includes(scope)) {
+      return res.status(400).json({
+        error: 'Invalid Request',
+        error_description: 'Invalid scope provided'
+      });
+    }
 
     jwt.verify(access_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] }, async (error, decoded) => {
 
@@ -69,7 +83,8 @@ router.get('/', async (req, res) => {
           nonce: nonce,
           codeChallenge: code_challenge,
           codeChallengeMethod: code_challenge_method,
-          redirectUri: redirect_uri
+          redirectUri: redirect_uri,
+          scope: scope
         }).filter(([_, value]) => value !== undefined)
       ));
 

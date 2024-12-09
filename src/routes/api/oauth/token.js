@@ -151,9 +151,8 @@ router.post('/', async (req, res) => {
       }
     }
 
-    const scopes = scope ? scope.split(' ') : ['openid'];
+    const scopes = session.scope.split(' ');
     const isProfile = scopes.includes('profile');
-    const isName = scopes.includes('name');
     const isEmail = scopes.includes('email');
 
     oauth_user = await userDB.findOne({ userId });
@@ -217,9 +216,6 @@ router.post('/', async (req, res) => {
 
       if (isProfile) {
         idTokenPayload.username = username;
-      }
-
-      if (isName) {
         idTokenPayload.name = username;
       }
 
