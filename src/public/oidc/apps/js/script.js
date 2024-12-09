@@ -245,30 +245,40 @@ document.addEventListener("DOMContentLoaded", function () {
   const closeEditModalButton = document.getElementById("close-edit-modal");
 
   document.addEventListener("click", function (event) {
-      const editAppButton = event.target.closest(".edit-app-button");
-      const oauthAppBox = event.target.closest(".oauth-app-box");
-      if (editAppButton && oauthAppBox) {
-          const appId = editAppButton.id.split("-")[1];
+    const editAppButton = event.target.closest(".edit-app-button");
+    const oauthAppBox = event.target.closest(".oauth-app-box");
+    if (editAppButton && oauthAppBox) {
+      const appId = editAppButton.id.split("-")[1];
+      const appName = oauthAppBox.querySelector("h4").textContent;
 
-          const appName = oauthAppBox.querySelector("h4").textContent;
-          const redirectUri = oauthAppBox.querySelector("p:nth-of-type(4)").textContent.split(": ")[1];
-          const accessTokenValidity = oauthAppBox.querySelector("p:nth-of-type(5)").textContent.split(": ")[1];
-          
-          openEditAppModal(appId, appName, redirectUri, accessTokenValidity);
-      }
+      const paragraphs = oauthAppBox.querySelectorAll("p");
+      let redirectUri = "";
+      let accessTokenValidity = "";
+
+      paragraphs.forEach((p) => {
+        const text = p.textContent.trim();
+        if (text.startsWith("Redirect URI:")) {
+          redirectUri = text.split(": ")[1];
+        } else if (text.startsWith("Access Token Validity:")) {
+          accessTokenValidity = text.split(": ")[1];
+        }
+      });
+
+      openEditAppModal(appId, appName, redirectUri, accessTokenValidity);
+    }
   });
 
   closeEditModalButton.addEventListener("click", function () {
-      editAppModal.close();
+    editAppModal.close();
   });
 
   function openEditAppModal(appId, appName, redirectUri, accessTokenValidity) {
-      document.getElementById("edit-app-id").value = appId;
-      document.getElementById("edit-appname").value = appName;
-      document.getElementById("edit-redirecturl").value = redirectUri;
-      document.getElementById("edit-access-token-validity").value = accessTokenValidity;
+    document.getElementById("edit-app-id").value = appId;
+    document.getElementById("edit-appname").value = appName;
+    document.getElementById("edit-redirecturl").value = redirectUri;
+    document.getElementById("edit-access-token-validity").value = accessTokenValidity;
 
-      editAppModal.showModal();
+    editAppModal.showModal();
   }
 });
 
