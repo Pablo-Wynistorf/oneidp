@@ -158,6 +158,7 @@ router.post('/', async (req, res) => {
 
     const scopes = requestedScope ? requestedScope.split(' ') : [];
     const isProfile = scopes.includes('profile');
+    const isName = scopes.includes('name');
     const isEmail = scopes.includes('email');
 
     oauth_user = await userDB.findOne({ userId });
@@ -222,6 +223,11 @@ router.post('/', async (req, res) => {
       if (isProfile) {
         idTokenPayload.username = username;
       }
+
+      if (isName) {
+        idTokenPayload.name = username;
+      }
+
       if (isEmail) {
         idTokenPayload.email = email;
       }
@@ -278,11 +284,14 @@ router.post('/', async (req, res) => {
       aud: clientId,
       nonce: nonce,
       osid: osid,
-      name: username
     };
 
     if (isProfile) {
       idTokenPayload.username = username;
+    }
+
+    if (isName) {
+      idTokenPayload.name = username;
     }
 
     if (isEmail) {
