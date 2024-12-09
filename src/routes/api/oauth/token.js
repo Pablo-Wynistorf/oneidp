@@ -141,19 +141,16 @@ router.post('/', async (req, res) => {
 
       userId = session.userId;
       nonce = session.nonce;
-      requestedScope = session.scope; // scope stored at authorization time
-      storedRedirectUri = session.redirectUri; // redirect_uri stored at authorization time
+      requestedScope = session.scope; 
+      storedRedirectUri = session.redirectUri;
 
-      // Validate provided redirect_uri
       if (!redirect_uri || redirect_uri !== storedRedirectUri) {
-        await redisCache.del(redisKey); // Invalidate code
+        await redisCache.del(redisKey);
         return res.status(400).json({ error: 'invalid_request', error_description: 'redirect_uri does not match the one used in the authorization request' });
       }
 
-      // Delete the code after use
       await redisCache.del(redisKey);
 
-      // PKCE Verification if provided
       if (code_verifier) {
         const code_challenge_method = session.codeChallengeMethod;
         const code_challenge = session.codeChallenge;
@@ -167,46 +164,37 @@ router.post('/', async (req, res) => {
           return res.status(400).json({ error: 'invalid_request', error_description: 'Unsupported code_challenge_method' });
         }
       } else {
-        // For public clients, code_verifier is mandatory
         if (oauth_client.isPublicClient) {
           return res.status(401).json({ error: 'invalid_grant', error_description: 'Public clients must use PKCE' });
         }
 
-        // For confidential clients, if no code_verifier, client_secret must be provided
         if (!providedClientSecret && !oauth_client.isPublicClient) {
           return res.status(400).json({ error: 'invalid_request', error_description: 'client_secret is required for confidential clients without PKCE' });
         }
       }
     }
 
-    // Validate that openid scope is present if we are to return an ID token
     const scopes = requestedScope ? requestedScope.split(' ') : [];
     const isOpenId = scopes.includes('openid');
     const isProfile = scopes.includes('profile');
     const isEmail = scopes.includes('email');
 
-    // Common token generation logic
     oauth_user = await userDB.findOne({ userId });
     if (!oauth_user) {
       return res.status(401).json({ error: 'invalid_grant', error_description: 'User not found' });
     }
-
-    console.log("User:", oauth_user);
 
     const username = oauth_user.username;
     const email = oauth_user.email;
     const mfaEnabled = oauth_user.mfaEnabled;
     const accessTokenValidity = oauth_client.accessTokenValidity;
 
-    // Determine what roles are applicable
     const roleData = await oAuthRolesDB.find({
       $or: [
         { oauthClientId: clientId, oauthUserIds: userId },
         { oauthClientId: clientId, oauthUserIds: "*" },
       ],
     }).exec();
-
-    console.log("Roles:", roleData);
 
     const roleNames = roleData.map(role => role.oauthRoleName);
 
@@ -221,9 +209,9 @@ router.post('/', async (req, res) => {
     });
     await redisCache.expire(osidRedisKey, accessTokenValidity);
 
+    console.log(`Issuing access token for user ${userId} and client ${clientId}`);
+
     if (grant_type === 'refresh_token') {
-      // Refresh token flow: Return only access_token and expires_in.
-      // Usually, when refreshing, you can also return a new ID token if 'openid' scope is still there.
       const payload = {
         userId,
         osid,
@@ -239,7 +227,6 @@ router.post('/', async (req, res) => {
         { algorithm: 'RS256', expiresIn: accessTokenValidity, keyid: JWK_PUBLIC_KEY.kid }
       );
 
-      // If openid scope was present originally, we might return a new id_token as well.
       let responseBody = {
         access_token: oauth_access_token,
         expires_in: accessTokenValidity,
@@ -247,12 +234,12 @@ router.post('/', async (req, res) => {
       };
 
       if (isOpenId) {
-        // We issue a new ID token
         const idTokenPayload = {
           iss: URL,
           sub: userId,
-          aud: clientId
-          // You can decide whether to re-include nonce. Generally, nonce is for initial auth requests.
+          aud: clientId,
+          nonce: nonce,
+          osid: osid
         };
 
         if (isProfile) {
@@ -262,9 +249,10 @@ router.post('/', async (req, res) => {
           idTokenPayload.email = email;
         }
 
-        // Roles is a custom claim - ensure that you only add it if the client is allowed/expected to receive it,
-        // possibly behind a specific scope or policy.
+
         idTokenPayload.roles = roleNames;
+
+        idTokenPayload.mfaEnabled = mfaEnabled;
 
         const oauth_id_token = jwt.sign(
           idTokenPayload,
@@ -324,6 +312,7 @@ router.post('/', async (req, res) => {
       }
 
       idTokenPayload.roles = roleNames;
+
       idTokenPayload.mfaEnabled = mfaEnabled;
 
       const oauth_id_token = jwt.sign(
@@ -352,9 +341,9 @@ router.post('/', async (req, res) => {
     responseBody.refresh_token = oauth_refresh_token;
 
     return res.json(responseBody);
-
   } catch (error) {
-    notifyError("Error on token endpoint", error);
+    console.log(error);
+    notifyError(error);
     res.status(500).json({ error: 'server_error', error_description: 'Something went wrong. Please try again later' });
   }
 });
