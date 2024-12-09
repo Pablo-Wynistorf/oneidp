@@ -199,7 +199,6 @@ router.post('/', async (req, res) => {
     const roleNames = roleData.map(role => role.oauthRoleName);
 
     osid = await generateRandomString(15);
-    orsid = await generateRandomString(15);
     const timestamp = Math.floor(Date.now() / 1000);
 
     const osidRedisKey = `osid:${userId}:${osid}`;
@@ -208,8 +207,6 @@ router.post('/', async (req, res) => {
       createdAt: timestamp,
     });
     await redisCache.expire(osidRedisKey, accessTokenValidity);
-
-    console.log(`Issuing access token for user ${userId} and client ${clientId}`);
 
     if (grant_type === 'refresh_token') {
       const payload = {
@@ -265,13 +262,20 @@ router.post('/', async (req, res) => {
 
       return res.json(responseBody);
     }
+
+    orsid = await generateRandomString(15);
     const orsidRedisKey = `orsid:${userId}:${orsid}`;
-    await redisCache.hSet(orsidRedisKey, {
+    const response1 = await redisCache.hSet(orsidRedisKey, {
       oauthClientAppId: oauth_client.oauthClientAppId,
       createdAt: timestamp,
       scope: requestedScope
     });
-    await redisCache.expire(orsidRedisKey, 20 * 24 * 60 * 60);
+
+    console.log(response1);
+
+
+    const response2 = await redisCache.expire(orsidRedisKey, 20 * 24 * 60 * 60);
+    console.log(response2);
 
     const oauth_access_token_payload = {
       userId,
