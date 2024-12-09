@@ -151,7 +151,7 @@ router.post('/', async (req, res) => {
       }
     }
 
-    const scopes = scope.split(' ') || ['openid'];
+    const scopes = scope ? scope.split(' ') : ['openid'];
     const isProfile = scopes.includes('profile');
     const isName = scopes.includes('name');
     const isEmail = scopes.includes('email');
