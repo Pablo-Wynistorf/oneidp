@@ -69,6 +69,7 @@ router.get('/', async (req, res) => {
           nonce: nonce,
           codeChallenge: code_challenge,
           codeChallengeMethod: code_challenge_method,
+          redirectUri: redirect_uri,
         }).filter(([_, value]) => value !== undefined)
       ));
 
