@@ -37,12 +37,14 @@ router.get('/', async (req, res) => {
       scope = 'openid';
     }
 
+    const requestedScopes = scope.split(' ');
     const allowedScopes = ['openid', 'profile', 'email', 'offline_access'];
 
-    if (!allowedScopes.includes(scope)) {
+    const invalidScopes = requestedScopes.filter(s => !allowedScopes.includes(s));
+    if (invalidScopes.length > 0) {
       return res.status(400).json({
         error: 'Invalid Request',
-        error_description: 'Invalid scope provided'
+        error_description: `Invalid scope(s) provided: ${invalidScopes.join(', ')}`
       });
     }
 
