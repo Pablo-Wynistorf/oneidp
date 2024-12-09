@@ -26,7 +26,6 @@ router.post('/', async (req, res) => {
   const password_reset_token = req.cookies.password_reset_token;
 
   if (!password_reset_token) {
-    console.log('Reset Token not found');
     return res.status(461).json({ success: false, error: 'Reset Token not found' });
   }
 
@@ -50,7 +49,6 @@ router.post('/', async (req, res) => {
       const session = await redisCache.keys(providerPasswordResetRedisKey);
   
       if (session.length === 0) {
-        console.log('Session not found');
         res.clearCookie('password_reset_token');
         return res.status(461).json({ success: false, error: 'Reset token invalid' });
       }
@@ -83,7 +81,6 @@ router.post('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
     notifyError(error);
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }

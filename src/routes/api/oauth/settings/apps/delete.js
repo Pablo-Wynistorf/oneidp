@@ -64,12 +64,11 @@ router.post('/', async (req, res) => {
 
         res.status(200).json({ success: true, message: 'OAuth app has been successfully deleted' });
       } catch (error) {
-        console.log(error);
         res.status(500).json({ error: 'Something went wrong, try again later' });
+
       }
     });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });

@@ -73,8 +73,6 @@ router.post('/', async (req, res) => {
           existingClientId = await oAuthClientAppDB.findOne({ clientId });
         } while (existingClientId);
 
-        console.log("Is Public:", isPublicClient)
-
         let clientSecret = null;
         if (!isPublicClient) {
           let existingclientSecret;

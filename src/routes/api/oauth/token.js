@@ -118,6 +118,7 @@ router.post('/', async (req, res) => {
       } else {
         // Try to find a public client
         potentialClient = await oAuthClientAppDB.findOne({ clientId: providedClientId, isPublicClient: true });
+        console.log("potentialClient", potentialClient);
       }
 
       if (!potentialClient) {
