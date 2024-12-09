@@ -280,9 +280,6 @@ router.post('/', async (req, res) => {
 
     if (isProfile) {
       idTokenPayload.username = username;
-    }
-
-    if (isName) {
       idTokenPayload.name = username;
     }
 
