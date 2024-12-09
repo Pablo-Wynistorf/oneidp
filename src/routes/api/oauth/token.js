@@ -282,6 +282,7 @@ router.post('/', async (req, res) => {
 
     if (isProfile) {
       idTokenPayload.username = username;
+      idTokenPayload.name = username;
     }
 
     if (isEmail) {
