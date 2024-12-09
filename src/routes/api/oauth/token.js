@@ -118,7 +118,6 @@ router.post('/', async (req, res) => {
       } else {
         // Try to find a public client
         potentialClient = await oAuthClientAppDB.findOne({ clientId: providedClientId, isPublicClient: true });
-        console.log("potentialClient", potentialClient);
       }
 
       if (!potentialClient) {
@@ -192,6 +191,8 @@ router.post('/', async (req, res) => {
       return res.status(401).json({ error: 'invalid_grant', error_description: 'User not found' });
     }
 
+    console.log("User:", oauth_user);
+
     const username = oauth_user.username;
     const email = oauth_user.email;
     const mfaEnabled = oauth_user.mfaEnabled;
@@ -204,6 +205,8 @@ router.post('/', async (req, res) => {
         { oauthClientId: clientId, oauthUserIds: "*" },
       ],
     }).exec();
+
+    console.log("Roles:", roleData);
 
     const roleNames = roleData.map(role => role.oauthRoleName);
 
@@ -274,16 +277,12 @@ router.post('/', async (req, res) => {
 
       return res.json(responseBody);
     }
-
-    // Authorization code flow: Return access_token, id_token (if openid), refresh_token, expires_in
     const orsidRedisKey = `orsid:${userId}:${orsid}`;
     await redisCache.hSet(orsidRedisKey, {
       oauthClientAppId: oauth_client.oauthClientAppId,
       createdAt: timestamp,
-      // Store the scope and other parameters if you want to use them on refresh
       scope: requestedScope
     });
-    // Refresh token is generally long-lived
     await redisCache.expire(orsidRedisKey, 20 * 24 * 60 * 60);
 
     const oauth_access_token_payload = {
@@ -307,7 +306,6 @@ router.post('/', async (req, res) => {
       token_type: "Bearer"
     };
 
-    // Only issue ID token if openid scope is present
     if (isOpenId) {
       const idTokenPayload = {
         iss: URL,
@@ -319,17 +317,14 @@ router.post('/', async (req, res) => {
 
       if (isProfile) {
         idTokenPayload.username = username;
-        // Additional profile claims could be added if relevant and requested
       }
 
       if (isEmail) {
         idTokenPayload.email = email;
       }
 
-      // If you want to conditionally add roles based on a custom scope, do so:
-      // For now, let's add roles if we consider that part of the user info:
       idTokenPayload.roles = roleNames;
-      idTokenPayload.mfaEnabled = mfaEnabled; // Consider if you want this claim behind a scope as well
+      idTokenPayload.mfaEnabled = mfaEnabled;
 
       const oauth_id_token = jwt.sign(
         idTokenPayload,
@@ -339,33 +334,27 @@ router.post('/', async (req, res) => {
       responseBody.id_token = oauth_id_token;
     }
 
-    // Issue refresh token if offline_access requested or always (depends on policy)
-    // OIDC states offline_access scope is required to issue long-lived refresh tokens.
-    // Let's issue refresh_token only if offline_access scope is present:
-    const isOfflineAccess = scopes.includes('offline_access');
-    if (isOfflineAccess) {
-      const oauth_refresh_token_payload = {
-        userId,
-        orsid,
-        clientId,
-        iss: URL,
-        sub: userId,
-        aud: clientId
-      };
+    const oauth_refresh_token_payload = {
+      userId,
+      orsid,
+      clientId,
+      iss: URL,
+      sub: userId,
+      aud: clientId
+    };
 
-      const oauth_refresh_token = jwt.sign(
-        oauth_refresh_token_payload,
-        JWT_PRIVATE_KEY,
+    const oauth_refresh_token = jwt.sign(
+      oauth_refresh_token_payload,
+      JWT_PRIVATE_KEY,
         { algorithm: 'RS256', expiresIn: '20d', keyid: JWK_PUBLIC_KEY.kid }
       );
 
-      responseBody.refresh_token = oauth_refresh_token;
-    }
+    responseBody.refresh_token = oauth_refresh_token;
 
     return res.json(responseBody);
 
   } catch (error) {
-    notifyError(error);
+    notifyError("Error on token endpoint", error);
     res.status(500).json({ error: 'server_error', error_description: 'Something went wrong. Please try again later' });
   }
 });
