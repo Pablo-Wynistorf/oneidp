@@ -48,7 +48,6 @@ router.post('/', async (req, res) => {
     }
 
     if (grant_type === 'refresh_token') {
-      // Refresh Token Flow
       let decodedRefreshToken;
       try {
         decodedRefreshToken = jwt.verify(refresh_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] });
@@ -60,7 +59,6 @@ router.post('/', async (req, res) => {
       orsid = decodedRefreshToken.orsid;
       clientId = decodedRefreshToken.clientId;
 
-      // Client authentication for refresh tokens
       oauth_client = await oAuthClientAppDB.findOne({ clientId, clientSecret });
       if (!oauth_client) {
         return res.status(401).json({ error: 'invalid_client', error_description: 'Invalid client credentials or refresh token' });
@@ -74,29 +72,13 @@ router.post('/', async (req, res) => {
         return res.status(401).json({ error: 'invalid_grant', error_description: 'Refresh Token is invalid or expired' });
       }
 
-      // For refresh tokens, scope might have been included at authorization time. 
-      // However, standard practice is that refresh tokens can request the same or fewer scopes.
-      // If you stored scope at the initial issuance, you could fetch it from Redis. 
-      // For simplicity, assume the same scope is used (if previously stored).
-      // If you want to implement scope restriction on refresh, you need to store and fetch from Redis.
-
-      // Let's say we stored the scope along with orsid for demonstration (not shown previously):
-      // const orsidSession = await redisCache.hGetAll(orsidRedisKey);
-      // requestedScope = orsidSession.scope || "openid";
-
-      // If not stored, default to at least 'openid' because ID token was issued initially:
-      // requestedScope = requestedScope || 'openid';
-
-      // For this example, let's just assume 'openid' scope since we must produce an access_token anyway.
       requestedScope = 'openid';
 
     } else if (grant_type === 'authorization_code') {
-      // Authorization Code Flow
       let providedClientId = clientId;
       let providedClientSecret = clientSecret;
 
       if (!providedClientSecret) {
-        // Check the Authorization header if client_secret wasn't provided directly
         const authorizationHeader = req.headers.authorization;
         if (authorizationHeader) {
           const authorizationHeaderBase64 = authorizationHeader.split(' ')[1];
@@ -175,7 +157,6 @@ router.post('/', async (req, res) => {
     }
 
     const scopes = requestedScope ? requestedScope.split(' ') : [];
-    const isOpenId = scopes.includes('openid');
     const isProfile = scopes.includes('profile');
     const isEmail = scopes.includes('email');
 
@@ -230,35 +211,32 @@ router.post('/', async (req, res) => {
         token_type: "Bearer"
       };
 
-      if (isOpenId) {
-        const idTokenPayload = {
-          iss: URL,
-          sub: userId,
-          aud: clientId,
-          nonce: nonce,
-          osid: osid
-        };
+      const idTokenPayload = {
+        iss: URL,
+        sub: userId,
+        aud: clientId,
+        nonce: nonce,
+        osid: osid
+      };
 
-        if (isProfile) {
-          idTokenPayload.username = username;
-        }
-        if (isEmail) {
-          idTokenPayload.email = email;
-        }
-
-
-        idTokenPayload.roles = roleNames;
-
-        idTokenPayload.mfaEnabled = mfaEnabled;
-
-        const oauth_id_token = jwt.sign(
-          idTokenPayload,
-          JWT_PRIVATE_KEY,
-          { algorithm: 'RS256', expiresIn: '48h', keyid: JWK_PUBLIC_KEY.kid }
-        );
-
-        responseBody.id_token = oauth_id_token;
+      if (isProfile) {
+        idTokenPayload.username = username;
       }
+      if (isEmail) {
+        idTokenPayload.email = email;
+      }
+
+      idTokenPayload.roles = roleNames;
+
+      idTokenPayload.mfaEnabled = mfaEnabled;
+
+      const oauth_id_token = jwt.sign(
+        idTokenPayload,
+        JWT_PRIVATE_KEY,
+        { algorithm: 'RS256', expiresIn: '48h', keyid: JWK_PUBLIC_KEY.kid }
+      );
+
+      responseBody.id_token = oauth_id_token;
 
       return res.json(responseBody);
     }
@@ -294,34 +272,32 @@ router.post('/', async (req, res) => {
       token_type: "Bearer"
     };
 
-    if (isOpenId) {
-      const idTokenPayload = {
-        iss: URL,
-        sub: userId,
-        aud: clientId,
-        nonce: nonce,
-        osid: osid
-      };
+    const idTokenPayload = {
+      iss: URL,
+      sub: userId,
+      aud: clientId,
+      nonce: nonce,
+      osid: osid
+    };
 
-      if (isProfile) {
-        idTokenPayload.username = username;
-      }
-
-      if (isEmail) {
-        idTokenPayload.email = email;
-      }
-
-      idTokenPayload.roles = roleNames;
-
-      idTokenPayload.mfaEnabled = mfaEnabled;
-
-      const oauth_id_token = jwt.sign(
-        idTokenPayload,
-        JWT_PRIVATE_KEY,
-        { algorithm: 'RS256', expiresIn: '48h', keyid: JWK_PUBLIC_KEY.kid }
-      );
-      responseBody.id_token = oauth_id_token;
+    if (isProfile) {
+      idTokenPayload.username = username;
     }
+
+    if (isEmail) {
+      idTokenPayload.email = email;
+    }
+
+    idTokenPayload.roles = roleNames;
+
+    idTokenPayload.mfaEnabled = mfaEnabled;
+
+    const oauth_id_token = jwt.sign(
+      idTokenPayload,
+      JWT_PRIVATE_KEY,
+      { algorithm: 'RS256', expiresIn: '48h', keyid: JWK_PUBLIC_KEY.kid }
+    );
+    responseBody.id_token = oauth_id_token;
 
     const oauth_refresh_token_payload = {
       userId,
@@ -342,7 +318,6 @@ router.post('/', async (req, res) => {
 
     return res.json(responseBody);
   } catch (error) {
-    console.log(error);
     notifyError(error);
     res.status(500).json({ error: 'server_error', error_description: 'Something went wrong. Please try again later' });
   }
