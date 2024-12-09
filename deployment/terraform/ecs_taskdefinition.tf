@@ -1,12 +1,3 @@
-variable "environment_variables" {
-  type        = map(string)
-  description = "Environment variables for the ECS task definition"
-}
-
-
-data "aws_caller_identity" "current" {}
-
-
 resource "aws_ecs_task_definition" "oneidp" {
   family                   = "oneidp-service"
   network_mode             = "awsvpc"
@@ -36,10 +27,6 @@ resource "aws_ecs_task_definition" "oneidp" {
         }
       ]
       environment = [
-        for k, v in var.environment_variables : {
-          name  = k
-          value = v
-        }
       ]
       readonlyRootFilesystem = true
       logConfiguration = {
