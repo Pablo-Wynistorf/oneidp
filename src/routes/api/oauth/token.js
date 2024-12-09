@@ -44,6 +44,7 @@ router.post('/', async (req, res) => {
     let clientSecret = client_secret;
     let nonce;
     let storedRedirectUri;
+    let session;
 
     if (grant_type !== 'authorization_code' && grant_type !== 'refresh_token') {
       return res.status(400).json({ error: 'unsupported_grant_type', error_description: 'Only authorization_code and refresh_token are supported' });
@@ -67,7 +68,7 @@ router.post('/', async (req, res) => {
       }
 
       const redisKey = `orsid:${userId}:${orsid}`;
-      const session = await redisCache.keys(redisKey);
+      session = await redisCache.keys(redisKey);
 
       if (session.length === 0) {
         res.clearCookie('refresh_token');
@@ -111,7 +112,7 @@ router.post('/', async (req, res) => {
       }
 
       const redisKey = `ac:${code}`;
-      const session = await redisCache.hGetAll(redisKey);
+      session = await redisCache.hGetAll(redisKey);
 
       if (Object.keys(session).length === 0) {
         return res.status(401).json({ error: 'invalid_grant', error_description: 'Invalid or expired authorization code' });
