@@ -30,8 +30,6 @@ const URL = process.env.URL;
 router.post('/', async (req, res) => {
   const { grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri, scope } = req.body;
 
-  console.log(grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri, scope)
-
   const JWK_PUBLIC_KEY = getJWKPublicKey();
 
   try {
