@@ -28,7 +28,10 @@ ${process.env.JWT_PUBLIC_KEY}
 const URL = process.env.URL;
 
 router.post('/', async (req, res) => {
-  const { grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri } = req.body;
+  const { grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri, scope } = req.body;
+
+  console.log(grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri, scope)
+
   const JWK_PUBLIC_KEY = getJWKPublicKey();
 
   try {
@@ -40,7 +43,6 @@ router.post('/', async (req, res) => {
     let clientId = client_id;
     let clientSecret = client_secret;
     let nonce;
-    let requestedScope;
     let storedRedirectUri;
 
     if (grant_type !== 'authorization_code' && grant_type !== 'refresh_token') {
@@ -72,8 +74,6 @@ router.post('/', async (req, res) => {
         return res.status(401).json({ error: 'invalid_grant', error_description: 'Refresh Token is invalid or expired' });
       }
 
-      requestedScope = 'openid';
-
     } else if (grant_type === 'authorization_code') {
       let providedClientId = clientId;
       let providedClientSecret = clientSecret;
@@ -88,17 +88,14 @@ router.post('/', async (req, res) => {
         }
       }
 
-      // Client ID must be provided
       if (!providedClientId) {
         return res.status(400).json({ error: 'invalid_request', error_description: 'client_id is required' });
       }
 
-      // Fetch OAuth client
       let potentialClient;
       if (providedClientSecret) {
         potentialClient = await oAuthClientAppDB.findOne({ clientId: providedClientId, clientSecret: providedClientSecret });
       } else {
-        // Try to find a public client
         potentialClient = await oAuthClientAppDB.findOne({ clientId: providedClientId, isPublicClient: true });
       }
 
@@ -113,7 +110,6 @@ router.post('/', async (req, res) => {
         return res.status(401).json({ error: 'invalid_client', error_description: 'client_secret is required for confidential clients' });
       }
 
-      // Check authorization code in Redis
       const redisKey = `ac:${code}`;
       const session = await redisCache.hGetAll(redisKey);
 
@@ -123,7 +119,6 @@ router.post('/', async (req, res) => {
 
       userId = session.userId;
       nonce = session.nonce;
-      requestedScope = session.scope; 
       storedRedirectUri = session.redirectUri;
 
       if (!redirect_uri || redirect_uri !== storedRedirectUri) {
@@ -156,7 +151,7 @@ router.post('/', async (req, res) => {
       }
     }
 
-    const scopes = requestedScope ? requestedScope.split(' ') : [];
+    const scopes = scope.split(' ') || ['openid'];
     const isProfile = scopes.includes('profile');
     const isName = scopes.includes('name');
     const isEmail = scopes.includes('email');
@@ -252,7 +247,7 @@ router.post('/', async (req, res) => {
     await redisCache.hSet(orsidRedisKey, {
       oauthClientAppId: oauth_client.oauthClientAppId,
       createdAt: timestamp,
-      scope: requestedScope || "openid"
+      scope: scope || "openid"
     });
 
     await redisCache.expire(orsidRedisKey, 20 * 24 * 60 * 60);
