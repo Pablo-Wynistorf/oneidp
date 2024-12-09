@@ -265,17 +265,13 @@ router.post('/', async (req, res) => {
 
     orsid = await generateRandomString(15);
     const orsidRedisKey = `orsid:${userId}:${orsid}`;
-    const response1 = await redisCache.hSet(orsidRedisKey, {
+    await redisCache.hSet(orsidRedisKey, {
       oauthClientAppId: oauth_client.oauthClientAppId,
       createdAt: timestamp,
-      scope: requestedScope
+      scope: requestedScope || "openid"
     });
 
-    console.log(response1);
-
-
-    const response2 = await redisCache.expire(orsidRedisKey, 20 * 24 * 60 * 60);
-    console.log(response2);
+    await redisCache.expire(orsidRedisKey, 20 * 24 * 60 * 60);
 
     const oauth_access_token_payload = {
       userId,
