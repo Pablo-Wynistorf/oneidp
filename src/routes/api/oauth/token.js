@@ -277,12 +277,12 @@ router.post('/', async (req, res) => {
       sub: userId,
       aud: clientId,
       nonce: nonce,
-      osid: osid
+      osid: osid,
+      name: username
     };
 
     if (isProfile) {
       idTokenPayload.username = username;
-      idTokenPayload.name = username;
     }
 
     if (isEmail) {
