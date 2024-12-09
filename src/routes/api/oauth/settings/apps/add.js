@@ -12,7 +12,7 @@ ${process.env.JWT_PUBLIC_KEY}
 `.trim();
 
 router.post('/', async (req, res) => {
-  const { oauthAppName, redirectUri, accessTokenValidity } = req.body;
+  const { oauthAppName, isPublicClient, redirectUri, accessTokenValidity } = req.body;
   const access_token = req.cookies.access_token;
 
   if (!access_token) {
@@ -47,7 +47,7 @@ router.post('/', async (req, res) => {
       try {
         const redisKey = `psid:${userId}:${sid}`;
         const session = await redisCache.keys(redisKey);
-    
+
         if (session.length === 0) {
           res.clearCookie('access_token');
           return res.status(401).json({ success: false, error: 'Access Token is invalid' });
@@ -73,39 +73,52 @@ router.post('/', async (req, res) => {
           existingClientId = await oAuthClientAppDB.findOne({ clientId });
         } while (existingClientId);
 
-        let clientSecret;
-        let existingclientSecret;
-        do {
-          clientSecret = [...Array(64)].map(() => Math.random().toString(36)[2]).join('');
-          existingclientSecret = await oAuthClientAppDB.findOne({ clientSecret });
-        } while (existingclientSecret);
+        console.log("Is Public:", isPublicClient)
+
+        let clientSecret = null;
+        if (!isPublicClient) {
+          let existingclientSecret;
+          do {
+            clientSecret = [...Array(64)].map(() => Math.random().toString(36)[2]).join('');
+            existingclientSecret = await oAuthClientAppDB.findOne({ clientSecret });
+          } while (existingclientSecret);
+        }
 
         const newoauthClientApp = new oAuthClientAppDB({
           oauthAppName,
           oauthClientAppId,
           clientId,
-          clientSecret,
+          ...(clientSecret && { clientSecret }),
           redirectUri,
           accessTokenValidity,
           owner: userId,
+          isPublicClient: !!isPublicClient
         });
 
         await newoauthClientApp.save();
 
-        res.status(200).json({
+        const responseData = {
           success: true,
           clientId,
-          clientSecret,
           redirectUri,
           oauthClientAppId,
           oauthAppName,
           accessTokenValidity,
-        });
+          isPublicClient: !!isPublicClient
+        };
+
+        if (!isPublicClient) {
+          responseData.clientSecret = clientSecret;
+        }
+
+        res.status(200).json(responseData);
       } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Something went wrong, try again later' });
       }
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });

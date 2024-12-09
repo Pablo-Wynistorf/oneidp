@@ -102,10 +102,14 @@ function displayOAuthApps(data) {
       <p><strong>OAuth App ID:</strong> ${app.oauthClientAppId}</p>
       <p><strong>Client ID:</strong> <span id="client-id-value-${app.clientId}">${app.clientId}</span> 
       <img id="clipboard-client-id-${app.clientId}" src="./svg/clipboard.svg" alt="Copy Client ID" class="inline-block w-4 h-4 ml-2 cursor-pointer hover:opacity-75"></p>
-      <p><strong>Client Secret:</strong> <span id="client-secret-value-${app.clientSecret}">${app.clientSecret}</span> 
-      <img id="clipboard-client-secret-${app.clientSecret}" src="./svg/clipboard.svg" alt="Copy Client Secret" class="inline-block w-4 h-4 ml-2 cursor-pointer hover:opacity-75"></p>
+      ${!app.isPublicClient ? `
+        <p><strong>Client Secret:</strong> <span id="client-secret-value-${app.clientSecret}">${app.clientSecret}</span>
+        <img id="clipboard-client-secret-${app.clientSecret}" src="./svg/clipboard.svg" alt="Copy Client Secret" class="inline-block w-4 h-4 ml-2 cursor-pointer hover:opacity-75">
+        </p>
+      ` : ``}
       <p><strong>Redirect URI:</strong> ${app.redirectUri}</p>
       <p><strong>Access Token Validity:</strong> ${app.accessTokenValidity}</p>
+      <p><strong>Public Client:</strong> ${app.isPublicClient ? "Yes" : "No"}</p>
     `;
 
     container.appendChild(appBox);
@@ -128,6 +132,7 @@ function create_app() {
   const oauthAppName = document.getElementById("appname-field").value;
   const redirectUri = document.getElementById("redirecturl-field").value;
   const accessTokenValidity = document.getElementById("access-token-validity-field").value;
+  const isPublicClient = document.getElementById("public-client-toggle").checked;
 
   try {
     fetch(`/api/oauth/settings/apps/add`, {
@@ -135,7 +140,7 @@ function create_app() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ redirectUri, oauthAppName, accessTokenValidity }),
+      body: JSON.stringify({ redirectUri, isPublicClient, oauthAppName, accessTokenValidity }),
     })
       .then((response) => {
         if (!response.ok) {
@@ -167,10 +172,14 @@ function create_app() {
           <p><strong>OAuth App ID:</strong> ${data.oauthClientAppId}</p>
           <p><strong>Client ID:</strong> <span id="client-id-${data.clientId}">${data.clientId}</span> 
           <img id="clipboard-client-id-${data.clientId}" src="./svg/clipboard.svg" alt="Copy Client ID" class="inline-block w-4 h-4 ml-2 cursor-pointer hover:opacity-75"></p>
-          <p><strong>Client Secret:</strong> <span id="client-secret-${data.clientSecret}">${data.clientSecret}</span> 
-          <img id="clipboard-client-secret-${data.clientSecret}" src="./svg/clipboard.svg" alt="Copy Client Secret" class="inline-block w-4 h-4 ml-2 cursor-pointer hover:opacity-75"></p>
+          ${!app.isPublicClient ? `
+              <p><strong>Client Secret:</strong> <span id="client-secret-value-${app.clientSecret}">${app.clientSecret}</span>
+              <img id="clipboard-client-secret-${app.clientSecret}" src="./svg/clipboard.svg" alt="Copy Client Secret" class="inline-block w-4 h-4 ml-2 cursor-pointer hover:opacity-75">
+              </p>
+          ` : ``}
           <p><strong>Redirect URI:</strong> ${data.redirectUri}</p>
           <p><strong>Access Token Validity:</strong> ${data.accessTokenValidity}</p>
+          <p><strong>Public Client:</strong> ${data.isPublicClient ? "Yes" : "No"}</p>
         `;
 
         newAppBox.innerHTML = appBoxHTML;

@@ -53,6 +53,7 @@ const oAuthClientSchema = new Schema({
   clientSecret: String,
   redirectUri: String,
   accessTokenValidity: Number,
+  isPublicClient: Boolean,
   owner: String,
 }, {
   timestamps: true

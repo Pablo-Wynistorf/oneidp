@@ -51,3 +51,18 @@ new Noty({
 function handleError() {
 displayAlertError('An unexpected error occurred.');
 }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const createAppModal = document.getElementById('create-app-modal');
+  const openCreateModalBtn = document.getElementById('open-create-modal');
+  const closeCreateModalBtn = document.getElementById('close-create-modal');
+
+  openCreateModalBtn.addEventListener('click', () => {
+      createAppModal.showModal();
+  });
+
+  closeCreateModalBtn.addEventListener('click', () => {
+      createAppModal.close();
+  });
+});

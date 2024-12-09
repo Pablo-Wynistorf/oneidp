@@ -36,7 +36,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href=""  class="flex items-center p-3 text-white bg-blue-500 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-blue-600">
+                        <a href="" class="flex items-center p-3 text-white bg-blue-500 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-blue-600">
                             <img src="svg/oidc-apps.svg" class="w-6 h-6" alt="OIDC Apps">
                             <span class="ml-3">OIDC Apps</span>
                         </a>
@@ -69,13 +69,47 @@
             </div>
         </div>
 
-        <!-- Main Content -->
+        <!-- Create Application Modal -->
+        <dialog id="create-app-modal" class="bg-gray-600 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50 w-full max-w-md">
+            <h2 class="text-lg mb-4 text-white">Create OAuth Application</h2>
+            <form class="space-y-4">
+                <div class="form-group">
+                    <label for="appname-field" class="text-gray-300 mb-2 block">OAuth App Name:</label>
+                    <input type="text" id="appname-field" class="w-full p-3 bg-gray-900 text-gray-100 rounded-lg" placeholder="My OAuth app" required>
+                </div>
+                <div class="form-group">
+                    <label for="redirecturl-field" class="text-gray-300 mb-2 block">Redirect URL:</label>
+                    <input type="text" id="redirecturl-field" class="w-full p-3 bg-gray-900 text-gray-100 rounded-lg" placeholder="https://example.com/api/auth/callback" required>
+                </div>
+                <div class="form-group">
+                    <label for="access-token-validity-field" class="text-gray-300 mb-2 block">Access Token Validity (seconds):</label>
+                    <input type="number" id="access-token-validity-field" class="w-full p-3 bg-gray-900 text-gray-100 rounded-lg" placeholder="720" required>
+                </div>
+                <div class="form-group flex items-center">
+                    <label for="public-client-toggle" class="mr-3 text-gray-300 font-semibold">Public Client:</label>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="public-client-toggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full 
+                                    peer dark:bg-gray-700 peer-checked:bg-blue-600
+                                    after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white 
+                                    after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 
+                                    after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white">
+                        </div>
+                    </label>
+                </div>
+                <div class="flex justify-between">
+                    <button type="button" class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg" id="close-create-modal">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg" onclick="create_app()">Create</button>
+                </div>
+            </form>
+        </dialog>
 
+        <!-- Edit Application Modal -->
         <dialog id="edit-app-modal" class="bg-gray-600 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50 w-2/5">
             <h2 class="text-lg mb-4 text-white">Edit OAuth Application</h2>
             <form id="edit-app-form" class="space-y-4">
                 <div class="form-group">
-                    <label for="edit-appname" class="text-gray-300 mb-2 block">OAuth App Id:</label>
+                    <label for="edit-app-id" class="text-gray-300 mb-2 block">OAuth App Id:</label>
                     <input type="text" id="edit-app-id" class="w-full p-3 bg-gray-900 text-gray-100 rounded-lg" readonly>
                 </div>
                 <div class="form-group">
@@ -96,32 +130,17 @@
                 </div>
             </form>
         </dialog>
-        
 
+        <!-- Main Content -->
         <div class="flex-1 p-6 md:ml-64">
-            <div class="bg-gray-600 p-4 rounded-lg shadow-lg">
-                <div class="text-center mb-6">
-                    <h2 class="text-3xl font-semibold text-gray-100">ONEDNS OAUTH APPS</h2>
-                </div>
-                <div class="space-y-6">
-                    <h3 class="text-xl text-center mb-4 text-gray-100">Get your OAuth app credentials!</h3>
-                    <div class="space-y-4">
-                        <div class="form-group">
-                            <input type="text" id="appname-field" class="w-full p-3 bg-gray-900 text-gray-100 rounded-lg" placeholder="App Name: My OAuth app" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="text" id="redirecturl-field" class="w-full p-3 bg-gray-900 text-gray-100 rounded-lg" placeholder="Redirect URL: https://example.com/api/auth/callback" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="number" id="access-token-validity-field" class="w-full p-3 bg-gray-900 text-gray-100 rounded-lg" placeholder="Access Token validity in seconds: 720" required>
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" id="create-app-button" class="w-full p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold mt-2 mb-2" onclick="create_app()">Create Application</button>
-                        </div>
-                    </div>
-                </div>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-3xl font-semibold text-gray-100">ONEDNS OAUTH APPS</h2>
+                <button id="open-create-modal" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold">
+                    Create Application
+                </button>
             </div>
-            <div class="bg-gray-900 p-8 mt-4 rounded-lg shadow-lg space-y-4 max-w-full overflow-hidden break-all font-semibold">
+
+            <div class="bg-gray-900 p-8 rounded-lg shadow-lg space-y-4 max-w-full overflow-hidden break-all font-semibold">
                 <p class="text-gray-100">OpenID Connect Base URL: <span id="oidc-url" class="font-normal text-gray-100"></span>
                     <span class="inline-flex items-center">
                         <img id="oidc-url-copy" src="./svg/clipboard.svg" alt="Clipboard Icon" class="w-5 h-5 cursor-pointer ml-2">
@@ -153,6 +172,7 @@
         </div>
     </div>
 
+    <!-- Confirmation dialog for deletion -->
     <dialog data-modal id="confirmation-box" class="bg-gray-900 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50">
         <h2 class="text-lg mb-4 text-white">Do you really want to delete this app?</h2>
         <div class="flex justify-center space-x-4">

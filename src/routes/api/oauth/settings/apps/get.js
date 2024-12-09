@@ -52,7 +52,8 @@ router.get('/', async (req, res) => {
         const organizedData = oauthApps.map(app => ({
           oauthAppName: app.oauthAppName,
           clientId: app.clientId,
-          clientSecret: app.clientSecret,
+          clientSecret: app.clientSecret || undefined,
+          isPublicClient: app.isPublicClient,
           redirectUri: app.redirectUri,
           oauthClientAppId: app.oauthClientAppId,
           accessTokenValidity: app.accessTokenValidity,
