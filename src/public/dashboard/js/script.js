@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', function() {
       })
       .then(data => {
         document.getElementById('userid-input').textContent  = data.userId;
+        document.getElementById('first-name-input').textContent  = data.firstName;
+        document.getElementById('last-name-input').textContent  = data.lastName;
         document.getElementById('username-input').textContent  = data.username;
         document.getElementById('email-input').textContent  = data.email;
         document.getElementById('roles-input').textContent  = data.providerRoles;

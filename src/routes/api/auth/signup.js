@@ -18,7 +18,7 @@ ${process.env.JWT_PRIVATE_KEY}
 `.trim();
 
 router.post('/', async (req, res) => {
-  const { username, password, email } = req.body;
+  const { firstName, lastName, username, password, email } = req.body;
   const usernameRegex = /^[a-zA-Z0-9-]{3,20}$/;
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 
@@ -70,6 +70,8 @@ router.post('/', async (req, res) => {
 
     const newUser = new userDB({
       userId: userId,
+      firstName: firstName,
+      lastName: lastName,
       username: username,
       password: hashedPassword,
       email: email,

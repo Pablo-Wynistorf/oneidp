@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 function signup() {
+  const firstName = document.getElementById('first-name-field').value;
+  const lastName = document.getElementById('last-name-field').value;
   const username = document.getElementById('username-field').value;
   const password = document.getElementById('password-field').value;
   const email = document.getElementById('email-field').value;
@@ -27,7 +29,7 @@ function signup() {
   signupButton.classList.add('flex', 'justify-center', 'items-center', 'text-gray-500')
   signupButton.innerHTML = `<img src="/signup/images/spinner.svg" width="24" height="24" />`;
 
-  if (!username || !password || !email) {
+  if (!firstName || !lastName || !username || !password || !email) {
     const signupButton = document.getElementById('signup-button');
     signupButton.disabled = false;
     signupButton.innerText = 'Create account';
@@ -41,7 +43,7 @@ function signup() {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ username, password, email}),
+    body: JSON.stringify({ firstName, lastName, username, password, email}),
   })
     .then(handleResponse)
     .catch(handleError);

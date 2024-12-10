@@ -30,6 +30,8 @@ const URL = process.env.URL;
 router.post('/', async (req, res) => {
   const { grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri, scope } = req.body;
 
+  console.log(grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri, scope)
+
   const JWK_PUBLIC_KEY = getJWKPublicKey();
 
   try {
@@ -140,6 +142,7 @@ router.post('/', async (req, res) => {
           return res.status(400).json({ error: 'invalid_request', error_description: 'Unsupported code_challenge_method' });
         }
       } else {
+
         if (oauth_client.isPublicClient) {
           return res.status(401).json({ error: 'invalid_grant', error_description: 'Public clients must use PKCE' });
         }
@@ -160,6 +163,8 @@ router.post('/', async (req, res) => {
     }
 
     const username = oauth_user.username;
+    const firstName = oauth_user.firstName;
+    const lastName = oauth_user.lastName;
     const email = oauth_user.email;
     const mfaEnabled = oauth_user.mfaEnabled;
     const accessTokenValidity = oauth_client.accessTokenValidity;
@@ -209,22 +214,23 @@ router.post('/', async (req, res) => {
         iss: URL,
         sub: userId,
         aud: clientId,
+        iat: timestamp,
         nonce: nonce,
         osid: osid
       };
 
       if (isProfile) {
         idTokenPayload.username = username;
-        idTokenPayload.name = username;
+        idTokenPayload.name = firstName + ' ' + lastName;
+        idTokenPayload.given_name = firstName;
+        idTokenPayload.family_name = lastName;
+        idTokenPayload.roles = roleNames;
+        idTokenPayload.mfaEnabled = mfaEnabled;
       }
 
       if (isEmail) {
         idTokenPayload.email = email;
       }
-
-      idTokenPayload.roles = roleNames;
-
-      idTokenPayload.mfaEnabled = mfaEnabled;
 
       const oauth_id_token = jwt.sign(
         idTokenPayload,
@@ -272,22 +278,23 @@ router.post('/', async (req, res) => {
       iss: URL,
       sub: userId,
       aud: clientId,
+      iat: timestamp,
       nonce: nonce,
       osid: osid,
     };
 
     if (isProfile) {
       idTokenPayload.username = username;
-      idTokenPayload.name = username;
+      idTokenPayload.name = firstName + ' ' + lastName;
+      idTokenPayload.given_name = firstName;
+      idTokenPayload.family_name = lastName;
+      idTokenPayload.roles = roleNames;
+      idTokenPayload.mfaEnabled = mfaEnabled;
     }
 
     if (isEmail) {
       idTokenPayload.email = email;
     }
-
-    idTokenPayload.roles = roleNames;
-
-    idTokenPayload.mfaEnabled = mfaEnabled;
 
     const oauth_id_token = jwt.sign(
       idTokenPayload,

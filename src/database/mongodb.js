@@ -34,10 +34,13 @@ const { Schema } = mongoose;
 
 const userSchema = new Schema({
   userId: String,
+  firstName: String,
+  lastName: String,
   username: String,
   password: String,
   email: String,
   identityProvider: String,
+  identityProviderUserId: String,
   mfaSecret: String,
   mfaEnabled: Boolean,
   emailVerified: Boolean,

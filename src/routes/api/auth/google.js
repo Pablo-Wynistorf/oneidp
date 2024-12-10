@@ -23,7 +23,9 @@ passport.use(new GoogleStrategy({
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      let existingUser = await userDB.findOne({ userId: profile.id });
+      let userId;
+      let existingUserId;
+      let existingUser = await userDB.findOne({ identityProviderUserId: profile.id });
       let username = profile.emails[0].value.split('@')[0];
       let existingUserName = await userDB.findOne({ username: username });
 
@@ -44,22 +46,33 @@ passport.use(new GoogleStrategy({
         if (!profile.emails[0].value) {
           return done(new Error('No email found in your Google account'), null);
         }
+    
+        do {
+          userId = Math.floor(Math.random() * 900000000000) + 100000000000;
+          existingUserId = await userDB.findOne({ userId });
+        } while (existingUserId);
+
+        const firstName = profile.name?.givenName;
+        const lastName = profile.name?.familyName || '';
         
         const newUser = new userDB({
-          userId: profile.id,
+          userId: userId,
           username: username,
+          firstName: firstName || 'N/A',
+          lastName: lastName || 'N/A',
           email: profile.emails[0].value,
           emailVerified: true,
           mfaEnabled: false,
           providerRoles: ['standardUser', 'oauthUser'],
           identityProvider: 'google',
+          identityProviderUserId: profile.id,
         });
       
         await newUser.save();
       }
 
-      const access_token = jwt.sign({ userId: profile.id, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
-      return done(null, { access_token, userId: profile.id, sid });
+      const access_token = jwt.sign({ userId: userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+      return done(null, { access_token, userId: userId, sid });
     } catch (error) {
       return done(error, null);
     }

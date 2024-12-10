@@ -22,8 +22,11 @@ passport.use(new GitHubStrategy({
     callbackURL: URL + '/api/auth/github/callback',
   },
   async (accessToken, refreshToken, profile, done) => {
+
     try {
-      let existingUser = await userDB.findOne({ userId: profile.id });
+      let userId;
+      let existingUserId;
+      let existingUser = await userDB.findOne({ identityProviderUserId: profile.id });
       let username = profile.username;
       let existingUserName = await userDB.findOne({ username: username });
 
@@ -44,22 +47,33 @@ passport.use(new GitHubStrategy({
         if (!profile.emails[0].value) {
           return done(new Error('No email found in your GitHub account'), null);
         }
+    
+        do {
+          userId = Math.floor(Math.random() * 900000000000) + 100000000000;
+          existingUserId = await userDB.findOne({ userId });
+        } while (existingUserId);
+
+        const firstName = profile.displayName.split(' ')[0];
+        const lastName = profile.displayName.split(' ')[1] || 'N/A';
 
         const newUser = new userDB({
-          userId: profile.id,
+          userId: userId,
+          firstName: firstName,
+          lastName: lastName,
           username: username,
           email: profile.emails[0].value,
           emailVerified: true,
           mfaEnabled: false,
           providerRoles: ['standardUser', 'oauthUser'],
           identityProvider: 'github',
+          identityProviderUserId: profile.id,
         });
 
         await newUser.save();
       }
 
-      const access_token = jwt.sign({ userId: profile.id, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
-      return done(null, { access_token, userId: profile.id, sid });
+      const access_token = jwt.sign({ userId: userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+      return done(null, { access_token, userId: userId, sid });
     } catch (error) {
       return done(error, null);
     }

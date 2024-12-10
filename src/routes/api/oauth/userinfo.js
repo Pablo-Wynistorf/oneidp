@@ -64,6 +64,8 @@ router.all('/', (req, res) => {
           userId,
           username: userData.username,
           email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
           providerRoles: userData.providerRoles,
           mfaEnabled: userData.mfaEnabled,
         });
@@ -81,6 +83,8 @@ router.all('/', (req, res) => {
       res.status(200).json({
         sub: userId,
         userId,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
         username: userData.username,
         email: userData.email,
         roles: roleNames,
