@@ -327,6 +327,7 @@ router.post('/', async (req, res) => {
   }
 });
 
+
 async function generateRandomString(length) {
   return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
 }
