@@ -46,6 +46,8 @@ router.get('/', (req, res) => {
       "email",
       "username",
       "name",
+      "given_name",
+      "family_name",
       "roles",
       "mfaEnabled"
     ]

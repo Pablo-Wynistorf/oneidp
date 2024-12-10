@@ -283,10 +283,6 @@ router.post('/', async (req, res) => {
       osid: osid,
     };
 
-    idTokenPayload.name = firstName + ' ' + lastName;
-    idTokenPayload.given_name = firstName;
-    idTokenPayload.family_name = lastName;
-
     if (isProfile) {
       idTokenPayload.username = username;
       idTokenPayload.name = firstName + ' ' + lastName;
