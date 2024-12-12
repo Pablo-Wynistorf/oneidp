@@ -28,8 +28,8 @@ router.post('/', async (req, res) => {
   if (!oauthRedirectUrlRegex.test(redirectUri)) {
     return res.status(460).json({ success: false, error: 'Invalid oauthRedirectUrl' });
   }
-  if (isNaN(accessTokenValidity) || accessTokenValidity < 0 || accessTokenValidity > 604800) {
-    return res.status(460).json({ success: false, error: 'Invalid access token validity' });
+  if (isNaN(accessTokenValidity) || accessTokenValidity < 0 || accessTokenValidity > 1728000) {
+    return res.status(460).json({ success: false, error: 'Invalid access token validity, the access_token can have a maximum validity of 20 days' });
   }
 
   try {
