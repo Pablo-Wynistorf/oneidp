@@ -20,7 +20,7 @@ https://github.com/Pablo-Wynistorf/oneidp-client-demo
 1.) Clone the github repo
 
 ```yaml
-git clone https://github.com/Pablo-Wynistorf/loginapp.git && cd loginapp
+git clone https://github.com/Pablo-Wynistorf/oneidp.git && cd oneidp
 ```
 2.) Add the values to the secrets.yaml file
 

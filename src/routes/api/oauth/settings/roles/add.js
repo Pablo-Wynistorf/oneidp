@@ -70,7 +70,7 @@ router.post('/', async (req, res) => {
 
         const smallLettersRoleName = oauthRoleName.toLowerCase();
 
-        const oauthRoleId = `uri:loginapp:oauth::${oauthClientAppId}:role/${smallLettersRoleName}`;
+        const oauthRoleId = `uri:oneidp:oauth::${oauthClientAppId}:role/${smallLettersRoleName}`;
 
         const existingOauthRole = await oAuthRolesDB.findOne({ oauthRoleId, oauthClientId });
 

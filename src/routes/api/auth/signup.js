@@ -70,9 +70,9 @@ router.post('/', async (req, res) => {
 
     const newUser = new userDB({
       userId: userId,
+      username: username,
       firstName: firstName,
       lastName: lastName,
-      username: username,
       password: hashedPassword,
       email: email,
       emailVerified: false,
