@@ -76,6 +76,11 @@ variable "url" {
   description = "Whats the URL of the Application?"
 }
 
+variable "google_analytics_tag_id" {
+  description = "Whats the Google Analytics Tag ID?"
+  default = "G-XXXXXXXXXX"
+}
+
 data "template_file" "render-var-file" {
   template = <<-EOT
     region = "${var.region}"
@@ -93,6 +98,7 @@ data "template_file" "render-var-file" {
     mongodb_uri = "${var.mongodb_uri}"
     redis_uri = "${var.redis_uri}"
     url = "${var.url}"
+    google_analytics_tag_id = "${var.google_analytics_tag_id}"
   EOT
 }
 

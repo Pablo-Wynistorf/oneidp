@@ -218,6 +218,9 @@ app.use('/api/health', require('./routes/api/health/health.js')); // No limit (p
 app.use('/api/health/details', rateLimiter(10, 60 * 1000), require('./routes/api/health/details.js')); // 10 requests per minute
 
 
+// Google Analytics Endpoint
+app.use('/google-analytics.js', require('./utils/google-analytics.js'));
+
 // Generate a random String
 async function generateRandomString(length) {
   return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');

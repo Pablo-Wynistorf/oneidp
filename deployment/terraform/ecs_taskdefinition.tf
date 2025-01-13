@@ -106,6 +106,10 @@ locals {
     {
       name  = "URL"
       value = var.url
+    },
+    {
+      name  = "GOOGLE_ANALYTICS_TAG_ID"
+      value = var.google_analytics_tag_id
     }
 
   ]
