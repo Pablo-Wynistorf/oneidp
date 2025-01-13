@@ -225,5 +225,5 @@ async function generateRandomString(length) {
 
 // Start the api
 app.listen(API_PORT, () => {
-  console.log('Login API started on port', API_PORT);
+  console.log('ONEIDP started on port', API_PORT);
 });
