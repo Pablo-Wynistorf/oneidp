@@ -27,6 +27,10 @@ resource "aws_ecs_task_definition" "oneidp" {
         }
       ]
       environment = [
+        for var in local.env_vars : {
+          name  = var.name
+          value = var.value
+        }
       ]
       readonlyRootFilesystem = true
       logConfiguration = {
@@ -42,6 +46,69 @@ resource "aws_ecs_task_definition" "oneidp" {
       }
     }
   ])
+}
+
+# ENV Variables
+locals {
+  env_vars = [
+    {
+      name  = "API_PORT"
+      value = var.api_port
+    },
+    {
+      name  = "DC_MONITORING_WEBHOOK_URL"
+      value = var.dc_monitoring_webhook_url
+    },
+    {
+      name  = "GITHUB_CLIENT_ID"
+      value = var.github_client_id
+    },
+    {
+      name  = "GITHUB_CLIENT_SECRET"
+      value = var.github_client_secret
+    },
+    {
+      name  = "GOOGLE_CLIENT_ID"
+      value = var.google_client_id
+    },
+    {
+      name  = "GOOGLE_CLIENT_SECRET"
+      value = var.google_client_secret
+    },
+    {
+      name  = "JWT_PRIVATE_KEY"
+      value = var.jwt_private_key
+    },
+    {
+      name  = "JWT_PUBLIC_KEY"
+      value = var.jwt_public_key
+    },
+    {
+      name  = "MJ_APIKEY_PRIVATE"
+      value = var.mj_api_key_private
+    },
+    {
+      name  = "MJ_APIKEY_PUBLIC"
+      value = var.mj_api_key_public
+    },
+    {
+      name  = "MJ_SENDER_EMAIL"
+      value = var.mj_sender_email
+    },
+    {
+      name  = "MONGODB_URI"
+      value = var.mongodb_uri
+    },
+    {
+      name  = "REDIS_URI"
+      value = var.redis_uri
+    },
+    {
+      name  = "URL"
+      value = var.url
+    }
+
+  ]
 }
 
 
