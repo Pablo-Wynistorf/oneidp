@@ -219,7 +219,7 @@ app.use('/api/health/details', rateLimiter(10, 60 * 1000), require('./routes/api
 
 
 // Google Analytics Endpoint
-app.use('/google-analytics.js', require('./utils/google-analytics.js'));
+app.use('/gtag.js', require('./utils/gtag.js'));
 
 // Generate a random String
 async function generateRandomString(length) {
