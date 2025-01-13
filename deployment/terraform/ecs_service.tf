@@ -45,12 +45,13 @@ resource "aws_appautoscaling_policy" "scale_out_policy" {
     target_value       = 100
     predefined_metric_specification {
       predefined_metric_type = "ALBRequestCountPerTarget"
-      resource_label         = "${aws_lb.oneidp_alb.arn_suffix}/${aws_lb_target_group.oneidp_target_group.name}"
+      resource_label         = "app/${aws_lb.oneidp_alb.name}/${aws_lb.oneidp_alb.arn_suffix}/targetgroup/${aws_lb_target_group.oneidp_target_group.name}/${aws_lb_target_group.oneidp_target_group.arn_suffix}"
     }
     scale_in_cooldown  = 60
     scale_out_cooldown = 60
   }
 }
+
 
 # Create an Application Load Balancer
 resource "aws_lb" "oneidp_alb" {

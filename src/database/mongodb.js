@@ -5,8 +5,6 @@ const { MONGODB_URI } = process.env;
 
 function connectToDatabase() {
   mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     tlsInsecure: true,
     serverSelectionTimeoutMS: 5000,
   })
