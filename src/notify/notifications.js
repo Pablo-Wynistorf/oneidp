@@ -5,7 +5,7 @@ const { DC_MONITORING_WEBHOOK_URL } = process.env;
 // Notify when database error occurs.
 function notifyError(error) {
   const params = {
-    content: `ALERT: DATABASE ERROR: ${error}`
+    content: `Error: ${error}`
   };
   fetch(DC_MONITORING_WEBHOOK_URL, {
     method: 'POST',

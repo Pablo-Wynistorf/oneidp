@@ -22,22 +22,12 @@ passport.use(new GitHubStrategy({
     callbackURL: URL + '/api/auth/github/callback',
   },
   async (accessToken, refreshToken, profile, done) => {
-
     try {
       let userId;
       let existingUserId;
       let existingUser = await userDB.findOne({ identityProviderUserId: profile.id });
       let username = profile.username;
       let existingUserName = await userDB.findOne({ username: username });
-
-      const sid = await generateRandomString(15);
-      const timestamp = Math.floor(Date.now() / 1000);
-      const redisKey = `psid:${profile.id}:${sid}`;
-      await redisCache.hSet(redisKey, {
-        identityProvider: 'github',
-        createdAt: timestamp,
-      });
-      await redisCache.expire(redisKey, 48 * 60 * 60);
 
       if (!existingUser) {
         if (existingUserName) {
@@ -53,14 +43,14 @@ passport.use(new GitHubStrategy({
           existingUserId = await userDB.findOne({ userId });
         } while (existingUserId);
 
-        const firstName = profile.displayName.split(' ')[0];
+        const firstName = profile.displayName.split(' ')[0] || 'N/A';
         const lastName = profile.displayName.split(' ')[1] || 'N/A';
 
         const newUser = new userDB({
           userId: userId,
-          firstName: firstName,
-          lastName: lastName,
           username: username,
+          firstName: firstName || 'N/A',
+          lastName: lastName || 'N/A',
           email: profile.emails[0].value,
           emailVerified: true,
           mfaEnabled: false,
@@ -72,8 +62,19 @@ passport.use(new GitHubStrategy({
         await newUser.save();
       }
 
-      const access_token = jwt.sign({ userId: userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
-      return done(null, { access_token, userId: userId, sid });
+      userId = existingUser ? existingUser.userId : userId;
+
+      const sid = await generateRandomString(15);
+      const timestamp = Math.floor(Date.now() / 1000);
+      const redisKey = `psid:${userId}:${sid}`;
+      await redisCache.hSet(redisKey, {
+        identityProvider: 'github',
+        createdAt: timestamp,
+      });
+      await redisCache.expire(redisKey, 48 * 60 * 60);
+
+      const access_token = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+      return done(null, { access_token, userId, sid });
     } catch (error) {
       return done(error, null);
     }
@@ -101,6 +102,7 @@ router.get('/', (req, res, next) => {
     state: state,
   })(req, res, next);
 });
+
 
 router.get('/callback', passport.authenticate('github', { session: false }), async (req, res) => {
   const { access_token, userId, sid } = req.user;

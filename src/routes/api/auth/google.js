@@ -29,15 +29,6 @@ passport.use(new GoogleStrategy({
       let username = profile.emails[0].value.split('@')[0];
       let existingUserName = await userDB.findOne({ username: username });
 
-      const sid = await generateRandomString(15);
-      const timestamp = Math.floor(Date.now() / 1000);
-      const redisKey = `psid:${profile.id}:${sid}`;
-      await redisCache.hSet(redisKey, {
-        identityProvider: 'google',
-        createdAt: timestamp,
-      });
-      await redisCache.expire(redisKey, 48 * 60 * 60);
-
       if (!existingUser) {
         if (existingUserName) {
           username = `${username}_${generateRandomString(3)}`;
@@ -52,8 +43,8 @@ passport.use(new GoogleStrategy({
           existingUserId = await userDB.findOne({ userId });
         } while (existingUserId);
 
-        const firstName = profile.name?.givenName;
-        const lastName = profile.name?.familyName || '';
+        const firstName = profile.name?.givenName || 'N/A';
+        const lastName = profile.name?.familyName || 'N/A';
         
         const newUser = new userDB({
           userId: userId,
@@ -71,8 +62,19 @@ passport.use(new GoogleStrategy({
         await newUser.save();
       }
 
-      const access_token = jwt.sign({ userId: userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
-      return done(null, { access_token, userId: userId, sid });
+      userId = existingUser ? existingUser.userId : userId;
+
+      const sid = await generateRandomString(15);
+      const timestamp = Math.floor(Date.now() / 1000);
+      const redisKey = `psid:${userId}:${sid}`;
+      await redisCache.hSet(redisKey, {
+        identityProvider: 'google',
+        createdAt: timestamp,
+      });
+      await redisCache.expire(redisKey, 48 * 60 * 60);
+
+      const access_token = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+      return done(null, { access_token, userId, sid });
     } catch (error) {
       return done(error, null);
     }
@@ -102,7 +104,6 @@ router.get('/', (req, res, next) => {
 });
 
 
-
 router.get('/callback', passport.authenticate('google', { session: false }), async (req, res) => {
   const { access_token, userId, sid } = req.user;
   let redirectUri = req.query.state ? Buffer.from(req.query.state, 'base64').toString('utf-8') : '/dashboard';
@@ -125,6 +126,5 @@ router.get('/callback', passport.authenticate('google', { session: false }), asy
 async function generateRandomString(length) {
   return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
 }
-
 
 module.exports = router;
