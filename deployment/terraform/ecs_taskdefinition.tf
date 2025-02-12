@@ -1,3 +1,4 @@
+# Create ECS Task Definition
 resource "aws_ecs_task_definition" "oneidp" {
   family                   = "oneidp-service"
   network_mode             = "awsvpc"
@@ -115,7 +116,6 @@ locals {
   ]
 }
 
-
 # Create IAM Role for ECS Task Execution
 resource "aws_iam_role" "ecs_task_execution_role" {
   name = "oneidpTaskExecutionRole"
@@ -134,14 +134,13 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   })
 }
 
-
 # Attach Policies to the ECS Execution Role
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_ecs_task_execution" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-
+# Attach Policies to the ECS Execution Role
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_logs" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"

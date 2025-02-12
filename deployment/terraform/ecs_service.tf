@@ -1,15 +1,15 @@
 # Create an ECS Service
 resource "aws_ecs_service" "oneidp_service" {
   name            = "oneidp-service"
-  cluster         = aws_ecs_cluster.oneidp-cluster.id
+  cluster         = aws_ecs_cluster.oneidp_cluster.id
   task_definition = aws_ecs_task_definition.oneidp.arn
   desired_count   = 1
   launch_type     = "FARGATE"
   platform_version = "1.4.0"
 
   network_configuration {
-    subnets         = [aws_subnet.oneidp-a-2.id, aws_subnet.oneidp-b-2.id, aws_subnet.oneidp-c-2.id]
-    security_groups = [aws_security_group.http-by-loadbalancer.id]
+    subnets         = [aws_subnet.oneidp_a_2.id, aws_subnet.oneidp_b_2.id, aws_subnet.oneidp_c_2.id]
+    security_groups = [aws_security_group.http_by_loadbalancer.id]
     assign_public_ip = false
   }
 
@@ -27,7 +27,7 @@ resource "aws_ecs_service" "oneidp_service" {
 # Create a scaling target
 resource "aws_appautoscaling_target" "oneidp_scaling_target" {
   service_namespace  = "ecs"
-  resource_id        = "service/${aws_ecs_cluster.oneidp-cluster.name}/${aws_ecs_service.oneidp_service.name}"
+  resource_id        = "service/${aws_ecs_cluster.oneidp_cluster.name}/${aws_ecs_service.oneidp_service.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   min_capacity       = 1
   max_capacity       = 10
@@ -52,14 +52,17 @@ resource "aws_appautoscaling_policy" "scale_out_policy" {
   }
 }
 
-
 # Create an Application Load Balancer
 resource "aws_lb" "oneidp_alb" {
   name               = "oneidp-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.loadbalancer.id]
-  subnets            = [aws_subnet.oneidp-a-1.id, aws_subnet.oneidp-b-1.id, aws_subnet.oneidp-c-1.id]
+  subnets            = [aws_subnet.oneidp_a_1.id, aws_subnet.oneidp_b_1.id, aws_subnet.oneidp_c_1.id]
+}
+
+output "oneidp_alb_dns_name" {
+  value = aws_lb.oneidp_alb.dns_name
 }
 
 # Create a Target Group for the ECS service
@@ -67,7 +70,7 @@ resource "aws_lb_target_group" "oneidp_target_group" {
   name        = "oneidp-tg"
   port        = 80
   protocol    = "HTTP"
-  vpc_id      = aws_vpc.oneidp-vpc.id
+  vpc_id      = aws_vpc.oneidp_vpc.id
   target_type = "ip"
   health_check {
     protocol            = "HTTP"
@@ -79,14 +82,38 @@ resource "aws_lb_target_group" "oneidp_target_group" {
   }
 }
 
-# Attach a Listener to the Load Balancer
-resource "aws_lb_listener" "oneidp_listener" {
+# Create a http listener for the ALB
+resource "aws_lb_listener" "oneidp_http_listener" {
   load_balancer_arn = aws_lb.oneidp_alb.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
+    type             = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+# Create a https listener for the ALB
+resource "aws_lb_listener" "oneidp_https_listener" {
+  load_balancer_arn = aws_lb.oneidp_alb.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = aws_acm_certificate.oneidp_cert.arn
+  
+  default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.oneidp_target_group.arn
   }
+}
+
+# Create a certificate for the ALB
+resource "aws_acm_certificate" "oneidp_cert" {
+  domain_name       = "oneidp.ch"
+  validation_method = "EMAIL"
 }

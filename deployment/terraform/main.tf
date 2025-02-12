@@ -3,7 +3,11 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 5.86.1"
+    }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.7.0"
     }
   }
   required_version = ">= 1.5.0"
@@ -12,6 +16,11 @@ terraform {
 # Define the AWS provider
 provider "aws" {
   region = var.region
+}
+
+provider "aws" {
+  region = "eu-central-1"
+  alias  = "lambda_region"
 }
 
 variable "region" {
@@ -81,7 +90,8 @@ variable "google_analytics_tag_id" {
   default = "G-XXXXXXXXXX"
 }
 
-data "template_file" "render-var-file" {
+# Create a template file for the variables
+data "template_file" "render_var_file" {
   template = <<-EOT
     region = "${var.region}"
     api_port = "${var.api_port}"
@@ -102,7 +112,8 @@ data "template_file" "render-var-file" {
   EOT
 }
 
-resource "local_file" "create-var-file" {
-  content  = data.template_file.render-var-file.rendered
+# Create a local file with the variables
+resource "local_file" "create_var_file" {
+  content  = data.template_file.render_var_file.rendered
   filename = "terraform.tfvars"
 }

@@ -8,4 +8,4 @@
 /deployment/terraform/terraform.tfstate
 /deployment/terraform/terraform.tfstate.backup
 /deployment/terraform/terraform.tfvars
-/deployment/terraform/oneidp.tfvars
+/deployment/terraform/lambda_code/lambda_code.zip
