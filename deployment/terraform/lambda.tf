@@ -9,6 +9,13 @@ resource "aws_lambda_function" "oneidp_redeployment_lambda" {
   role = aws_iam_role.oneidp_redeployment_lambda_role.arn
   timeout = 10
   memory_size = 128
+  environment {
+    variables = {
+      ECS_CLUSTER_REGION = var.region
+      ECS_CLUSTER_NAME = aws_ecs_cluster.oneidp_cluster.name
+      ECS_SERVICE_NAME = aws_ecs_service.oneidp_service.name
+    }
+  }
 }
 
 # Create a URL for the lambda function

@@ -1,14 +1,25 @@
 import { ECSClient, DescribeServicesCommand, UpdateServiceCommand } from "@aws-sdk/client-ecs";
 
-const ecsClient = new ECSClient();
+const ECS_CLUSTER_REGION = process.env.ECS_CLUSTER_REGION;
+const ECS_CLUSTER_NAME = process.env.ECS_CLUSTER_NAME;
+const ECS_SERVICE_NAME = process.env.ECS_SERVICE_NAME;
 
-const clusterName = "oneidp-cluster";
-const serviceName = "oneidp-service"; 
+const ecsClient = new ECSClient({ region: ECS_CLUSTER_REGION });
 
 export async function handler(event) {
+    let body;
+    
     try {
-        const body = JSON.parse(event.body);
+        body = JSON.parse(event.body);
+    } catch (error) {
+        console.error("Malformatted JSON:", error);
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ message: "Malformatted webhook request:" }),
+        };
+    }
 
+    try {
         const repoName = body.repository?.repo_name;
         const tag = body.push_data?.tag;
 
@@ -36,7 +47,7 @@ export async function handler(event) {
 
         return {
             statusCode: 500,
-            body: JSON.stringify({ message: "Error processing the webhook.", error }),
+            body: JSON.stringify({ message: "Error processing the webhook.", error: error.message }),
         };
     }
 }
@@ -46,8 +57,8 @@ async function forceEcsRedeployment() {
         console.log("Forcing ECS redeployment...");
 
         const describeCommand = new DescribeServicesCommand({
-            cluster: clusterName,
-            services: [serviceName],
+            cluster: ECS_CLUSTER_NAME,
+            services: [ECS_SERVICE_NAME],
         });
 
         const describeServiceResponse = await ecsClient.send(describeCommand);
@@ -60,8 +71,8 @@ async function forceEcsRedeployment() {
         console.log(`Current task definition: ${taskDefinitionArn}`);
 
         const updateCommand = new UpdateServiceCommand({
-            cluster: clusterName,
-            service: serviceName,
+            cluster: ECS_CLUSTER_NAME,
+            service: ECS_SERVICE_NAME,
             forceNewDeployment: true,
         });
 
