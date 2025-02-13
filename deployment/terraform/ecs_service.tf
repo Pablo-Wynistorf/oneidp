@@ -6,6 +6,7 @@ resource "aws_ecs_service" "oneidp_service" {
   desired_count   = 1
   launch_type     = "FARGATE"
   platform_version = "1.4.0"
+  health_check_grace_period_seconds = 60
 
   network_configuration {
     subnets         = [aws_subnet.oneidp_a_2.id, aws_subnet.oneidp_b_2.id, aws_subnet.oneidp_c_2.id]
@@ -16,7 +17,7 @@ resource "aws_ecs_service" "oneidp_service" {
   load_balancer {
     target_group_arn = aws_lb_target_group.oneidp_target_group.arn
     container_name   = "oneidp"
-    container_port   = 80
+    container_port   = var.api_port
   }
 
   deployment_controller {

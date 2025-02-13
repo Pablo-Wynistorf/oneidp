@@ -8,7 +8,7 @@ resource "aws_ecs_task_definition" "oneidp" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
   runtime_platform {
-    cpu_architecture      = "X86_64"
+    cpu_architecture       = "X86_64"
     operating_system_family = "LINUX"
   }
 
@@ -16,7 +16,8 @@ resource "aws_ecs_task_definition" "oneidp" {
     {
       name      = "oneidp"
       image     = "pablo06/oneidp:latest"
-      cpu       = 0
+      cpu       = 1024
+      memory    = 3072
       essential = true
       portMappings = [
         {
@@ -27,6 +28,13 @@ resource "aws_ecs_task_definition" "oneidp" {
           appProtocol   = "http"
         }
       ]
+      healthCheck = {
+        command     = ["CMD-SHELL", "curl -f http://localhost:${var.api_port}/api/health || exit 1"]
+        interval    = 30
+        timeout     = 5
+        retries     = 2
+        startPeriod = 60
+      }
       environment = [
         for var in local.env_vars : {
           name  = var.name
@@ -48,6 +56,7 @@ resource "aws_ecs_task_definition" "oneidp" {
     }
   ])
 }
+
 
 # ENV Variables
 locals {
