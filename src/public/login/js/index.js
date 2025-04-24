@@ -155,6 +155,86 @@ function handleGoogleAuth() {
 }
 
 
+function bufferDecode(base64urlString) {
+  // Convert base64url to base64
+  let base64 = base64urlString.replace(/-/g, '+').replace(/_/g, '/');
+  // Pad to multiple of 4
+  while (base64.length % 4 !== 0) base64 += '=';
+  const binary = atob(base64);
+  return Uint8Array.from(binary, c => c.charCodeAt(0));
+}
+
+function base64urlEncode(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+
+async function loginWithPasskey() {
+  try {
+    // Step 1: Get authentication options from the backend
+    const optionsRes = await fetch('/api/auth/passkey', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!optionsRes.ok) {
+      const error = await optionsRes.json();
+      throw new Error(error.error || 'Failed to get authentication options');
+    }
+
+    const options = await optionsRes.json();
+
+    // Step 2: Decode challenge and allowCredentials if needed
+    options.challenge = bufferDecode(options.challenge);
+
+    // Let the browser show passkey selector UI (no user input)
+    options.allowCredentials = [];
+
+    // Step 3: Use WebAuthn API to trigger browser-native passkey UI
+    const assertion = await navigator.credentials.get({ publicKey: options });
+
+    // Step 4: Format the response to send back to the server
+    const response = {
+      id: base64urlEncode(assertion.rawId),
+      rawId: base64urlEncode(assertion.rawId),
+      type: assertion.type,
+      response: {
+        authenticatorData: base64urlEncode(assertion.response.authenticatorData),
+        clientDataJSON: base64urlEncode(assertion.response.clientDataJSON),
+        signature: base64urlEncode(assertion.response.signature),
+        userHandle: assertion.response.userHandle
+          ? base64urlEncode(assertion.response.userHandle)
+          : null,
+      },
+      clientExtensionResults: assertion.getClientExtensionResults(),
+    };
+    
+
+    // Step 5: Send the response to the backend for verification
+    const verifyRes = await fetch('/api/auth/passkey/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ response }),
+    });
+
+    if (!verifyRes.ok) {
+      const error = await verifyRes.json();
+      throw new Error(error.error || 'Passkey verification failed');
+    }
+
+    // Step 6: Redirect on success
+    handle200Response();
+  } catch (err) {
+    console.error(err);
+    displayAlertError(err.message || 'Passkey login failed');
+  }
+}
+
+
+
 function displayAlertError(message) {
   const alertBox = document.getElementById('alert-box');
   const alertMessage = document.getElementById('alert-message');

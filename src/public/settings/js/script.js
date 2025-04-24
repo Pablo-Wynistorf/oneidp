@@ -1,60 +1,14 @@
+let mfaActivationCode;
+
 document.addEventListener("DOMContentLoaded", function () {
   fetchUserData();
   fetchActiveSessions();
+});
 
-  function fetchUserData() {
-    try {
-      fetch(`/api/oauth/userinfo`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          updateMfaBox(data.mfaEnabled);
-        })
-        .catch((error) => {
-          handleError();
-          window.location.href = "/login";
-        });
-    } catch (error) {
-      handleError();
-    }
-  }
 
-  function updateMfaBox(isMfaEnabled) {
-    const mfaBox = document.getElementById("mfa-box");
-    mfaBox.innerHTML = "";
-
-    if (isMfaEnabled) {
-      const disableMfaButton = document.createElement("button");
-      disableMfaButton.textContent = "Disable MFA";
-      disableMfaButton.className =
-        "w-full px-4 py-2 bg-red-700 text-white font-semibold rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500";
-      disableMfaButton.onclick = disableMfa;
-
-      mfaBox.appendChild(disableMfaButton);
-    } else {
-      const enableMfaButton = document.createElement("button");
-      enableMfaButton.textContent = "Enable MFA";
-      enableMfaButton.className =
-        "w-full px-4 py-2 bg-blue-700 text-white font-semibold rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500";
-      enableMfaButton.onclick = openMfaModal;
-
-      mfaBox.appendChild(enableMfaButton);
-    }
-  }
-
-  function openMfaModal() {
-    const mfaModal = document.getElementById("mfa-modal");
-    const mfaQrCode = document.getElementById("mfa-qr-code");
-    const mfaCodeInput = document.getElementById("mfa-code");
-    mfaModal.classList.remove("hidden");
-    mfaModal.classList.add("flex");
-    mfaCodeInput.focus();
-
-    fetch("/api/auth/mfa/setup", {
+function fetchUserData() {
+  try {
+    fetch(`/api/oauth/userinfo`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -62,63 +16,137 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((response) => response.json())
       .then((data) => {
-        if (data.success) {
-          mfaQrCode.src = data.imageUrl;
-          mfaActivationCode = data.mfaActivationCode;
-        } else {
-          handleError();
-        }
+        updateMfaBox(data.mfaEnabled);
+        updatePasskeyBox(data.passkeyEnabled);
       })
-      .catch((error) => handleError());
+      .catch((error) => {
+        handleError();
+        window.location.href = "/login";
+      });
+  } catch (error) {
+    handleError();
+  }
+}
 
-    mfaCodeInput.addEventListener("input", function () {
-      if (mfaCodeInput.value.length === 6) {
-        verifyMfaCode(mfaCodeInput.value, mfaModal);
+function updateMfaBox(isMfaEnabled) {
+  const mfaBox = document.getElementById("mfa-box");
+  mfaBox.innerHTML = "";
+
+  if (isMfaEnabled) {
+    const disableMfaButton = document.createElement("button");
+    disableMfaButton.textContent = "Disable MFA";
+    disableMfaButton.className =
+      "w-full px-4 py-2 bg-red-700 text-white font-semibold rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500";
+    disableMfaButton.onclick = disableMfa;
+
+    mfaBox.appendChild(disableMfaButton);
+  } else {
+    const enableMfaButton = document.createElement("button");
+    enableMfaButton.textContent = "Enable MFA";
+    enableMfaButton.className =
+      "w-full px-4 py-2 bg-blue-700 text-white font-semibold rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500";
+    enableMfaButton.onclick = openMfaModal;
+
+    mfaBox.appendChild(enableMfaButton);
+  }
+}
+
+function updatePasskeyBox(isPasskeyEnabled) {
+  const passkeyBox = document.getElementById("passkey-box");
+  passkeyBox.innerHTML = "";
+
+  if (isPasskeyEnabled) {
+    const deletePasskeyButton = document.createElement("button");
+    deletePasskeyButton.textContent = "Delete Passkey";
+    deletePasskeyButton.className =
+      "w-full px-4 py-2 bg-red-700 text-white font-semibold rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-500";
+    deletePasskeyButton.onclick = deletePasskey;
+
+    passkeyBox.appendChild(deletePasskeyButton);
+  } else {
+    const enablePasskeyButton = document.createElement("button");
+    enablePasskeyButton.textContent = "Enable Passkey";
+    enablePasskeyButton.id = "passkey-button";
+    enablePasskeyButton.className =
+      "w-full px-4 py-2 bg-blue-700 text-white font-semibold rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500";
+    enablePasskeyButton.onclick = enablePasskey;
+
+    passkeyBox.appendChild(enablePasskeyButton);
+  }
+
+}
+
+function openMfaModal() {
+  const mfaModal = document.getElementById("mfa-modal");
+  const mfaQrCode = document.getElementById("mfa-qr-code");
+  const mfaCodeInput = document.getElementById("mfa-code");
+  mfaModal.classList.remove("hidden");
+  mfaModal.classList.add("flex");
+  mfaCodeInput.focus();
+
+  fetch("/api/auth/mfa/setup", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        mfaQrCode.src = data.imageUrl;
+        mfaActivationCode = data.mfaActivationCode;
+      } else {
+        handleError();
       }
-    });
-  }
-
-  function verifyMfaCode(code, modal) {
-    fetch("/api/auth/mfa/setup/verify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ mfaVerifyCode: code }),
     })
-      .then((response) => {
-        if (response.ok) {
-          modal.classList.add("hidden");
-          displayAlertSuccess("MFA setup successfully.");
-          fetchUserData();
-        } else {
-          displayAlertError("Invalid code.");
-          document.getElementById("mfa-code").value = "";
-        }
-      })
-      .catch(() => handleError());
-  }
+    .catch((error) => handleError());
 
-  function disableMfa() {
-    fetch("/api/auth/mfa/disable", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+  mfaCodeInput.addEventListener("input", function () {
+    if (mfaCodeInput.value.length === 6) {
+      verifyMfaCode(mfaCodeInput.value, mfaModal);
+    }
+  });
+}
+
+function verifyMfaCode(code, modal) {
+  fetch("/api/auth/mfa/setup/verify", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ mfaVerifyCode: code }),
+  })
+    .then((response) => {
+      if (response.ok) {
+        modal.classList.add("hidden");
+        displayAlertSuccess("MFA setup successfully.");
+        fetchUserData();
+      } else {
+        displayAlertError("Invalid code.");
+        document.getElementById("mfa-code").value = "";
+      }
     })
-      .then((response) => {
-        if (response.ok) {
-          displayAlertSuccess("MFA disabled successfully.");
-          fetchUserData();
-        } else {
-          handleError();
-        }
-      })
-      .catch(() => handleError());
-  }
-});
+    .catch(() => handleError());
+}
 
-let mfaActivationCode;
+function disableMfa() {
+  fetch("/api/auth/mfa/disable", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => {
+      if (response.ok) {
+        displayAlertSuccess("MFA disabled successfully.");
+        fetchUserData();
+      } else {
+        handleError();
+      }
+    })
+    .catch(() => handleError());
+}
+
 
 function copyMfaActivationCode() {
   const textArea = document.createElement("textarea");
@@ -302,3 +330,96 @@ function logoutSession(sessionId) {
     handleError();
   }
 }
+
+
+async function enablePasskey() {
+      try {
+        const res = await fetch("/api/auth/passkey/setup/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!res.ok) throw new Error("Failed to generate registration options");
+
+        const options = await res.json();
+
+        // Convert base64 fields to ArrayBuffers
+        options.challenge = base64urlToBuffer(options.challenge);
+        options.user.id = base64urlToBuffer(options.user.id);
+
+        const cred = await navigator.credentials.create({ publicKey: options });
+
+        const credentialResponse = {
+          id: cred.id,
+          rawId: bufferToBase64url(cred.rawId),
+          type: cred.type,
+          response: {
+            attestationObject: bufferToBase64url(cred.response.attestationObject),
+            clientDataJSON: bufferToBase64url(cred.response.clientDataJSON),
+          },
+        };
+
+        const verifyRes = await fetch("/api/auth/passkey/setup/verify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ response: credentialResponse }),
+        });
+
+        const verifyData = await verifyRes.json();
+
+        if (verifyData.success) {
+          displayAlertSuccess("Passkey registered successfully!");
+          fetchUserData();
+        } else {
+          displayAlertError("Passkey registration failed: " + (verifyData.error || "Unknown error"));
+        }
+      } catch (err) {
+        console.error("Passkey registration error:", err);
+        displayAlertError("Passkey registration error: " + err.message);
+      }
+};
+
+async function deletePasskey() {
+  try {
+    const res = await fetch("/api/auth/passkey/delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (res.ok) {
+      displayAlertSuccess("Passkey deleted successfully.");
+      fetchUserData();
+    } else {
+      handleError();
+    }
+  } catch (error) {
+    handleError();
+  }
+}
+
+
+
+function base64urlToBuffer(base64url) {
+  const padding = '='.repeat((4 - (base64url.length % 4)) % 4);
+  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/') + padding;
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+function bufferToBase64url(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+

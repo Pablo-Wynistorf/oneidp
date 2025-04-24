@@ -68,6 +68,7 @@ router.all('/', (req, res) => {
           lastName: userData.lastName,
           providerRoles: userData.providerRoles,
           mfaEnabled: userData.mfaEnabled,
+          passkeyEnabled: userData.passkeyId ? true : false
         });
       }
 

@@ -176,6 +176,9 @@ app.use('/api/auth/google', rateLimiter(10, 60 * 1000), require('./routes/api/au
 app.use('/api/auth/github', rateLimiter(10, 60 * 1000), require('./routes/api/auth/github.js')); // 10 requests per minute
 app.use('/api/auth/logout', rateLimiter(10, 60 * 1000), require('./routes/api/auth/logout.js')); // 10 requests per minute
 app.use('/api/auth/logoutall', rateLimiter(10, 60 * 1000), require('./routes/api/auth/logoutall.js')); // 10 requests per minute
+app.use('/api/auth/passkey', rateLimiter(10, 60 * 1000), require('./routes/api/auth/passkey.js')); // 10 requests per minute
+app.use('/api/auth/passkey/setup', rateLimiter(10, 60 * 1000), require('./routes/api/auth/passkey/setup.js')); // 10 requests per minute
+app.use('/api/auth/passkey/delete', rateLimiter(10, 60 * 1000), require('./routes/api/auth/passkey/delete.js')); // 10 requests per minute
 app.use('/api/auth/mfa/verify', rateLimiter(10, 60 * 1000), require('./routes/api/auth/mfa/verify.js')); // 10 requests per minute
 app.use('/api/auth/mfa/setup', rateLimiter(5, 60 * 1000), require('./routes/api/auth/mfa/setup.js')); // 5 requests per minute
 app.use('/api/auth/mfa/setup/verify', rateLimiter(5, 60 * 1000), require('./routes/api/auth/mfa/setup/verify.js')); // 5 requests per minute
