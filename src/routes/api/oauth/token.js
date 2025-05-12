@@ -28,9 +28,8 @@ ${process.env.JWT_PUBLIC_KEY}
 const URL = process.env.URL;
 
 router.post('/', async (req, res) => {
-  const { grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri, scope } = req.body;
-
-  console.log(grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri, scope)
+  const { grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri } = req.body;
+  let scope = req.body.scope;
 
   const JWK_PUBLIC_KEY = getJWKPublicKey();
 
@@ -153,9 +152,24 @@ router.post('/', async (req, res) => {
       }
     }
 
-    const scopes = session.scope.split(' ');
-    const isProfile = scopes.includes('profile');
-    const isEmail = scopes.includes('email');
+    if (!scope || scope === 'undefined') {
+      scope = 'openid';
+    }
+
+    const requestedScopes = scope.split(' ');
+  
+    const allowedScopes = ['openid', 'profile', 'email', 'offline_access'];
+
+    const invalidScopes = requestedScopes.filter(s => !allowedScopes.includes(s));
+    if (invalidScopes.length > 0) {
+      return res.status(400).json({
+        error: 'Invalid Request',
+        error_description: `Invalid scope(s) provided: ${invalidScopes.join(', ')}`
+      });
+    }
+
+    const isProfile = scope.includes('profile');
+    const isEmail = scope.includes('email');
 
     oauth_user = await userDB.findOne({ userId });
     if (!oauth_user) {
@@ -248,7 +262,7 @@ router.post('/', async (req, res) => {
     await redisCache.hSet(orsidRedisKey, {
       oauthClientAppId: oauth_client.oauthClientAppId,
       createdAt: timestamp,
-      scope: scope || "openid"
+      scope: scope
     });
 
     await redisCache.expire(orsidRedisKey, 20 * 24 * 60 * 60);
