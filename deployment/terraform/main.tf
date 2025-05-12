@@ -108,6 +108,7 @@ data "template_file" "render_var_file" {
     mongodb_uri = "${var.mongodb_uri}"
     redis_uri = "${var.redis_uri}"
     url = "${var.url}"
+    DOMAIN = "${var.domain}"
     google_analytics_tag_id = "${var.google_analytics_tag_id}"
   EOT
 }

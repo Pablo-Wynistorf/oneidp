@@ -153,12 +153,8 @@ function handleGoogleAuth() {
     window.location.href = `/api/auth/google?redirectUri=${redirectUri}`;
   }
 }
-
-
 function bufferDecode(base64urlString) {
-  // Convert base64url to base64
   let base64 = base64urlString.replace(/-/g, '+').replace(/_/g, '/');
-  // Pad to multiple of 4
   while (base64.length % 4 !== 0) base64 += '=';
   const binary = atob(base64);
   return Uint8Array.from(binary, c => c.charCodeAt(0));
@@ -170,7 +166,6 @@ function base64urlEncode(buffer) {
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 }
-
 
 async function loginWithPasskey() {
   try {
@@ -187,16 +182,21 @@ async function loginWithPasskey() {
 
     const options = await optionsRes.json();
 
-    // Step 2: Decode challenge and allowCredentials if needed
+    // Step 2: Decode challenge and allowCredentials
     options.challenge = bufferDecode(options.challenge);
 
-    // Let the browser show passkey selector UI (no user input)
-    options.allowCredentials = [];
+    if (Array.isArray(options.allowCredentials)) {
+      options.allowCredentials = options.allowCredentials.map(cred => ({
+        id: bufferDecode(cred.id),
+        type: cred.type,
+        transports: cred.transports,
+      }));
+    }
 
-    // Step 3: Use WebAuthn API to trigger browser-native passkey UI
+    // Step 3: Trigger browser-native WebAuthn login
     const assertion = await navigator.credentials.get({ publicKey: options });
 
-    // Step 4: Format the response to send back to the server
+    // Step 4: Format the response to send back to backend
     const response = {
       id: base64urlEncode(assertion.rawId),
       rawId: base64urlEncode(assertion.rawId),
@@ -211,9 +211,8 @@ async function loginWithPasskey() {
       },
       clientExtensionResults: assertion.getClientExtensionResults(),
     };
-    
 
-    // Step 5: Send the response to the backend for verification
+    // Step 5: Send response for verification
     const verifyRes = await fetch('/api/auth/passkey/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -225,13 +224,14 @@ async function loginWithPasskey() {
       throw new Error(error.error || 'Passkey verification failed');
     }
 
-    // Step 6: Redirect on success
     handle200Response();
+
   } catch (err) {
     console.error(err);
     displayAlertError(err.message || 'Passkey login failed');
   }
 }
+
 
 
 

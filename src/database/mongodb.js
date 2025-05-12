@@ -45,6 +45,7 @@ const userSchema = new Schema({
   mfaEnabled: Boolean,
   emailVerified: Boolean,
   providerRoles: Array,
+  signCount: Number,
 }, {
   timestamps: true
 });

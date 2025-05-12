@@ -169,14 +169,14 @@ app.use('/oidc/roles', verifyToken, express.static(path.join(__dirname, 'public/
 
 
 // Authentication Endpoints
-app.use('/api/auth/token/check', rateLimiter(20, 60 * 1000), require('./routes/api/auth/token/check.js')); // 20 requests per minute
-app.use('/api/auth/login', rateLimiter(10, 60 * 1000), require('./routes/api/auth/login.js')); // 10 requests per minute
-app.use('/api/auth/signup', rateLimiter(5, 60 * 1000), require('./routes/api/auth/signup.js')); // 5 requests per minute
+app.use('/api/auth/token/check', rateLimiter(60, 60 * 1000), require('./routes/api/auth/token/check.js')); // 60 requests per minute
+app.use('/api/auth/login', rateLimiter(60, 60 * 1000), require('./routes/api/auth/login.js')); // 60 requests per minute
+app.use('/api/auth/signup', rateLimiter(10, 60 * 1000), require('./routes/api/auth/signup.js')); // 10 requests per minute
 app.use('/api/auth/google', rateLimiter(10, 60 * 1000), require('./routes/api/auth/google.js')); // 10 requests per minute
 app.use('/api/auth/github', rateLimiter(10, 60 * 1000), require('./routes/api/auth/github.js')); // 10 requests per minute
 app.use('/api/auth/logout', rateLimiter(10, 60 * 1000), require('./routes/api/auth/logout.js')); // 10 requests per minute
 app.use('/api/auth/logoutall', rateLimiter(10, 60 * 1000), require('./routes/api/auth/logoutall.js')); // 10 requests per minute
-app.use('/api/auth/passkey', rateLimiter(10, 60 * 1000), require('./routes/api/auth/passkey.js')); // 10 requests per minute
+app.use('/api/auth/passkey', rateLimiter(60, 60 * 1000), require('./routes/api/auth/passkey.js')); // 10 requests per minute
 app.use('/api/auth/passkey/setup', rateLimiter(10, 60 * 1000), require('./routes/api/auth/passkey/setup.js')); // 10 requests per minute
 app.use('/api/auth/passkey/delete', rateLimiter(10, 60 * 1000), require('./routes/api/auth/passkey/delete.js')); // 10 requests per minute
 app.use('/api/auth/mfa/verify', rateLimiter(10, 60 * 1000), require('./routes/api/auth/mfa/verify.js')); // 10 requests per minute
@@ -191,11 +191,11 @@ app.use('/api/auth/user/setpassword', rateLimiter(5, 60 * 1000), require('./rout
 app.use('/api/auth/user/session', rateLimiter(20, 60 * 1000), require('./routes/api/auth/user/session.js')); // 20 requests per minute
 
 // OAuth Settings Endpoints
-app.use('/api/oauth/settings/apps/get', rateLimiter(30, 60 * 1000), require('./routes/api/oauth/settings/apps/get.js')); // 20 requests per minute
+app.use('/api/oauth/settings/apps/get', rateLimiter(60, 60 * 1000), require('./routes/api/oauth/settings/apps/get.js')); // 60 requests per minute
 app.use('/api/oauth/settings/apps/add', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/apps/add.js')); // 10 requests per minute
 app.use('/api/oauth/settings/apps/delete', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/apps/delete.js')); // 10 requests per minute
 app.use('/api/oauth/settings/apps/edit', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/apps/edit.js')); // 10 requests per minute
-app.use('/api/oauth/settings/roles/get', rateLimiter(30, 60 * 1000), require('./routes/api/oauth/settings/roles/get.js')); // 20 requests per minute
+app.use('/api/oauth/settings/roles/get', rateLimiter(60, 60 * 1000), require('./routes/api/oauth/settings/roles/get.js')); // 20 requests per minute
 app.use('/api/oauth/settings/roles/get-users', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/roles/get-users.js')); // 10 requests per minute
 app.use('/api/oauth/settings/roles/add', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/roles/add.js')); // 10 requests per minute
 app.use('/api/oauth/settings/roles/update/remove-user', rateLimiter(30, 60 * 1000), require('./routes/api/oauth/settings/roles/update/remove-user.js')); // 30 requests per minute
@@ -204,13 +204,13 @@ app.use('/api/oauth/settings/roles/update/bulk-update', rateLimiter(10, 60 * 100
 app.use('/api/oauth/settings/roles/delete', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/settings/roles/delete.js')); // 10 requests per minute
 
 // OAuth Endpoints
-app.use('/api/oauth/authorize', rateLimiter(1, 1000), require('./routes/api/oauth/authorize.js')); // 1 request per second
-app.use('/api/oauth/token', rateLimiter(1, 1000), require('./routes/api/oauth/token.js')); // 1 request per second
-app.use('/api/oauth/userinfo', rateLimiter(20, 10 * 1000), require('./routes/api/oauth/userinfo.js')); // 20 requests per 10 seconds
+app.use('/api/oauth/authorize', rateLimiter(5, 1000), require('./routes/api/oauth/authorize.js')); // 5 requests per second
+app.use('/api/oauth/token', rateLimiter(5, 1000), require('./routes/api/oauth/token.js')); // 5 requests per second
+app.use('/api/oauth/userinfo', rateLimiter(50, 1000), require('./routes/api/oauth/userinfo.js')); // 50 requests per second
 app.use('/api/oauth/users', rateLimiter(30, 60 * 1000), require('./routes/api/oauth/users.js')); // 30 requests per minute
-app.use('/api/oauth/check_token', rateLimiter(20, 10 * 1000), require('./routes/api/oauth/check_token.js')); // 20 requests per 10 seconds
-app.use('/api/oauth/logout', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/logout.js')); // 10 requests per minute
-app.use('/api/oauth/revoke', rateLimiter(10, 60 * 1000), require('./routes/api/oauth/revoke.js')); // 10 requests per minute
+app.use('/api/oauth/check_token', rateLimiter(60, 10 * 1000), require('./routes/api/oauth/check_token.js')); // 60 requests per 10 seconds
+app.use('/api/oauth/logout', rateLimiter(60, 60 * 1000), require('./routes/api/oauth/logout.js')); // 60 requests per minute
+app.use('/api/oauth/revoke', rateLimiter(60, 60 * 1000), require('./routes/api/oauth/revoke.js')); // 60 requests per minute
 
 // OIDC Discovery Endpoints
 app.use('/.well-known/openid-configuration', require('./routes/api/oauth/openid-configuration.js')); // No limit (public endpoint)

@@ -6,7 +6,7 @@ const { userDB } = require('../../../../database/mongodb');
 
 const router = express.Router();
 
-const URL = process.env.URL;
+const { DOMAIN, URL } = process.env;
 
 const JWT_PUBLIC_KEY = `
 -----BEGIN PUBLIC KEY-----
@@ -41,7 +41,7 @@ router.post('/generate', async (req, res) => {
 
     const options = await generateRegistrationOptions({
       rpName: 'Oneidp',
-      rpID: URL.split('/')[2].split('/')[0],
+      rpID: DOMAIN,
       userName: user.username,
       timeout: 60000,
       attestationType: 'none',
@@ -90,7 +90,7 @@ router.post('/verify', async (req, res) => {
       response,
       expectedChallenge,
       expectedOrigin: URL,
-      expectedRPID: URL.split('/')[2].split('/')[0],
+      expectedRPID: DOMAIN,
     });
 
     const { verified, registrationInfo } = verification;

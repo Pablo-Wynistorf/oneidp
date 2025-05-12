@@ -7,7 +7,7 @@ const base64url = require('base64url');
 
 const router = express.Router();
 
-const { URL } = process.env;
+const { DOMAIN, URL } = process.env;
 
 const JWT_PRIVATE_KEY = `
 -----BEGIN PRIVATE KEY-----
@@ -19,26 +19,26 @@ function generateRandomString(length) {
   return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
 }
 
-// Step 1: Generate Passkey Login Options
 router.post('/', async (req, res) => {
-  const options = generateAuthenticationOptions({
-    rpID: URL.split('/')[2].split('/')[0],
+  const options = await generateAuthenticationOptions({
+    rpID: DOMAIN,
     userVerification: 'preferred',
   });
 
-  const challengeBase64url = base64url.encode(options.challenge);
-  const redisKey = `webauthn:challenge:${challengeBase64url}`;
+  const challengeString = Buffer.from(options.challenge).toString('base64url');
+  const redisKey = `webauthn:challenge:${challengeString}`;
 
-  await redisCache.set(redisKey, challengeBase64url);
+  await redisCache.set(redisKey, challengeString);
   await redisCache.expire(redisKey, 60);
 
   res.json({
     ...options,
-    challenge: challengeBase64url,
+    challenge: challengeString,
   });
 });
 
-// Step 2: Verify Passkey Assertion
+
+
 router.post('/verify', async (req, res) => {
   const { response } = req.body;
 
@@ -54,25 +54,34 @@ router.post('/verify', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Challenge expired or missing' });
     }
 
+    const rawId = response.rawId;
+    const rawIdBase64 = base64url.encode(rawId);
+
+    const rawIdBuffer = Buffer.from(rawIdBase64, 'base64');
+    const credentialIDBase64 = rawIdBuffer.toString('base64');
+
+    const user = await userDB.findOne({ passkeyId: credentialIDBase64 });
+    if (!user) return res.status(462).json({ success: false, error: 'User not found' });
+
     const verification = await verifyAuthenticationResponse({
       response,
       expectedChallenge,
       expectedOrigin: URL,
-      expectedRPID: URL.split('/')[2].split(':')[0],
+      expectedRPID: DOMAIN,
       requireUserVerification: true,
+      credential: {
+        id: user.passkeyId,
+        publicKey: Buffer.from(user.passkeyPublicKey, 'base64'),
+        counter: user.signCount,
+      },
     });
+
 
     if (!verification.verified) {
       return res.status(462).json({ success: false, error: 'Invalid passkey login' });
     }
 
-    const { authenticationInfo } = verification;
-    const { credentialID } = authenticationInfo;
-
-    const user = await userDB.findOne({ passkeyId: credentialID.toString('base64') });
-    if (!user) return res.status(462).json({ success: false, error: 'User not found' });
-
-    user.signCount = authenticationInfo.newCounter;
+    user.signCount = verification.authenticationInfo.newCounter;
     await user.save();
 
     const sid = await generateRandomString(15);
@@ -85,7 +94,7 @@ router.post('/verify', async (req, res) => {
     });
     await redisCache.expire(redisSessionKey, 48 * 60 * 60);
 
-    await redisCache.del(redisKey); // clean up challenge
+    await redisCache.del(redisKey);
 
     res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
     res.status(200).json({ success: true });
@@ -95,5 +104,7 @@ router.post('/verify', async (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to verify passkey' });
   }
 });
+
+
 
 module.exports = router;

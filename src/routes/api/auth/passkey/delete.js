@@ -43,7 +43,7 @@ router.post('/', async (req, res) => {
       return res.status(462).json({ success: false, error: 'No passkey found' });
     }
 
-    await userDB.updateOne({ userId }, { $unset: { passkeyId: 1, passkeyPublicKey: 1 } });
+    await userDB.updateOne({ userId }, { $unset: { passkeyId: 1, passkeyPublicKey: 1, signCount: 1 } });
 
     return res.status(200).json({ success: true, message: 'Passkey has been deleted successfully' });
   });
