@@ -47,8 +47,7 @@ router.post('/generate', async (req, res) => {
       attestationType: 'none',
       authenticatorSelection: {
         userVerification: 'preferred',
-        residentKey: 'required',
-        authenticatorAttachment: 'platform',
+        residentKey: 'preferred',
       },
     });
 
@@ -64,7 +63,7 @@ router.post('/generate', async (req, res) => {
 router.post('/verify', async (req, res) => {
   const { response } = req.body;
   const access_token = req.cookies.access_token;
-   
+
   const decoded = jwt.verify(access_token, JWT_PUBLIC_KEY, { algorithms: ['RS256'] });
   const userId = decoded.userId;
   const sid = decoded.sid;
@@ -86,12 +85,14 @@ router.post('/verify', async (req, res) => {
   if (!expectedChallenge) return res.status(400).json({ error: 'Challenge expired' });
 
   try {
-    const verification = await verifyRegistrationResponse({
+    verifyRegistrationResponse({
       response,
       expectedChallenge,
       expectedOrigin: URL,
       expectedRPID: DOMAIN,
-    });
+      requireUserVerification: false,
+    })
+
 
     const { verified, registrationInfo } = verification;
     if (!verified) return res.status(462).json({ success: false, error: 'Invalid registration' });
