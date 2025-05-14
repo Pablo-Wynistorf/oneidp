@@ -118,6 +118,10 @@ locals {
       value = var.url
     },
     {
+      name  = "DOMAIN"
+      value = var.domain
+    },
+    {
       name  = "GOOGLE_ANALYTICS_TAG_ID"
       value = var.google_analytics_tag_id
     }
