@@ -23,6 +23,7 @@ router.post('/', async (req, res) => {
   const options = await generateAuthenticationOptions({
     rpID: DOMAIN,
     userVerification: 'preferred',
+    residentKey: 'preferred',
   });
 
   const challengeString = Buffer.from(options.challenge).toString('base64url');
@@ -85,20 +86,25 @@ router.post('/verify', async (req, res) => {
     await user.save();
 
     const sid = await generateRandomString(15);
-    const token = jwt.sign({ userId: user.userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+    const device = req.headers['user-agent'];
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const platform = device.match(/(Windows|Linux|Macintosh|iPhone|iPad|Android)/i);
 
+    const timestamp = Math.floor(Date.now() / 1000);
     const redisSessionKey = `psid:${user.userId}:${sid}`;
+
     await redisCache.hSet(redisSessionKey, {
-      createdAt: Math.floor(Date.now() / 1000),
-      method: 'passkey',
-    });
+      deviceType: platform ? platform[0] : 'Unknown',
+      ipAddr: ip || 'Unknown',
+      createdAt: timestamp,
+    })
     await redisCache.expire(redisSessionKey, 48 * 60 * 60);
 
     await redisCache.del(redisKey);
+    const access_token = jwt.sign({ userId: user.userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+    res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
 
-    res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
-    res.status(200).json({ success: true });
-
+    return res.status(200).json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, error: 'Failed to verify passkey' });
