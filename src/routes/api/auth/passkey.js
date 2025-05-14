@@ -64,6 +64,17 @@ router.post('/verify', async (req, res) => {
     const user = await userDB.findOne({ passkeyId: credentialIDBase64 });
     if (!user) return res.status(462).json({ success: false, error: 'User not found' });
 
+    console.log(
+      "response:", response,
+      "expectedChallenge:", expectedChallenge,
+      "URL:", URL,
+      "DOMAIN:", DOMAIN,
+      "user.passkeyId:", user.passkeyId,
+      "Buffer.from(user.passkeyPublicKey, 'base64'):", Buffer.from(user.passkeyPublicKey, 'base64'),
+      "user.signCount:", user.signCount,
+      "user.passkeyId:", user.passkeyId,
+    )
+
     const verification = await verifyAuthenticationResponse({
       response,
       expectedChallenge,
