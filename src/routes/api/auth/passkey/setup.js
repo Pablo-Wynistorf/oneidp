@@ -85,14 +85,13 @@ router.post('/verify', async (req, res) => {
   if (!expectedChallenge) return res.status(400).json({ error: 'Challenge expired' });
 
   try {
-    verifyRegistrationResponse({
+    const verification = await verifyRegistrationResponse({
       response,
       expectedChallenge,
       expectedOrigin: URL,
       expectedRPID: DOMAIN,
       requireUserVerification: false,
     })
-
 
     const { verified, registrationInfo } = verification;
     if (!verified) return res.status(462).json({ success: false, error: 'Invalid registration' });
