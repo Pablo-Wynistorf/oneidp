@@ -81,6 +81,10 @@ variable "redis_uri" {
   description = "Whats the Redis URI?"
 }
 
+variable "domain" {
+  description = "Whats the domain?"
+}
+
 variable "url" {
   description = "Whats the URL of the Application?"
 }
@@ -108,7 +112,7 @@ data "template_file" "render_var_file" {
     mongodb_uri = "${var.mongodb_uri}"
     redis_uri = "${var.redis_uri}"
     url = "${var.url}"
-    DOMAIN = "${var.domain}"
+    domain = "${var.domain}"
     google_analytics_tag_id = "${var.google_analytics_tag_id}"
   EOT
 }
