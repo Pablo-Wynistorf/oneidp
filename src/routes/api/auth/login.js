@@ -76,6 +76,7 @@ const handleUnverifiedEmail = async (user, res) => {
   return res.status(461).json({
     success: false, 
     error: 'Email not yet verified',
+    email: user.email,
     message: 'A verification email has been sent. Please check your inbox.',
   });
 };

@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendVerificationEmail } = require('../../../utils/send-emails.js');
 const { notifyError, notifyRegister } = require('../../../notify/notifications.js');
+
+const redisCache = require('../../../database/redis.js');
 const { userDB } = require('../../../database/mongodb.js');
 
 const router = express.Router();
@@ -53,6 +55,15 @@ router.post('/', async (req, res) => {
 
     const verifySid = await generateRandomString(15);
 
+    const timestamp = Math.floor(Date.now() / 1000);
+    const redisKey = `pev:${userId}:${verifySid}`;
+
+    await redisCache.hSet(redisKey, {
+      createdAt: timestamp,
+    })
+
+    await redisCache.expire(redisKey, 30 * 60);
+
     const email_verification_token = jwt.sign(
       { userId, pevSid: verifySid },
       JWT_PRIVATE_KEY,
@@ -78,7 +89,7 @@ router.post('/', async (req, res) => {
     notifyRegister(username);
 
     const signup_token = jwt.sign(
-      { userId },
+      { userId: userId },
       JWT_PRIVATE_KEY,
       { algorithm: 'RS256', expiresIn: '29m' }
     );
@@ -89,7 +100,7 @@ router.post('/', async (req, res) => {
       path: '/',
     });
 
-    return res.redirect('/verify');
+    return res.redirect(`/verify?email=${email}`);
   } catch (error) {
     notifyError(error);
     return res.status(500).json({ error: 'Something went wrong, try again later' });

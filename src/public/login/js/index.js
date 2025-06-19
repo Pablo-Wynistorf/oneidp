@@ -72,7 +72,7 @@ function handleResponse(response) {
   if (response.status === 200) {
     handle200Response();
   } else if (response.status === 461) {
-    handle461Error();
+    response.json().then(data => handle461Error(data.email));
   } else if (response.status === 462) {
     handle462Error();
   } else if (response.status === 463) {
@@ -91,10 +91,14 @@ function handle200Response() {
   }
 }
 
-function handle461Error() {
+function handle461Error(email) {
   displayAlertError('Email not verified');
   const redirectUrl = getRedirectUri();
-  window.location.replace(`/verify?redirectUri=${redirectUrl}`);
+  if (!redirectUrl || redirectUrl === 'null' || redirectUrl === 'undefined') {
+    window.location.replace(`/verify?email=${email}`);
+  } else {
+    window.location.replace(`/verify?redirectUri=${redirectUrl}&email=${email}`);
+  }
 }
 
 function handle462Error() {
