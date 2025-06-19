@@ -1,15 +1,40 @@
 document.addEventListener('DOMContentLoaded', () => {
-  if (document.getElementById('email-field')) {
-    document.getElementById('email-field').focus();
+  const firstNameField = document.getElementById('first-name-field');
+  const lastNameField = document.getElementById('last-name-field');
+  const usernameField = document.getElementById('username-field');
+  const emailField = document.getElementById('email-field');
+  const passwordField = document.getElementById('password-field');
+  const signupButton = document.getElementById('signup-button');
+
+  if (firstNameField) {
+    firstNameField.focus();
   }
 
-  const signupButton = document.getElementById('signup-button')
+  const validateFields = () => {
+    const allFilled =
+      firstNameField.value.trim() &&
+      lastNameField.value.trim() &&
+      usernameField.value.trim() &&
+      emailField.value.trim() &&
+      passwordField.value.trim();
+
+    signupButton.disabled = !allFilled;
+    signupButton.classList.toggle('opacity-50', !allFilled);
+    signupButton.classList.toggle('cursor-not-allowed', !allFilled);
+  };
+
+  [firstNameField, lastNameField, usernameField, emailField, passwordField].forEach(field =>
+    field.addEventListener('input', validateFields)
+  );
+
+  validateFields();
+
   if (signupButton) {
     signupButton.addEventListener('click', signup);
   }
 
   document.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !signupButton.disabled) {
       signup();
     }
   });
@@ -22,18 +47,17 @@ function signup() {
   const username = document.getElementById('username-field').value;
   const password = document.getElementById('password-field').value;
   const email = document.getElementById('email-field').value;
-  const signupButton = document.getElementById('signup-button')
+  const signupButton = document.getElementById('signup-button');
 
   signupButton.disabled = true;
   signupButton.innerText = '';
-  signupButton.classList.add('flex', 'justify-center', 'items-center', 'text-gray-500')
+  signupButton.classList.add('flex', 'justify-center', 'items-center', 'text-gray-500');
   signupButton.innerHTML = `<img src="/signup/images/spinner.svg" width="24" height="24" />`;
 
   if (!firstName || !lastName || !username || !password || !email) {
-    const signupButton = document.getElementById('signup-button');
     signupButton.disabled = false;
     signupButton.innerText = 'Create account';
-    signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+    signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500');
     displayAlertError('All fields are required');
     return;
   }
@@ -43,12 +67,11 @@ function signup() {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ firstName, lastName, username, password, email}),
+    body: JSON.stringify({ firstName, lastName, username, password, email }),
   })
     .then(handleResponse)
     .catch(handleError);
 }
-
 
 
 function handleResponse(response) {
@@ -66,8 +89,8 @@ function handleResponse(response) {
   } else if (response.status === 463) {
     handle463Error();
   } else if (response.status === 464) {
-    handle464Error()
-  }else {
+    handle464Error();
+  } else {
     handleError();
   }
 }
@@ -82,79 +105,78 @@ function handle200Response() {
 }
 
 function handle429Error() {
-  const signupButton = document.getElementById('signup-button');
-  signupButton.disabled = false;
-  signupButton.innerText = 'Create account';
-  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
-  displayAlertError('Error: Too many requests')
+  resetSignupButton();
+  displayAlertError('Error: Too many requests');
 }
 
-
 function handle460Error() {
-  const signupButton = document.getElementById('signup-button');
-  signupButton.disabled = false;
-  signupButton.innerText = 'Create account';
-  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  resetSignupButton();
   document.getElementById('username-field').value = '';
-  displayAlertError('Username must only contain letters, numbers, and dashes and be between 3 and 20 characters')
+  displayAlertError('Username must only contain letters, numbers, and dashes and be between 3 and 20 characters');
 }
 
 function handle461Error() {
-  const signupButton = document.getElementById('signup-button');
-  signupButton.disabled = false;
-  signupButton.innerText = 'Create account';
-  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  resetSignupButton();
   document.getElementById('email-field').value = '';
-  displayAlertError('Invalid email address')
+  displayAlertError('Invalid email address');
 }
 
 function handle462Error() {
-  const signupButton = document.getElementById('signup-button');
-  signupButton.disabled = false;
-  signupButton.innerText = 'Create account';
-  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+  resetSignupButton();
   document.getElementById('password-field').value = '';
-  displayAlertError('Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character')
+  displayAlertError('Password must have at least 8 characters, contain at least one uppercase letter, one lowercase letter, one digit, and one special character');
 }
 
 function handle463Error() {
-  const signupButton = document.getElementById('signup-button');
-  signupButton.disabled = false;
-  signupButton.innerText = 'Create account';
-  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
-  displayAlertError('Email already registered')
+  resetSignupButton();
+  displayAlertError('Email already registered');
 }
 
 function handle464Error() {
-  const signupButton = document.getElementById('signup-button');
-  signupButton.disabled = false;
-  signupButton.innerText = 'Create account';
-  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
-  displayAlertError('Username already taken')
+  resetSignupButton();
+  displayAlertError('Username already taken');
 }
 
 function handleError() {
+  resetSignupButton();
+  displayAlertError('Something went wrong, please try again later');
+}
+
+function resetSignupButton() {
   const signupButton = document.getElementById('signup-button');
   signupButton.disabled = false;
   signupButton.innerText = 'Create account';
-  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
-  displayAlertError('Something went wrong, please try again later')
+  signupButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500');
 }
 
+function displayAlertSuccess(message) {
+  new Noty({
+    text: message,
+    type: 'success',
+    layout: 'topRight',
+    timeout: 5000,
+    theme: 'metroui',
+    progressBar: true
+  }).show();
+}
 
 function displayAlertError(message) {
-  const alertBox = document.getElementById('alert-box');
-  const alertMessage = document.getElementById('alert-message');
-  alertMessage.innerText = message;
-  alertBox.style.display = 'block';
+  new Noty({
+    text: message,
+    type: 'error',
+    layout: 'topRight',
+    timeout: 5000,
+    theme: 'metroui',
+    progressBar: true
+  }).show();
 }
 
 function redirect_login() {
-  const redirectUrl = getRedirectUri()
+  const redirectUrl = getRedirectUri();
   if (!redirectUrl || redirectUrl === 'null' || redirectUrl === 'undefined') {
     window.location.href = '/login';
   } else {
-  window.location.href = `/login?redirectUri=${redirectUrl}`;
+    window.location.href = `/login?redirectUri=${redirectUrl}`;
   }
 }
 
@@ -175,7 +197,6 @@ function handleGoogleAuth() {
     window.location.href = `/api/auth/google?redirectUri=${redirectUri}`;
   }
 }
-
 
 function getRedirectUri() {
   const urlParams = new URLSearchParams(window.location.search);

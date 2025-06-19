@@ -107,7 +107,7 @@
 }
 
 /*
-! tailwindcss v3.4.15 | MIT License | https://tailwindcss.com
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
 */
 
 /*
@@ -856,6 +856,10 @@ video {
   min-height: 100vh;
 }
 
+.w-1\/2 {
+  width: 50%;
+}
+
 .w-10 {
   width: 2.5rem;
 }
@@ -1595,6 +1599,10 @@ video {
   color: rgb(35 43 58 / var(--tw-placeholder-opacity, 1));
 }
 
+.opacity-50 {
+  opacity: 0.5;
+}
+
 .shadow {
   --tw-shadow: 0px 8px 16px rgba(0, 0, 0, 0.16);
   --tw-shadow-colored: 0px 8px 16px var(--tw-shadow-color);
@@ -1733,9 +1741,19 @@ video {
   content: var(--tw-content);
 }
 
+.focus-within\:border-gray-200:focus-within {
+  --tw-border-opacity: 1;
+  border-color: rgb(192 200 210 / var(--tw-border-opacity, 1));
+}
+
 .focus-within\:border-green-500:focus-within {
   --tw-border-opacity: 1;
   border-color: rgb(36 209 100 / var(--tw-border-opacity, 1));
+}
+
+.hover\:border-gray-300:hover {
+  --tw-border-opacity: 1;
+  border-color: rgb(145 158 176 / var(--tw-border-opacity, 1));
 }
 
 .hover\:border-white:hover {
@@ -1771,6 +1789,11 @@ video {
 .hover\:bg-gray-700:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(26 32 44 / var(--tw-bg-opacity, 1));
+}
+
+.hover\:bg-gray-800:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(21 26 35 / var(--tw-bg-opacity, 1));
 }
 
 .hover\:bg-gray-900:hover {

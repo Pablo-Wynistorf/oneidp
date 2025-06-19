@@ -1,21 +1,32 @@
 document.addEventListener('DOMContentLoaded', () => {
   const usernameEmailField = document.getElementById('username-email-field');
-  if (usernameEmailField) {
-    usernameEmailField.focus();
-  }
-
+  const passwordField = document.getElementById('password-field');
   const loginButton = document.getElementById('login-button');
+
+  if (usernameEmailField) usernameEmailField.focus();
+
+  const validateFields = () => {
+    const usernameFilled = usernameEmailField.value.trim().length > 0;
+    const passwordFilled = passwordField.value.trim().length > 0;
+    loginButton.disabled = !(usernameFilled && passwordFilled);
+    loginButton.classList.toggle('opacity-50', loginButton.disabled);
+    loginButton.classList.toggle('cursor-not-allowed', loginButton.disabled);
+  };
+
+  usernameEmailField.addEventListener('input', validateFields);
+  passwordField.addEventListener('input', validateFields);
+  validateFields();
+
   if (loginButton) {
     loginButton.addEventListener('click', login);
   }
 
   document.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !loginButton.disabled) {
       login();
     }
   });
 });
-
 
 function login() {
   const usernameInput = document.getElementById('username-email-field');
@@ -24,17 +35,15 @@ function login() {
 
   loginButton.disabled = true;
   loginButton.innerText = '';
-  loginButton.classList.add('flex', 'justify-center', 'items-center', 'text-gray-500')
-  loginButton.innerHTML = `<img src="/login/images/spinner.svg" width="24" height="24" />`
+  loginButton.classList.add('flex', 'justify-center', 'items-center', 'text-gray-500');
+  loginButton.innerHTML = `<img src="/login/images/spinner.svg" width="24" height="24" />`;
 
   const username_or_email = usernameInput.value;
   const password = passwordInput.value;
 
   if (!username_or_email || !password) {
     displayAlertError('Error: All fields are required');
-    loginButton.disabled = false;
-    loginButton.innerText = 'Sign In';
-    loginButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500')
+    resetLoginButton();
     return;
   }
 
@@ -45,9 +54,19 @@ function login() {
     },
     body: JSON.stringify({ username_or_email, password })
   })
-    .then(response => handleResponse(response));
+    .then(response => handleResponse(response))
+    .catch(() => {
+      displayAlertError('Something went wrong');
+      resetLoginButton();
+    });
 }
 
+function resetLoginButton() {
+  const loginButton = document.getElementById('login-button');
+  loginButton.disabled = false;
+  loginButton.classList.remove('flex', 'justify-center', 'items-center', 'text-gray-500');
+  loginButton.innerHTML = 'Sign In';
+}
 
 function handleResponse(response) {
   if (response.status === 200) {
@@ -63,7 +82,6 @@ function handleResponse(response) {
   }
 }
 
-
 function handle200Response() {
   const redirectUri = getRedirectUri();
   if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
@@ -76,18 +94,14 @@ function handle200Response() {
 function handle461Error() {
   displayAlertError('Email not verified');
   const redirectUrl = getRedirectUri();
-    window.location.replace(`/verify?redirectUri=${redirectUrl}`);
+  window.location.replace(`/verify?redirectUri=${redirectUrl}`);
 }
 
 function handle462Error() {
   const usernameInput = document.getElementById('username-email-field');
   const passwordInput = document.getElementById('password-field');
-  const loginButton = document.getElementById('login-button');
 
-  loginButton.disabled = false;
-  loginButton.classList.remove('flex', 'justify-center', 'items-center', 'h-6', 'w-6', 'text-gray-500');
-  loginButton.innerHTML = 'Sign In';
-
+  resetLoginButton();
   usernameInput.value = '';
   passwordInput.value = '';
   usernameInput.focus();
@@ -106,6 +120,7 @@ function handle463Error() {
 
 function handleError() {
   displayAlertError('Something went wrong');
+  resetLoginButton();
 }
 
 function redirect_signup() {
@@ -153,6 +168,7 @@ function handleGoogleAuth() {
     window.location.href = `/api/auth/google?redirectUri=${redirectUri}`;
   }
 }
+
 function bufferDecode(base64urlString) {
   let base64 = base64urlString.replace(/-/g, '+').replace(/_/g, '/');
   while (base64.length % 4 !== 0) base64 += '=';
@@ -169,7 +185,6 @@ function base64urlEncode(buffer) {
 
 async function loginWithPasskey() {
   try {
-    // Step 1: Get authentication options from the backend
     const optionsRes = await fetch('/api/auth/passkey', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -182,9 +197,7 @@ async function loginWithPasskey() {
 
     const options = await optionsRes.json();
 
-    // Step 2: Decode challenge and allowCredentials
     options.challenge = bufferDecode(options.challenge);
-
     if (Array.isArray(options.allowCredentials)) {
       options.allowCredentials = options.allowCredentials.map(cred => ({
         id: bufferDecode(cred.id),
@@ -193,10 +206,8 @@ async function loginWithPasskey() {
       }));
     }
 
-    // Step 3: Trigger browser-native WebAuthn login
     const assertion = await navigator.credentials.get({ publicKey: options });
 
-    // Step 4: Format the response to send back to backend
     const response = {
       id: base64urlEncode(assertion.rawId),
       rawId: base64urlEncode(assertion.rawId),
@@ -212,7 +223,6 @@ async function loginWithPasskey() {
       clientExtensionResults: assertion.getClientExtensionResults(),
     };
 
-    // Step 5: Send response for verification
     const verifyRes = await fetch('/api/auth/passkey/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -225,19 +235,30 @@ async function loginWithPasskey() {
     }
 
     handle200Response();
-
   } catch (err) {
     console.error(err);
     displayAlertError(err.message || 'Passkey login failed');
   }
 }
 
-
-
+function displayAlertSuccess(message) {
+  new Noty({
+    text: message,
+    type: 'success',
+    layout: 'topRight',
+    timeout: 5000,
+    theme: 'metroui',
+    progressBar: true
+  }).show();
+}
 
 function displayAlertError(message) {
-  const alertBox = document.getElementById('alert-box');
-  const alertMessage = document.getElementById('alert-message');
-  alertMessage.innerText = message;
-  alertBox.style.display = 'block';
+  new Noty({
+    text: message,
+    type: 'error',
+    layout: 'topRight',
+    timeout: 5000,
+    theme: 'metroui',
+    progressBar: true
+  }).show();
 }

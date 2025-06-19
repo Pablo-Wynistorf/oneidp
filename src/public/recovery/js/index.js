@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
   const emailField = document.getElementById('email-field');
   const recoverButton = document.getElementById('recover-button');
@@ -6,14 +5,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const countdownElement = document.getElementById('countdown');
   const resendEmailButton = document.getElementById('resend-email');
   const redirectLoginButton = document.getElementById('redirect-login');
+  const useAnotherEmailButton = document.getElementById('use-another-email');
 
   let countdown;
   let countdownValue = 30;
 
   emailField.focus();
 
+  const validateEmailField = () => {
+    const email = emailField.value.trim();
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    recoverButton.disabled = !isValidEmail;
+    recoverButton.classList.toggle('opacity-50', !isValidEmail);
+    recoverButton.classList.toggle('cursor-not-allowed', !isValidEmail);
+  };
+
+
+  emailField.addEventListener('input', validateEmailField);
+  validateEmailField();
+
   emailField.addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !recoverButton.disabled) {
       e.preventDefault();
       recover();
     }
@@ -21,12 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   recoverButton.addEventListener('click', recover);
   resendEmailButton.addEventListener('click', resendEmail);
+  useAnotherEmailButton.addEventListener('click', () => {
+    emailField.value = '';
+    closeModal();
+    validateEmailField();
+    emailField.focus();
+  });
   redirectLoginButton.addEventListener('click', redirect_login);
 
   async function recover() {
     const resetEmailInput = emailField.value.trim();
     if (resetEmailInput === '') {
-      alert('Please enter your email address.');
+      displayAlertError('Please enter your email address.');
       return;
     }
 
@@ -42,17 +61,27 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response.ok) {
         openModal();
       } else {
-        const errorMessage = await response.text();
-        showError(errorMessage);
+        const errorMessage = await response.json();
+        displayAlertError(errorMessage.error);
       }
     } catch (error) {
-      showError('An error occurred. Please try again later.');
+      displayAlertError('An error occurred. Please try again later.');
     }
   }
 
   function openModal() {
     modal.classList.remove('hidden');
     startCountdown();
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+    clearInterval(countdown);
+    countdownValue = 30;
+    countdownElement.textContent = countdownValue;
+    resendEmailButton.disabled = false;
+    resendEmailButton.classList.remove('bg-gray-300', 'cursor-not-allowed');
+    resendEmailButton.classList.add('hover:bg-blue-600');
   }
 
   function startCountdown() {
@@ -80,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function resendEmail() {
     const resetEmailInput = emailField.value.trim();
     if (resetEmailInput === '') {
-      alert('Please enter your email address.');
+      displayAlertError('Please enter your email address.');
       return;
     }
 
@@ -94,44 +123,28 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (response.ok) {
-        countdownValue = 30; // Reset countdown value
+        countdownValue = 30;
         countdownElement.textContent = countdownValue;
-        clearInterval(countdown); // Clear previous countdown
-        startCountdown(); // Start a new countdown
+        clearInterval(countdown);
+        startCountdown();
       } else {
         const errorMessage = await response.text();
-        showError(errorMessage);
+        displayAlertError(errorMessage);
       }
     } catch (error) {
-      showError('An error occurred. Please try again later.');
+      displayAlertError('An error occurred. Please try again later.');
     }
   }
 
-function redirect_login() {
+  function redirect_login() {
     const redirectUri = getRedirectUri();
     if (!redirectUri || redirectUri === 'null' || redirectUri === 'undefined') {
       window.location.href = '/login';
     } else {
       window.location.href = `/login?redirectUri=${redirectUri}`;
     }
-}
-
-  function showError(message) {
-    const alertMessage = document.getElementById('alert-message');
-    alertMessage.textContent = message;
-    document.getElementById('alert-box').classList.remove('hidden');
   }
 });
-
-
-
-
-
-
-
-
-
-
 
 function redirect_login() {
   const redirectUri = getRedirectUri();
@@ -152,10 +165,24 @@ function getRedirectUri() {
   return null;
 }
 
+function displayAlertSuccess(message) {
+  new Noty({
+    text: message,
+    type: 'success',
+    layout: 'topRight',
+    timeout: 5000,
+    theme: 'metroui',
+    progressBar: true
+  }).show();
+}
 
 function displayAlertError(message) {
-  const alertBox = document.getElementById('alert-box');
-  const alertMessage = document.getElementById('alert-message');
-  alertMessage.innerText = message;
-  alertBox.style.display = 'block';
+  new Noty({
+    text: message,
+    type: 'error',
+    layout: 'topRight',
+    timeout: 5000,
+    theme: 'metroui',
+    progressBar: true
+  }).show();
 }
