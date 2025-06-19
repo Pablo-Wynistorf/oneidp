@@ -51,7 +51,8 @@ router.post('/generate', async (req, res) => {
       },
     });
 
-    await redisCache.set(`webauthn:register:challenge:${user.username}`, options.challenge, 'EX', 60);
+    await redisCache.set(`webauthn:register:challenge:${user.username}`, options.challenge);
+    await redisCache.expire(`webauthn:register:challenge:${user.username}`, 300);
 
     res.json(options);
   } catch (error) {
