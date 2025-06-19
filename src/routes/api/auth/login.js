@@ -46,30 +46,37 @@ const handleUnverifiedEmail = async (user, res) => {
   const redisKey = `pev:${user.userId}:${verifySid}`;
 
   const oldEmailVerifcationKeys = await redisCache.keys(oldRedisKey);
-    
+
   if (oldEmailVerifcationKeys.length > 0) {
-      await redisCache.del(oldEmailVerifcationKeys);
+    await redisCache.del(oldEmailVerifcationKeys);
   }
 
   await redisCache.hSet(redisKey, {
     createdAt: timestamp,
   })
-  
+
   await redisCache.expire(redisKey, 30 * 60);
 
   const email_verification_token = jwt.sign({ userId: user.userId, pevSid: verifySid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '30m' });
 
-  res.cookie('email_verification_token', email_verification_token, {
-    maxAge: 30 * 60 * 1000, 
-    httpOnly: true, 
-    path: '/'
+  sendVerificationEmail(user.username, user.email, email_verification_token);
+
+  const signup_token = jwt.sign(
+    { userId: user.userId },
+    JWT_PRIVATE_KEY,
+    { algorithm: 'RS256', expiresIn: '29m' }
+  );
+
+  res.cookie('signup_token', signup_token, {
+    maxAge: 29 * 60 * 1000,
+    httpOnly: true,
+    path: '/',
   });
 
-  sendVerificationEmail(user.username, user.email, email_verification_token);
-  
   return res.status(461).json({
-    success: true, 
-    message: 'Email not verified', 
+    success: false, 
+    error: 'Email not yet verified',
+    message: 'A verification email has been sent. Please check your inbox.',
   });
 };
 
@@ -87,7 +94,7 @@ const handleLoginSuccess = async (user, req, res) => {
   const device = req.headers['user-agent'];
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   const platform = device.match(/(Windows|Linux|Macintosh|iPhone|iPad|Android)/i);
-  
+
   const timestamp = Math.floor(Date.now() / 1000);
   const redisKey = `psid:${userId}:${sid}`;
 
@@ -114,22 +121,22 @@ const handleMfaEnabled = async (userId, res) => {
   const redisKey = `pmfa:${userId}:${mfaSid}`;
 
   const oldMfaKey = await redisCache.keys(oldRedisKey);
-    
+
   if (oldMfaKey.length > 0) {
-      await redisCache.del(oldMfaKey);
+    await redisCache.del(oldMfaKey);
   }
 
   await redisCache.hSet(redisKey, {
     createdAt: timestamp,
   })
-  
+
   await redisCache.expire(redisKey, 5 * 60);
-  
+
 
   const mfaToken = jwt.sign({ userId, mfaSid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '5m' });
   res.cookie('mfa_token', mfaToken, { maxAge: 5 * 60 * 1000, httpOnly: true, path: '/' });
 
-  const response = { success: true, message: 'Redirecting to MFA site'};
+  const response = { success: true, message: 'Redirecting to MFA site' };
   return res.status(463).json(response);
 };
 

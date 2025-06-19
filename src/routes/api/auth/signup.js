@@ -3,11 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendVerificationEmail } = require('../../../utils/send-emails.js');
 const { notifyError, notifyRegister } = require('../../../notify/notifications.js');
-
-
 const { userDB } = require('../../../database/mongodb.js');
-
-const redisCache = require('../../../database/redis.js');
 
 const router = express.Router();
 
@@ -36,8 +32,8 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    let existingUsername = await userDB.findOne({ username });
-    let existingEmail = await userDB.findOne({ email });
+    const existingUsername = await userDB.findOne({ username });
+    const existingEmail = await userDB.findOne({ email });
 
     if (existingEmail) {
       return res.status(463).json({ success: false, error: 'Email already used, try login' });
@@ -49,32 +45,27 @@ router.post('/', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    let userId;
-    let existingUserId;
-
+    let userId, existingUserId;
     do {
       userId = Math.floor(Math.random() * 900000000000) + 100000000000;
       existingUserId = await userDB.findOne({ userId });
     } while (existingUserId);
 
     const verifySid = await generateRandomString(15);
-    const timestamp = Math.floor(Date.now() / 1000);
-    const redisKey = `pev:${userId}:${verifySid}`;
-  
-    await redisCache.hSet(redisKey, {
-      createdAt: timestamp,
-    })
-    await redisCache.expire(redisKey, 30 * 60);
 
-    const email_verification_token = jwt.sign({ userId, pevSid: verifySid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '30m' });
+    const email_verification_token = jwt.sign(
+      { userId, pevSid: verifySid },
+      JWT_PRIVATE_KEY,
+      { algorithm: 'RS256', expiresIn: '30m' }
+    );
 
     const newUser = new userDB({
-      userId: userId,
-      username: username,
-      firstName: firstName,
-      lastName: lastName,
+      userId,
+      username,
+      firstName,
+      lastName,
       password: hashedPassword,
-      email: email,
+      email,
       emailVerified: false,
       mfaEnabled: false,
       providerRoles: ['standardUser', 'oauthUser'],
@@ -84,12 +75,24 @@ router.post('/', async (req, res) => {
     await newUser.save();
 
     sendVerificationEmail(username, email, email_verification_token);
-
     notifyRegister(username);
+
+    const signup_token = jwt.sign(
+      { userId },
+      JWT_PRIVATE_KEY,
+      { algorithm: 'RS256', expiresIn: '29m' }
+    );
+
+    res.cookie('signup_token', signup_token, {
+      maxAge: 29 * 60 * 1000,
+      httpOnly: true,
+      path: '/',
+    });
+
     return res.redirect('/verify');
   } catch (error) {
     notifyError(error);
-    res.status(500).json({ error: 'Something went wrong, try again later' });
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
   }
 });
 

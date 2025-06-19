@@ -184,6 +184,7 @@ app.use('/api/auth/mfa/setup', require('./routes/api/auth/mfa/setup.js')); // 5 
 app.use('/api/auth/mfa/setup/verify', require('./routes/api/auth/mfa/setup/verify.js')); // 5 requests per minute
 app.use('/api/auth/mfa/disable', require('./routes/api/auth/mfa/disable.js')); // 5 requests per minute
 app.use('/api/auth/user/confirmationlink', require('./routes/api/auth/user/confirmationlink.js')); // 5 requests per minute
+app.use('/api/auth/user/exchange-signup-token', require('./routes/api/auth/user/exchangeSignupToken.js')); // 5 requests per minute
 app.use('/api/auth/user/setresettoken', require('./routes/api/auth/user/setresettoken.js')); // 5 requests per minute
 app.use('/api/auth/user/changepassword', require('./routes/api/auth/user/changepassword.js')); // 5 requests per minute
 app.use('/api/auth/user/resetpassword', require('./routes/api/auth/user/resetpassword.js')); // 1 request per 60 seconds
