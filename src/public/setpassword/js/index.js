@@ -107,9 +107,24 @@ function getRedirectUri() {
 }
 
 
+function displayAlertSuccess(message) {
+  new Noty({
+    text: message,
+    type: 'success',
+    layout: 'topRight',
+    timeout: 5000,
+    theme: 'metroui',
+    progressBar: true
+  }).show();
+}
+
 function displayAlertError(message) {
-  const alertBox = document.getElementById('alert-box');
-  const alertMessage = document.getElementById('alert-message');
-  alertMessage.innerText = message;
-  alertBox.style.display = 'block';
+  new Noty({
+    text: message,
+    type: 'error',
+    layout: 'topRight',
+    timeout: 5000,
+    theme: 'metroui',
+    progressBar: true
+  }).show();
 }
