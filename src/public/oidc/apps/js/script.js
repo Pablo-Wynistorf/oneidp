@@ -5,7 +5,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeEditModalButton = document.getElementById("close-edit-modal");
   const createAppButton = document.getElementById("create-app-button");
 
-  // Set OIDC URLs
   const currentURL = window.location.origin;
   setTextContent("oidc-url", currentURL);
   setTextContent("authorization-url", `${currentURL}/api/oauth/authorize`);
@@ -13,35 +12,29 @@ document.addEventListener("DOMContentLoaded", () => {
   setTextContent("token-check-url", `${currentURL}/api/oauth/check_token`);
   setTextContent("userinfo-url", `${currentURL}/api/oauth/userinfo`);
 
-  // Copy buttons for OIDC URLs
   addCopyListener("oidc-url", "oidc-url-copy");
   addCopyListener("authorization-url", "authorization-url-copy");
   addCopyListener("token-url", "token-url-copy");
   addCopyListener("token-check-url", "token-check-url-copy");
   addCopyListener("userinfo-url", "userinfo-url-copy");
 
-  // Fetch initial data
   fetchData();
 
-  // Modal close button
   closeButton.addEventListener("click", () => modal.close());
   closeEditModalButton.addEventListener("click", () => editAppModal.close());
 
-  // Create app button
   if (createAppButton) {
     createAppButton.addEventListener("click", () => createApp());
   }
 
-  // Delegated event listeners for actions
   document.addEventListener("click", (event) => {
     const deleteButton = event.target.closest(".delete-button");
     const editRolesButton = event.target.closest(".edit-roles-button");
     const editAppButton = event.target.closest(".edit-app-button");
     const oauthAppBox = event.target.closest(".oauth-app-box");
 
-    // Delete App
     if (deleteButton) {
-      const appId = deleteButton.id;
+      const appId = deleteButton.id.split("-")[1];
       modal.showModal();
       document.getElementById("delete-button").onclick = () => {
         deleteApp(appId);
@@ -49,15 +42,13 @@ document.addEventListener("DOMContentLoaded", () => {
       };
     }
 
-    // Edit Roles
     if (editRolesButton) {
-      const appId = editRolesButton.id.split("-")[1];
+      const appId = editRolesButton.id.split("-")[2];
       window.location.href = `/oidc/roles/?oauthAppId=${appId}`;
     }
 
-    // Edit App (Open Edit Modal)
     if (editAppButton && oauthAppBox) {
-      const appId = editAppButton.id.split("-")[1];
+      const appId = editAppButton.id.split("-")[2];
       const appName = oauthAppBox.querySelector("h4").textContent;
       const { redirectUri, accessTokenValidity } = extractAppData(oauthAppBox);
 
@@ -65,13 +56,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Handle edit app form submission
   document.getElementById("edit-app-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     await updateApp();
   });
 
-  // Functions
   async function fetchData() {
     try {
       const response = await fetch("/api/oauth/settings/apps/get");
@@ -86,96 +75,113 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function displayOAuthApps(data) {
-    const container = document.getElementById("oauth-apps-container");
-    container.innerHTML = "";
+  let allApps = [];
 
-    data.oauthApps.forEach((app) => {
-      const appBox = createAppBox(app);
-      container.appendChild(appBox);
-      attachCopyListeners(app);
-    });
+  function displayOAuthApps(data) {
+    allApps = data.oauthApps;
+    const searchInput = document.getElementById("search-oauth-apps");
+    const list = document.getElementById("oauth-apps-container");
+
+    const renderList = (filter = "") => {
+      list.innerHTML = "";
+      const lowerFilter = filter.toLowerCase();
+      allApps
+        .filter(app =>
+          app.oauthAppName.toLowerCase().includes(lowerFilter) ||
+          app.redirectUri.toLowerCase().includes(lowerFilter) ||
+          app.clientId.toLowerCase().includes(lowerFilter)
+        )
+        .forEach(app => {
+          const appBox = createAppBox(app);
+          list.appendChild(appBox);
+          attachCopyListeners(app);
+        });
+    };
+
+    renderList();
+
+    if (searchInput) {
+      if (searchInput._handler) {
+        searchInput.removeEventListener("input", searchInput._handler);
+      }
+      const handler = (e) => renderList(e.target.value);
+      searchInput.addEventListener("input", handler);
+      searchInput._handler = handler;
+    }
   }
 
   function createAppBox(app) {
     const appBox = document.createElement("div");
-    appBox.classList.add(
-      "oauth-app-box",
-      "p-4",
-      "bg-gray-900",
-      "rounded-lg",
-      "shadow-md",
-      "transition",
-      "transform",
-      "mb-4",
-      "max-w-full",
-      "overflow-hidden",
-      "break-all"
-    );
-    appBox.id = app.oauthClientAppId;
+    appBox.className = "oauth-app-box bg-gray-900 p-4 rounded-lg shadow hover:shadow-lg transition mb-4 duration-300";
+    appBox.id = `${app.oauthClientAppId}`;
+
+    const isPublic = app.isPublicClient;
+    const secretId = `client-secret-value-${app.clientSecret}`;
+    const secretField = `
+    <p class="mt-2"><strong>Client Secret:</strong>
+      <span id="${secretId}" class="hidden">${app.clientSecret}</span>
+      <button class="ml-2 text-sm text-blue-400 hover:underline" onclick="toggleSecret('${secretId}', this)">Show</button>
+      <img src="./svg/clipboard.svg" class="inline-block w-4 h-4 ml-2 cursor-pointer hover:opacity-75" id="clipboard-client-secret-${app.clientSecret}">
+    </p>
+  `;
 
     appBox.innerHTML = `
-      <div class="flex justify-between items-center mb-4">
-        <h4 class="text-lg font-semibold">${app.oauthAppName}</h4>
-        <div class="flex space-x-3">
-          <a class="edit-app-button cursor-pointer" id="app-${app.oauthClientAppId}">
-            <img src="./svg/edit-app.svg" alt="Edit Icon" class="w-5 h-5 hover:opacity-75">
-          </a>
-          <a class="edit-roles-button cursor-pointer" id="app-${app.oauthClientAppId}">
-            <img src="./svg/edit-roles.svg" alt="Edit Roles Icon" class="w-5 h-5 hover:opacity-75">
-          </a>
-          <a class="delete-button cursor-pointer" id="${app.oauthClientAppId}">
-            <img src="./svg/trash.svg" alt="Trash Icon" class="w-5 h-5 hover:opacity-75">
-          </a>
-        </div>
+    <div class="flex justify-between items-start">
+      <div class="pr-2 overflow-hidden">
+        <h4 class="text-lg font-bold mb-1 truncate">${app.oauthAppName}</h4>
+        <p><strong>Client ID:</strong> <span id="client-id-value-${app.clientId}">${app.clientId}</span>
+          <img src="./svg/clipboard.svg" class="inline-block w-4 h-4 ml-2 cursor-pointer hover:opacity-75" id="clipboard-client-id-${app.clientId}">
+        </p>
+        ${!isPublic ? secretField : ""}
+        <p><strong>Redirect URI:</strong> ${app.redirectUri}</p>
+        <p><strong>Access Token Validity (Seconds):</strong> ${app.accessTokenValidity}</p>
+        <p><strong>Public Client:</strong> ${isPublic ? "Yes" : "No"}</p>
       </div>
-      <p><strong>OAuth App ID:</strong> ${app.oauthClientAppId}</p>
-      <p><strong>Client ID:</strong> <span id="client-id-value-${app.clientId}">${app.clientId}</span>
-        <img id="clipboard-client-id-${app.clientId}" src="./svg/clipboard.svg" alt="Copy Client ID" class="inline-block w-4 h-4 ml-2 cursor-pointer hover:opacity-75">
-      </p>
-      ${
-        !app.isPublicClient
-          ? `<p><strong>Client Secret:</strong> <span id="client-secret-value-${app.clientSecret}">${app.clientSecret}</span>
-             <img id="clipboard-client-secret-${app.clientSecret}" src="./svg/clipboard.svg" alt="Copy Client Secret" class="inline-block w-4 h-4 ml-2 cursor-pointer hover:opacity-75">
-             </p>`
-          : ``
-      }
-      <p><strong>Redirect URI:</strong> ${app.redirectUri}</p>
-      <p><strong>Access Token Validity:</strong> ${app.accessTokenValidity}</p>
-      <p><strong>Public Client:</strong> ${app.isPublicClient ? "Yes" : "No"}</p>
-    `;
+      <div class="flex flex-col items-end space-y-2 pl-2">
+        <img src="./svg/edit-app.svg" title="Edit App" class="w-5 h-5 cursor-pointer edit-app-button" id="edit-app-${app.oauthClientAppId}">
+        <img src="./svg/edit-roles.svg" title="Edit Roles" class="w-5 h-5 cursor-pointer edit-roles-button" id="edit-roles-${app.oauthClientAppId}">
+        <img src="./svg/trash.svg" title="Delete" class="w-5 h-5 cursor-pointer delete-button" id="delete-${app.oauthClientAppId}">
+      </div>
+    </div>
+  `;
+
     return appBox;
   }
 
   function attachCopyListeners(app) {
-    const clientIdCopyBtn = document.getElementById(`clipboard-client-id-${app.clientId}`);
-    if (clientIdCopyBtn) {
-      clientIdCopyBtn.addEventListener("click", () => copyTextToClipboard(`client-id-value-${app.clientId}`));
+    const clientIdBtn = document.getElementById(`clipboard-client-id-${app.clientId}`);
+    if (clientIdBtn) {
+      clientIdBtn.addEventListener("click", () => copyTextToClipboard(`client-id-value-${app.clientId}`));
     }
 
     if (!app.isPublicClient) {
-      const clientSecretCopyBtn = document.getElementById(`clipboard-client-secret-${app.clientSecret}`);
-      if (clientSecretCopyBtn) {
-        clientSecretCopyBtn.addEventListener("click", () => copyTextToClipboard(`client-secret-value-${app.clientSecret}`));
+      const secretBtn = document.getElementById(`clipboard-client-secret-${app.clientSecret}`);
+      if (secretBtn) {
+        secretBtn.addEventListener("click", () => copyTextToClipboard(`client-secret-value-${app.clientSecret}`));
       }
     }
   }
 
   async function createApp() {
-    const oauthAppName = document.getElementById("appname-field").value;
-    const redirectUri = document.getElementById("redirecturl-field").value;
-    const accessTokenValidity = document.getElementById("access-token-validity-field").value;
-    const isPublicClient = document.getElementById("public-client-toggle").checked;
+    const nameField = document.getElementById("appname-field");
+    const redirectField = document.getElementById("redirecturl-field");
+    const tokenValidityField = document.getElementById("access-token-validity-field");
+    const publicToggle = document.getElementById("public-client-toggle");
+
+    const oauthAppName = nameField.value;
+    const redirectUri = redirectField.value;
+    const accessTokenValidity = tokenValidityField.value;
+    const isPublicClient = publicToggle.checked;
 
     try {
       const response = await fetch(`/api/oauth/settings/apps/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ redirectUri, isPublicClient, oauthAppName, accessTokenValidity }),
+        body: JSON.stringify({ oauthAppName, redirectUri, accessTokenValidity, isPublicClient }),
       });
 
       if (!response.ok) {
-        displayAlertError("Error: Failed to create app. Please check the app name, redirect URI, or access token validity.");
+        displayAlertError("Error: Failed to create app. Please check the input fields.");
         return;
       }
 
@@ -184,19 +190,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const newAppBox = createAppBox(data);
       container.appendChild(newAppBox);
       attachCopyListeners(data);
-      
-      document.getElementById("appname-field").value = "";
-      document.getElementById("redirecturl-field").value = "";
-      document.getElementById("access-token-validity-field").value = "";
-      document.getElementById("public-client-toggle").checked = false;
 
-      const createAppModal = document.getElementById("create-app-modal");
-      createAppModal.close();
+      nameField.value = "";
+      redirectField.value = "";
+      tokenValidityField.value = "";
+      publicToggle.checked = false;
 
+      document.getElementById("create-app-modal").close();
       displayAlertSuccess("App created successfully");
-    } catch (error) {
-      console.error("Error creating app:", error);
-      displayAlertError("Error: Failed to create app. Please check the app name, redirect URI, or access token validity.");
+    } catch (err) {
+      console.error("Error creating app:", err);
+      displayAlertError("Error: Failed to create app. Please check the input fields.");
     }
   }
 
@@ -260,11 +264,13 @@ document.addEventListener("DOMContentLoaded", () => {
           const text = p.textContent.trim();
           if (text.startsWith("Redirect URI:")) {
             p.innerHTML = `<strong>Redirect URI:</strong> ${redirectUri}`;
-          } else if (text.startsWith("Access Token Validity:")) {
-            p.innerHTML = `<strong>Access Token Validity:</strong> ${accessTokenValidity}`;
+          } else if (text.startsWith("Access Token Validity (Seconds):")) {
+            p.innerHTML = `<strong>Access Token Validity (Seconds):</strong> ${accessTokenValidity}`;
           }
         });
       }
+
+      await fetchData();
 
       displayAlertSuccess("Changes saved successfully");
       editAppModal.close();
@@ -292,7 +298,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const text = element.textContent;
     if (!navigator.clipboard) {
-      // Fallback if navigator.clipboard is not available
       const textArea = document.createElement("textarea");
       textArea.value = text;
       document.body.appendChild(textArea);
@@ -337,10 +342,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const text = p.textContent.trim();
       if (text.startsWith("Redirect URI:")) {
         redirectUri = text.split(": ")[1];
-      } else if (text.startsWith("Access Token Validity:")) {
+      } else if (text.startsWith("Access Token Validity (Seconds):")) {
         accessTokenValidity = text.split(": ")[1];
       }
     });
     return { redirectUri, accessTokenValidity };
   }
 });
+
+
+function toggleSecret(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isHidden = el.classList.contains("hidden");
+  el.classList.toggle("hidden");
+  btn.textContent = isHidden ? "Hide" : "Show";
+}
