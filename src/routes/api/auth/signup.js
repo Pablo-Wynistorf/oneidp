@@ -18,7 +18,7 @@ ${process.env.JWT_PRIVATE_KEY}
 router.post('/', async (req, res) => {
   const { firstName, lastName, username, password, email } = req.body;
   const usernameRegex = /^[a-zA-Z0-9-]{3,20}$/;
-  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
 
   if (!usernameRegex.test(username)) {
     return res.status(460).json({ success: false, error: 'Username must only contain letters, numbers, and dashes and be between 3 and 20 characters' });

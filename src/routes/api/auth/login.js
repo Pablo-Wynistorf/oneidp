@@ -17,7 +17,7 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   const { username_or_email, password } = req.body;
-  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
 
   try {
     const user = await userDB.findOne(
