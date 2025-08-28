@@ -29,7 +29,6 @@ const URL = process.env.URL;
 
 router.post('/', async (req, res) => {
   const { grant_type, code, client_id, client_secret, refresh_token, code_verifier, redirect_uri } = req.body;
-  let scope = req.body.scope;
 
   const JWK_PUBLIC_KEY = getJWKPublicKey();
 
@@ -151,6 +150,8 @@ router.post('/', async (req, res) => {
         }
       }
     }
+
+    let scope = session.scope;
 
     if (!scope || scope === 'undefined') {
       scope = 'openid';
