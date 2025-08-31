@@ -15,16 +15,19 @@ ${process.env.JWT_PRIVATE_KEY}
 
 const router = express.Router();
 
+
 router.post('/', async (req, res) => {
   const { username_or_email, password } = req.body;
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
 
   try {
     const user = await userDB.findOne(
-      emailRegex.test(username_or_email) ? { email: username_or_email, identityProvider: 'local' } : { username: username_or_email, identityProvider: 'local' }
+      emailRegex.test(username_or_email)
+        ? { email: username_or_email, identityProvider: 'local' }
+        : { username: username_or_email, identityProvider: 'local' }
     );
 
-    if (!user || !(bcrypt.compare(password, user.password))) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(462).json({ success: false, error: 'Invalid username or password' });
     }
 
