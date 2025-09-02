@@ -2,7 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 
 const redisCache = require('../../../../database/redis.js');
-const { userDB } = require('../../../../database/mongodb.js');
+const { userDB } = require('../../../../database/postgres.js');
 
 const JWT_PUBLIC_KEY = `
 -----BEGIN PUBLIC KEY-----

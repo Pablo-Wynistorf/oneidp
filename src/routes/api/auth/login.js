@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const { sendVerificationEmail } = require('../../../utils/send-emails.js');
 const { notifyError, notifyLogin } = require('../../../notify/notifications');
 
-const { userDB } = require('../../../database/mongodb.js');
+const { userDB } = require('../../../database/postgres.js');
 const redisCache = require('../../../database/redis.js');
 
 const JWT_PRIVATE_KEY = `

@@ -1,5 +1,5 @@
 const express = require('express');
-const { userDB } = require('../../../database/mongodb.js');
+const { userDB } = require('../../../database/postgres.js');
 const { notifyError } = require('../../../notify/notifications.js');
 
 const router = express.Router();

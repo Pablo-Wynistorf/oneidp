@@ -5,7 +5,7 @@ const { sendVerificationEmail } = require('../../../utils/send-emails.js');
 const { notifyError, notifyRegister } = require('../../../notify/notifications.js');
 
 const redisCache = require('../../../database/redis.js');
-const { userDB } = require('../../../database/mongodb.js');
+const { userDB } = require('../../../database/postgres.js');
 
 const router = express.Router();
 

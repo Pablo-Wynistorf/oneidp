@@ -1,5 +1,5 @@
 const express = require('express');
-const { userDB, oAuthClientAppDB, oAuthRolesDB } = require('../../../database/mongodb.js');
+const { userDB, oAuthClientAppDB, oAuthRolesDB } = require('../../../database/postgres.js');
 const redisCache = require('../../../database/redis.js');
 const { notifyError } = require('../../../notify/notifications.js');
 const jwt = require('jsonwebtoken');

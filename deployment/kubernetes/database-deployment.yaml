@@ -2,55 +2,50 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loginapp-mongodb
+  name: loginapp-postgres
   namespace: loginapp
 spec:
   selector:
     matchLabels:
-      app: loginapp-mongodb
+      app: loginapp-postgres
   replicas: 1
   template:
     metadata:
       labels:
-        app: loginapp-mongodb
+        app: loginapp-postgres
     spec:
       containers:
-      - name: mongo
-        image: mongo
+      - name: postgres
+        image: postgres
         env:
-        - name: MONGO_INITDB_ROOT_USERNAME
+        - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
               name: loginapp-secrets
-              key: MONGO_INITDB_ROOT_USERNAME
+              key: POSTGRES_USER
               optional: false
-        - name: MONGO_INITDB_ROOT_PASSWORD
+        - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: loginapp-secrets
-              key: MONGO_INITDB_ROOT_PASSWORD
+              key: POSTGRES_PASSWORD
               optional: false
+        - name: POSTGRES_DB
+          value: oneidp
         ports:
-        - containerPort: 27017
-        resources:
-          requests:
-            cpu: "50m"
-            memory: "500Mi"
-          limits:
-            cpu: "80m"
-            memory: "600Mi"
+        - containerPort: 5432
         volumeMounts:
-        - name: loginapp-mongodb
-          mountPath: /data/db
+        - name: loginapp-postgres
+          mountPath: /var/lib/postgresql/data
       volumes:
-      - name: loginapp-mongodb
+      - name: loginapp-postgres
         persistentVolumeClaim:
-          claimName: loginapp-mongodb-pvc
+          claimName: loginapp-postgres-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: loginapp-mongodb-pvc
+  name: loginapp-postgres-pvc
   namespace: loginapp
 spec:
   accessModes:
@@ -63,25 +58,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: loginapp-mongodb-svc
+  name: loginapp-postgres-svc
   namespace: loginapp
 spec:
   selector:
-    app: loginapp-mongodb
+    app: loginapp-postgres
   ports:
-  - port: 27017
-    targetPort: 27017
+  - port: 5432
+    targetPort: 5432
   type: ClusterIP
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: loginapp-mongodb-pvc
-  namespace: loginapp
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: ebs-sc
-  resources:
-    requests:
-      storage: 20Gi

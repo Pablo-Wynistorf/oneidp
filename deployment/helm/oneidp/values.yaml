@@ -16,7 +16,7 @@ hpa:
 
 env:
   URL: ""
-  MONGODB_URI: "mongodb://root:password@oneidp-mongodb-svc.oneidp.svc:27017/"
+  POSTGRES_URI: "postgres://user:password@oneidp-postgres-svc.oneidp.svc:5432/"
   REDIS_URI: "redis://default:"
   API_PORT: ""
   JWT_PUBLIC_KEY: ""

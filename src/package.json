@@ -27,7 +27,6 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.1.1",
     "node-jose": "^2.2.0",
     "node-mailjet": "^6.0.5",
     "passport": "^0.7.0",
@@ -36,7 +35,8 @@
     "path": "^0.12.7",
     "qrcode": "^1.5.3",
     "redis": "^4.7.0",
-    "speakeasy": "^2.0.0"
+    "speakeasy": "^2.0.0",
+    "pg": "^8.11.3"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",

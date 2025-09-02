@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { userDB, oAuthRolesDB } = require('../../../database/mongodb.js');
+const { userDB, oAuthRolesDB } = require('../../../database/postgres.js');
 const redisCache = require('../../../database/redis.js');
 const { notifyError } = require('../../..//notify/notifications.js');
 require('dotenv').config();

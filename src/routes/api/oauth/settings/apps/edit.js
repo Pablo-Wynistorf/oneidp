@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { userDB, oAuthClientAppDB } = require('../../../../../database/mongodb.js');
+const { userDB, oAuthClientAppDB } = require('../../../../../database/postgres.js');
 const redisCache = require('../../../../../database/redis.js');
 
 const router = express.Router();

@@ -73,7 +73,7 @@ variable "mj_sender_email" {
   
 }
 
-variable "mongodb_uri" {
+variable "postgres_uri" {
   description = "Whats the MongoDB URI?"
 }
 
@@ -109,7 +109,7 @@ data "template_file" "render_var_file" {
     mj_api_key_private = "${var.mj_api_key_private}"
     mj_api_key_public = "${var.mj_api_key_public}"
     mj_sender_email = "${var.mj_sender_email}"
-    mongodb_uri = "${var.mongodb_uri}"
+    postgres_uri = "${var.postgres_uri}"
     redis_uri = "${var.redis_uri}"
     url = "${var.url}"
     domain = "${var.domain}"

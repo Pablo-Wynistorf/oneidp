@@ -7,7 +7,7 @@ const path = require('path');
 
 require('dotenv').config();
 
-const { connectToDatabase } = require('./database/mongodb.js');
+const { connectToDatabase } = require('./database/postgres.js');
 
 const redisCache = require('./database/redis.js');
 

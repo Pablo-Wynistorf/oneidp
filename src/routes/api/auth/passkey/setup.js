@@ -2,7 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { generateRegistrationOptions, verifyRegistrationResponse } = require('@simplewebauthn/server');
 const redisCache = require('../../../../database/redis');
-const { userDB } = require('../../../../database/mongodb');
+const { userDB } = require('../../../../database/postgres');
 
 const router = express.Router();
 

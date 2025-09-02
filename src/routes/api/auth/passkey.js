@@ -1,7 +1,7 @@
 const express = require('express');
 const { generateAuthenticationOptions, verifyAuthenticationResponse } = require('@simplewebauthn/server');
 const jwt = require('jsonwebtoken');
-const { userDB } = require('../../../database/mongodb');
+const { userDB } = require('../../../database/postgres');
 const redisCache = require('../../../database/redis');
 const base64url = require('base64url');
 

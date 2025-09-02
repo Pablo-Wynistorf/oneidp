@@ -4,7 +4,7 @@ Use predeployed provider under: https://oneidp.ch
 
 This loginapp can be placed in front of practically ever application to authenticate their users. After a successful login, the api sends back a session cookie to authenticate the user.
 
-The app is build with express js and a mongodb backend. 
+The app is build with express js and a PostgreSQL backend. 
 For mail delievery we use mailjet. Create a account to get the api key. https://app.mailjet.com/signin
 
 For alerting and log we use discord webhook. Create a channel in a discord server and get the webhook url. https://discord.com
@@ -26,9 +26,7 @@ git clone https://github.com/Pablo-Wynistorf/oneidp.git && cd oneidp
 
 ```bash
 URL= # Add the url of your application. Format: http://login.example.com, https://login.example.com
-MONGODB_URI= # Add the MongoDB database uri. Format: mongodb+srv://username:password@db-host.example.com, mongodb://username:password@db-host.example.com
-MONGO_INITDB_USERNAME_PASSWORD=  # Add the MongoDB database initdb username
-MONGO_INITDB_ROOT_PASSWORD= # Add the MongoDB database initdb password
+POSTGRES_URI= # Add the PostgreSQL connection string
 REDIS_URI= # Add the Redis Cache uri
 API_PORT= # Enter the api port you want to use. 
 JWT_PUBLIC_KEY=
@@ -43,7 +41,7 @@ GITHUB_CLIENT_ID= # Enter the clientId for github oauth
 GITHUB_CLIENT_SECRET= # Enter the clientSecret for github oauth
 ```
 
-3.) Its not recommended to use the mongodb in kubernetes. But if you want to, you just need to install these manifests. Make sure to add the values in the secrets.yaml to MONGO_INITDB_ROOT_USERNAME and MONGO_INITDB_ROOT_PASSWORD. 
+3.) Its not recommended to use the PostgreSQL in kubernetes. But if you want to, you just need to install these manifests. Make sure to add the values in the secrets.yaml to POSTGRES_USER and POSTGRES_PASSWORD. 
 ```yaml
 kubectl create ns loginapp
 kubectl apply -f secrets.yaml

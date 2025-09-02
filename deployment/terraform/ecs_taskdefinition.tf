@@ -106,8 +106,8 @@ locals {
       value = var.mj_sender_email
     },
     {
-      name  = "MONGODB_URI"
-      value = var.mongodb_uri
+      name  = "POSTGRES_URI"
+      value = var.postgres_uri
     },
     {
       name  = "REDIS_URI"

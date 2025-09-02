@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const speakeasy = require('speakeasy');
 const { notifyLogin, notifyError } = require('../../../../notify/notifications');
 
-const { userDB } = require('../../../../database/mongodb.js');
+const { userDB } = require('../../../../database/postgres.js');
 const redisCache = require('../../../../database/redis.js');
 
 const router = express.Router();

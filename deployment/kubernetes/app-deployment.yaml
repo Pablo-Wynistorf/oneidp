@@ -34,11 +34,11 @@ spec:
               name: loginapp-secrets
               key: URL
               optional: false
-        - name: MONGODB_URI
+        - name: POSTGRES_URI
           valueFrom:
             secretKeyRef:
               name: loginapp-secrets
-              key: MONGODB_URI
+              key: POSTGRES_URI
               optional: false
         - name: REDIS_URI
           valueFrom:

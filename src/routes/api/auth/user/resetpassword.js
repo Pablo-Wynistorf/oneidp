@@ -4,7 +4,7 @@ const { sendRecoveryEmail } = require('../../../../utils/send-emails.js');
 const { notifyError } = require('../../../../notify/notifications.js');
 
 
-const { userDB } = require('../../../../database/mongodb.js');
+const { userDB } = require('../../../../database/postgres.js');
 const redisCache = require('../../../../database/redis.js');
 
 const router = express.Router();
