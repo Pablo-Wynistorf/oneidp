@@ -48,20 +48,11 @@ const isPublicRoute = (path) => {
   return publicRoutes.includes(path.split('?')[0]);
 };
 
-// Function to check if a route is a static asset
-const isStaticAsset = (path) => {
-  const staticExtensions = ['.css', '.js', '.svg', '.png', '.jpg', '.jpeg', '.gif', '.ico'];
-  return staticExtensions.some(ext => path.endsWith(ext));
-};
 
 // Middleware to verify access token
 const verifyToken = async (req, res, next) => {
   const access_token = req.cookies.access_token;
   const requestedPath = req.originalUrl;
-
-  if (isStaticAsset(requestedPath)) {
-    return next();
-  }
 
   if (!access_token) {
     return handleUnauthenticated(req, res, next, requestedPath);
@@ -73,13 +64,6 @@ const verifyToken = async (req, res, next) => {
     const userId = decoded.userId;
     const sid = decoded.sid;
     const exp = decoded.exp;
-
-    const redisKey = `psid:${userId}:${sid}`;
-    const session = await redisCache.keys(redisKey);
-
-    if (session.length === 0) {
-      return handleUnauthenticated(req, res, next, requestedPath);
-    }
 
     await handleTokenRenewalIfNeeded(userId, sid, exp, req, res);
 
