@@ -16,7 +16,7 @@
 <body class="bg-gray-500 text-gray-300">
     <div class="flex flex-col md:flex-row min-h-screen">
         <!-- Sidebar -->
-        <div id="sidebar" class="w-full md:w-64 bg-gray-950 p-4 flex flex-col justify-between">
+        <div id="sidebar" class="w-full md:w-64 bg-gray-950 p-4 flex flex-col md:fixed top-0 bottom-0 left-0">
             <!-- Mobile Menu Button Container -->
             <div class="absolute top-0 right-0 mt-1 p-4 flex items-center space-x-2 md:hidden">
                 <img id="mobile-open-menu" src="svg/mobile-open-menu.svg"
@@ -34,7 +34,7 @@
                 </div>
 
                 <!-- Navigation Items -->
-                <ul id="nav-items" class="space-y-2 md:block hidden mt-4">
+                <ul id="nav-items" class="space-y-2 mt-4 md:block hidden">
                     <li>
                         <a href=""
                             class="flex items-center p-3 text-white bg-blue-500 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-blue-600">
@@ -59,8 +59,7 @@
                 </ul>
             </div>
 
-            <!-- Settings and Logout Buttons -->
-            <div id="settings-logout-container" class="mt-2">
+            <div id="settings-logout-buttons" class="mt-2">
                 <ul class="space-y-2">
                     <li id="settings-item" class="hidden md:block">
                         <a href="/settings"
