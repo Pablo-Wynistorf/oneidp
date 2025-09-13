@@ -42,7 +42,6 @@ router.post('/generate', async (req, res) => {
     const options = await generateRegistrationOptions({
       rpName: 'Oneidp',
       rpID: DOMAIN,
-      userID: user.userId,
       userName: user.username,
       userDisplayName: user.username,
       timeout: 60000,
