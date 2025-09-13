@@ -256,9 +256,7 @@ function fetchActiveSessions() {
 }
 
 function displayActiveSessions(sessions) {
-  const activeSessionsContainer = document.getElementById(
-    "active-sessions-container"
-  );
+  const activeSessionsContainer = document.getElementById("active-sessions-container");
   activeSessionsContainer.innerHTML = "";
 
   sessions.forEach((session) => {
@@ -269,33 +267,36 @@ function displayActiveSessions(sessions) {
       "rounded-md",
       "shadow-md",
       "flex",
-      "justify-between",
-      "items-center"
+      "flex-col",          // mobile: stack
+      "md:flex-row",       // desktop: row
+      "md:justify-between",
+      "md:items-center",
+      "space-y-3",         // spacing between stacked items
+      "md:space-y-0"
     );
 
-    const logoutButton = session.currentSession === "false" 
-      ? `<div class="cursor-pointer text-gray-300 hover:text-red-600" data-session-id="${session.sessionId}">
-          <img src="svg/logout-session.svg" alt="Logout Session" width="24" height="24" />
-        </div>` 
-      : 'Current Session';
+    const logoutButton = session.currentSession === "false"
+      ? `<button class="cursor-pointer text-gray-300 hover:text-red-600 flex items-center space-x-2" data-session-id="${session.sessionId}">
+           <img src="svg/logout-session.svg" alt="Logout Session" width="24" height="24" />
+         </button>`
+      : `<span class="px-2 py-1 rounded bg-green-700 text-green-100 text-sm font-semibold">Current Session</span>`;
 
     sessionDiv.innerHTML = `
-      <div>
+      <div class="space-y-1">
         <p class="text-gray-300">Session ID: ${session.sessionId}</p>
         <p class="text-gray-300">Device: ${session.sessionData.deviceType}</p>
         <p class="text-gray-300">Source IP: ${session.sessionData.ipAddr}</p>
-        <p class="text-gray-300">Login Time: ${new Date(
-          session.sessionData.createdAt * 1000
-        ).toLocaleString("en-US")}</p>
+        <p class="text-gray-300">Login Time: ${new Date(session.sessionData.createdAt * 1000).toLocaleString("en-US")}</p>
       </div>
-      ${logoutButton}
+      <div class="flex-shrink-0">${logoutButton}</div>
     `;
 
     activeSessionsContainer.appendChild(sessionDiv);
   });
 
-  document.querySelectorAll("div[data-session-id]").forEach((icon) => {
-    icon.addEventListener("click", function () {
+  // Add event listeners to logout buttons
+  document.querySelectorAll("button[data-session-id]").forEach((btn) => {
+    btn.addEventListener("click", function () {
       const sessionId = this.getAttribute("data-session-id");
       logoutSession(sessionId);
     });
@@ -333,54 +334,54 @@ function logoutSession(sessionId) {
 
 
 async function enablePasskey() {
-      try {
-        const res = await fetch("/api/auth/passkey/setup/generate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+  try {
+    const res = await fetch("/api/auth/passkey/setup/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-        if (!res.ok) throw new Error("Failed to generate registration options");
+    if (!res.ok) throw new Error("Failed to generate registration options");
 
-        const options = await res.json();
+    const options = await res.json();
 
-        // Convert base64 fields to ArrayBuffers
-        options.challenge = base64urlToBuffer(options.challenge);
-        options.user.id = base64urlToBuffer(options.user.id);
+    // Convert base64 fields to ArrayBuffers
+    options.challenge = base64urlToBuffer(options.challenge);
+    options.user.id = base64urlToBuffer(options.user.id);
 
-        const cred = await navigator.credentials.create({ publicKey: options });
+    const cred = await navigator.credentials.create({ publicKey: options });
 
-        const credentialResponse = {
-          id: cred.id,
-          rawId: bufferToBase64url(cred.rawId),
-          type: cred.type,
-          response: {
-            attestationObject: bufferToBase64url(cred.response.attestationObject),
-            clientDataJSON: bufferToBase64url(cred.response.clientDataJSON),
-          },
-        };
+    const credentialResponse = {
+      id: cred.id,
+      rawId: bufferToBase64url(cred.rawId),
+      type: cred.type,
+      response: {
+        attestationObject: bufferToBase64url(cred.response.attestationObject),
+        clientDataJSON: bufferToBase64url(cred.response.clientDataJSON),
+      },
+    };
 
-        const verifyRes = await fetch("/api/auth/passkey/setup/verify", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ response: credentialResponse }),
-        });
+    const verifyRes = await fetch("/api/auth/passkey/setup/verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ response: credentialResponse }),
+    });
 
-        const verifyData = await verifyRes.json();
+    const verifyData = await verifyRes.json();
 
-        if (verifyData.success) {
-          displayAlertSuccess("Passkey registered successfully!");
-          fetchUserData();
-        } else {
-          displayAlertError("Passkey registration failed: " + (verifyData.error || "Unknown error"));
-        }
-      } catch (err) {
-        console.error("Passkey registration error:", err);
-        displayAlertError("Passkey registration error: " + err.message);
-      }
+    if (verifyData.success) {
+      displayAlertSuccess("Passkey registered successfully!");
+      fetchUserData();
+    } else {
+      displayAlertError("Passkey registration failed: " + (verifyData.error || "Unknown error"));
+    }
+  } catch (err) {
+    console.error("Passkey registration error:", err);
+    displayAlertError("Passkey registration error: " + err.message);
+  }
 };
 
 async function deletePasskey() {
