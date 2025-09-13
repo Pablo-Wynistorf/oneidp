@@ -69,14 +69,13 @@ router.post('/verify', async (req, res) => {
       expectedChallenge,
       expectedOrigin: URL,
       expectedRPID: DOMAIN,
-      requireUserVerification: true,
+      requireUserVerification: false,
       credential: {
         id: user.passkeyId,
         publicKey: Buffer.from(user.passkeyPublicKey, 'base64'),
         counter: user.signCount,
       },
     });
-
 
     if (!verification.verified) {
       return res.status(462).json({ success: false, error: 'Invalid passkey login' });
@@ -106,8 +105,7 @@ router.post('/verify', async (req, res) => {
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: 'Failed to verify passkey' });
+    return res.status(500).json({ success: false, error: 'Failed to verify passkey' });
   }
 });
 

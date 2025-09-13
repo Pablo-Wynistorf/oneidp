@@ -105,10 +105,10 @@ router.post('/verify', async (req, res) => {
 
     await user.save();
 
-    res.status(200).json({ success: true });
+    return res.status(200).json({ success: true });
   } catch (err) {
     console.error('Verification failed:', err);
-    res.status(500).json({ error: 'Passkey registration failed' });
+    return res.status(500).json({ error: 'Passkey registration failed' });
   }
 });
 
