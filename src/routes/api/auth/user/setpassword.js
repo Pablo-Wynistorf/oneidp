@@ -70,13 +70,13 @@ router.post('/', async (req, res) => {
         ipAddr: ip,
         createdAt: timestamp,
       })
-      await redisCache.expire(redisKey, 48 * 60 * 60);
+      await redisCache.expire(redisKey, 14 * 24 * 60 * 60);
 
 
       await userDB.updateOne({ userId }, { $set: { password: hashedPassword } });
-      const access_token = jwt.sign({ userId: userId, sid: sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+      const access_token = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '14d' });
       res.clearCookie('password_reset_token');
-      res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+      res.cookie('access_token', access_token, { maxAge: 14 * 24 * 60 * 60 * 1000, httpOnly: true, path: '/' });
       res.status(200).json({ success: true });
     });
 

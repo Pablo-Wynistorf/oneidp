@@ -82,7 +82,7 @@ const verifyToken = async (req, res, next) => {
 // Function to handle token renewal
 const handleTokenRenewalIfNeeded = async (userId, sid, exp, req, res) => {
   const now = Math.floor(Date.now() / 1000);
-  const tokenExpirationThreshold = now + (24 * 60 * 60);
+  const tokenExpirationThreshold = now + (3 * 24 * 60 * 60);
 
   if (exp < tokenExpirationThreshold) {
 
@@ -103,9 +103,9 @@ const handleTokenRenewalIfNeeded = async (userId, sid, exp, req, res) => {
       createdAt: timestamp,
     })
 
-    await redisCache.expire(newRedisKey, 48 * 60 * 60);
-    const newAccessToken = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
-    res.cookie('access_token', newAccessToken, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+    await redisCache.expire(newRedisKey, 14 * 24 * 60 * 60);
+    const newAccessToken = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '14d' });
+    res.cookie('access_token', newAccessToken, { maxAge: 14 * 24 * 60 * 60 * 1000, httpOnly: true, path: '/' });
   }
 };
 

@@ -98,11 +98,11 @@ router.post('/verify', async (req, res) => {
       ipAddr: ip || 'Unknown',
       createdAt: timestamp,
     })
-    await redisCache.expire(redisSessionKey, 48 * 60 * 60);
+    await redisCache.expire(redisSessionKey, 14 * 24 * 60 * 60);
 
     await redisCache.del(redisKey);
-    const access_token = jwt.sign({ userId: user.userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
-    res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+    const access_token = jwt.sign({ userId: user.userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '14d' });
+    res.cookie('access_token', access_token, { maxAge: 14 * 24 * 60 * 60 * 1000, httpOnly: true, path: '/' });
 
     return res.status(200).json({ success: true });
   } catch (err) {

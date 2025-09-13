@@ -71,9 +71,9 @@ passport.use(new GoogleStrategy({
         identityProvider: 'google',
         createdAt: timestamp,
       });
-      await redisCache.expire(redisKey, 48 * 60 * 60);
+      await redisCache.expire(redisKey, 14 * 24 * 60 * 60);
 
-      const access_token = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+      const access_token = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '14d' });
       return done(null, { access_token, userId, sid });
     } catch (error) {
       return done(error, null);
@@ -119,7 +119,7 @@ router.get('/callback', passport.authenticate('google', { session: false }), asy
     ipAddr: ip || 'Unknown',
   });
 
-  res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+  res.cookie('access_token', access_token, { maxAge: 14 * 24 * 60 * 60 * 1000, httpOnly: true, path: '/' });
   res.redirect(redirectUri);
 });
 

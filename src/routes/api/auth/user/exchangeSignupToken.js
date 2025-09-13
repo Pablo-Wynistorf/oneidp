@@ -54,16 +54,16 @@ router.post('/', async (req, res) => {
                 createdAt: timestamp,
             });
 
-            await redisCache.expire(redisKey, 48 * 60 * 60);
+            await redisCache.expire(redisKey, 14 * 24 * 60 * 60);
 
             const access_token = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, {
                 algorithm: 'RS256',
-                expiresIn: '48h',
+                expiresIn: '14d',
             });
 
             res.clearCookie('signup_token', { path: '/' });
             res.cookie('access_token', access_token, {
-                maxAge: 48 * 60 * 60 * 1000,
+                maxAge: 14 * 24 * 60 * 60 * 1000,
                 httpOnly: true,
                 path: '/',
             });

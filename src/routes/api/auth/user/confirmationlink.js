@@ -53,10 +53,10 @@ router.get('/:email_verification_token', async (req, res) => {
       ipAddr: ip || 'Unknown',
       createdAt: timestamp,
     })
-    await redisCache.expire(redisKey, 48 * 60 * 60);
+    await redisCache.expire(redisKey, 14 * 24 * 60 * 60);
 
-    const access_token = jwt.sign({ userId: userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
-    res.cookie('access_token', access_token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+    const access_token = jwt.sign({ userId, sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '14d' });
+    res.cookie('access_token', access_token, { maxAge: 14 * 24 * 60 * 60 * 1000, httpOnly: true, path: '/' });
     return res.redirect('/dashboard');
   });
 });
