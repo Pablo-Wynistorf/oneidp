@@ -136,7 +136,6 @@ const existingToken = (req, res, next) => {
 
 // Express routes
 app.use('/css', express.static(path.join(__dirname, 'public/css')));
-app.use('/', existingToken, express.static(path.join(__dirname, 'public/homepage')));
 app.use('/imprint', express.static(path.join(__dirname, 'public/imprint')));
 app.use('/privacy-policy', express.static(path.join(__dirname, 'public/privacy-policy')));
 app.use('/login', existingToken, express.static(path.join(__dirname, 'public/login')));
@@ -205,9 +204,11 @@ app.use('/.well-known/jwks.json', require('./routes/api/oauth/jwks-info.js')); /
 app.use('/api/health', require('./routes/api/health/health.js')); // No limit (public endpoint)
 app.use('/api/health/details', require('./routes/api/health/details.js')); // 10 requests per minute
 
-
 // Google Analytics Endpoint
 app.use('/gtag.js', require('./utils/gtag.js'));
+
+// Serve the homepage
+app.use('/', existingToken, express.static(path.join(__dirname, 'public/homepage')));
 
 // Generate a random String
 async function generateRandomString(length) {

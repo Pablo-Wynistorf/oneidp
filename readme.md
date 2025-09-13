@@ -64,3 +64,9 @@ kubectl apply -f app-deployment.yaml
 ```yaml
 kubectl get pods -n loginapp
 ```
+
+
+Compile CSS
+```bash
+oneidp/src# npx tailwindcss -i public/input.css -o public/css/tailwind/tailwind.min.css -c public/tailwind.config.js
+```
