@@ -68,5 +68,5 @@ kubectl get pods -n loginapp
 
 Compile CSS
 ```bash
-oneidp/src# npx tailwindcss -i public/input.css -o public/css/tailwind/tailwind.min.css -c public/tailwind.config.js
+/oneidp/src/public# npx tailwindcss -i input.css -o css/tailwind/tailwind.min.css -c tailwind.config.js
 ```
