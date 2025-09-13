@@ -927,7 +927,7 @@ module.exports = {
       "./*/index.html",
       "./*/*/index.html",
       "./*/*/js/*.js",
-      "./*/js/*.js",
+      "./*/js/*.js"
   ],
   "plugins": []
 };
