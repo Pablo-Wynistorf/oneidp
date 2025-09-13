@@ -3,6 +3,7 @@ const { generateAuthenticationOptions, verifyAuthenticationResponse } = require(
 const jwt = require('jsonwebtoken');
 const { userDB } = require('../../../database/mongodb');
 const redisCache = require('../../../database/redis');
+const { notifyError, notifyLogin } = require('../../../notify/notifications');
 const base64url = require('base64url');
 
 const router = express.Router();
@@ -105,6 +106,7 @@ router.post('/verify', async (req, res) => {
 
     return res.status(200).json({ success: true });
   } catch (err) {
+    notifyError('Passkey verification error', err);
     return res.status(500).json({ success: false, error: 'Failed to verify passkey' });
   }
 });
