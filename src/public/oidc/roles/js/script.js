@@ -146,16 +146,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Handle OAuth Display Toggle
   const toggleOAuthDisplay = document.getElementById('toggle-oauth-display');
   const oauthDisplaySlider = toggleOAuthDisplay.nextElementSibling.querySelector('span:nth-child(1)');
-  const oauthDisplaySliderCircle = toggleOAuthDisplay.nextElementSibling.querySelector('span:nth-child(2)');
   const jsonInput = document.getElementById('json-input');
 
   const updateOAuthDisplayUI = () => {
     if (toggleOAuthDisplay.checked) {
       oauthDisplaySlider.classList.replace('bg-gray-400', 'bg-blue-500');
-      oauthDisplaySliderCircle.classList.replace('transform', 'translate-x-6');
     } else {
       oauthDisplaySlider.classList.replace('bg-blue-500', 'bg-gray-400');
-      oauthDisplaySliderCircle.classList.replace('translate-x-6', 'transform');
     }
   };
 
@@ -288,17 +285,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const toggleRoleAction = document.getElementById('toggle-role-action');
       const dynamicActionButton = document.getElementById('dynamic-action-button');
       const sliderRoleAction = toggleRoleAction.nextElementSibling.querySelector('span:nth-child(1)');
-      const sliderCircleRoleAction = toggleRoleAction.nextElementSibling.querySelector('span:nth-child(2)');
 
       if (toggleRoleAction.checked) {
           sliderRoleAction.classList.replace('bg-gray-400', 'bg-blue-500');
-          sliderCircleRoleAction.classList.replace('translate-x-0', 'translate-x-6');
           dynamicActionButton.classList.replace('bg-blue-600', 'bg-red-600');
           dynamicActionButton.textContent = 'Remove User';
           dynamicActionButton.onclick = handleRemoveUser;
       } else {
           sliderRoleAction.classList.replace('bg-blue-500', 'bg-gray-400');
-          sliderCircleRoleAction.classList.replace('translate-x-6', 'translate-x-0');
           dynamicActionButton.classList.replace('bg-red-600', 'bg-blue-600');
           dynamicActionButton.textContent = 'Add User';
           dynamicActionButton.onclick = handleAddUser;
@@ -313,14 +307,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateOauthDisplayUI = () => {
       const toggleOauthDisplay = document.getElementById('toggle-oauth-display');
       const sliderOauthDisplay = toggleOauthDisplay.nextElementSibling.querySelector('span:nth-child(1)');
-      const sliderCircleOauthDisplay = toggleOauthDisplay.nextElementSibling.querySelector('span:nth-child(2)');
 
       if (toggleOauthDisplay.checked) {
           sliderOauthDisplay.classList.replace('bg-gray-400', 'bg-blue-500');
-          sliderCircleOauthDisplay.classList.replace('translate-x-0', 'translate-x-6');
       } else {
           sliderOauthDisplay.classList.replace('bg-blue-500', 'bg-gray-400');
-          sliderCircleOauthDisplay.classList.replace('translate-x-6', 'translate-x-0');
       }
   };
 

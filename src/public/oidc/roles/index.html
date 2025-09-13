@@ -140,9 +140,9 @@
                         <span class="text-sm text-gray-300">Add</span>
                         <input id="toggle-role-action" type="checkbox" class="hidden peer">
                         <label for="toggle-role-action"
-                            class="relative inline-flex h-5 w-10 cursor-pointer items-center rounded-full bg-gray-600 peer-checked:bg-red-500 transition">
+                            class="relative inline-flex h-5 w-10 cursor-pointer rounded-full bg-gray-600 transition peer-checked:bg-red-500">
                             <span
-                                class="absolute left-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5"></span>
+                                class="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200 peer-checked:translate-x-5"></span>
                         </label>
                         <span class="text-sm text-gray-300">Remove</span>
                     </div>
@@ -174,9 +174,9 @@
                     <span class="text-sm text-white">User IDs</span>
                     <input id="toggle-oauth-display" type="checkbox" class="hidden peer">
                     <label for="toggle-oauth-display"
-                        class="relative inline-flex h-5 w-10 cursor-pointer items-center rounded-full bg-gray-600 peer-checked:bg-blue-500 transition">
+                        class="relative inline-flex h-5 w-10 cursor-pointer rounded-full bg-gray-600 transition peer-checked:bg-blue-500">
                         <span
-                            class="absolute left-1 h-4 w-4 rounded-full bg-white transition peer-checked:translate-x-5"></span>
+                            class="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200 peer-checked:translate-x-5"></span>
                     </label>
                     <span class="text-sm text-white">User Names</span>
                 </div>
@@ -190,7 +190,7 @@
             <!-- Footer Buttons -->
             <div class="flex justify-between items-center">
                 <button type="button" data-close-modal
-                    class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition ">
+                    class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition">
                     Close
                 </button>
                 <button type="button" id="save-bulk-edit-button"
@@ -200,8 +200,6 @@
             </div>
         </form>
     </dialog>
-
-
 
 
     <!-- Delete Role Dialog -->
