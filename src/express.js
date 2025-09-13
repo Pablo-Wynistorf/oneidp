@@ -79,6 +79,7 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
+
 // Function to handle token renewal
 const handleTokenRenewalIfNeeded = async (userId, sid, exp, req, res) => {
   const now = Math.floor(Date.now() / 1000);
