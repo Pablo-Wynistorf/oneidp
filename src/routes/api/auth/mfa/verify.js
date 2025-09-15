@@ -75,12 +75,12 @@ router.post('/', async (req, res) => {
         ipAddr: ip || 'Unknown',
         createdAt: timestamp,
       })
-      await redisCache.expire(redisKey, 48 * 60 * 60);
+      await redisCache.expire(redisKey, 14 * 24 * 60 * 60 * 1000);
 
 
-      const token = jwt.sign({ userId: userId, sid: sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '48h' });
+      const token = jwt.sign({ userId: userId, sid: sid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '14d' });
       notifyLogin(username);
-      res.cookie('access_token', token, { maxAge: 48 * 60 * 60 * 1000, httpOnly: true, path: '/' });
+      res.cookie('access_token', token, { maxAge: 14 * 24 * 60 * 60 * 1000, httpOnly: true, path: '/' });
       res.clearCookie('mfa_token');
       return res.status(200).json({ success: true });
     } else {
