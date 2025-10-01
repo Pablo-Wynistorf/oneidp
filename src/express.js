@@ -148,7 +148,6 @@ app.use('/oidc/apps', verifyToken, express.static(path.join(__dirname, 'public/o
 app.use('/oidc/roles', verifyToken, express.static(path.join(__dirname, 'public/oidc/roles')));
 
 
-
 // Authentication Endpoints
 app.use('/api/auth/token/check', require('./routes/api/auth/token/check.js')); // 60 requests per minute
 app.use('/api/auth/login', require('./routes/api/auth/login.js')); // 60 requests per minute
