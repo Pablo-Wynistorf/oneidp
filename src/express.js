@@ -41,13 +41,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 connectToDatabase();
 
-
 // Function to check if a route is public
 const isPublicRoute = (path) => {
   const publicRoutes = ['/', '/login/', '/signup/', '/recovery/', '/setpassword/', '/verify/'];
   return publicRoutes.includes(path.split('?')[0]);
 };
-
 
 // Middleware to verify access token
 const verifyToken = async (req, res, next) => {
@@ -78,7 +76,6 @@ const verifyToken = async (req, res, next) => {
     return handleUnauthenticated(req, res, next, requestedPath);
   }
 };
-
 
 // Function to handle token renewal
 const handleTokenRenewalIfNeeded = async (userId, sid, exp, req, res) => {
