@@ -197,6 +197,7 @@ app.use('/api/oauth/revoke', require('./routes/api/oauth/revoke.js')); // 60 req
 const wellKnownCorsOptions = {
   origin: '*'
 };
+
 app.use('/.well-known/openid-configuration', cors(wellKnownCorsOptions), require('./routes/api/oauth/openid-configuration.js')); // No limit (public endpoint)
 app.use('/.well-known/jwks.json', cors(wellKnownCorsOptions), require('./routes/api/oauth/jwks-info.js')); // No limit (public endpoint)
 
