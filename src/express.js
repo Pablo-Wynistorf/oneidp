@@ -193,13 +193,17 @@ app.use('/api/oauth/check_token', require('./routes/api/oauth/check_token.js'));
 app.use('/api/oauth/logout', require('./routes/api/oauth/logout.js')); // 60 requests per minute
 app.use('/api/oauth/revoke', require('./routes/api/oauth/revoke.js')); // 60 requests per minute
 
-// OIDC Discovery Endpoints - Allow CORS from all origins
-const wellKnownCorsOptions = {
-  origin: '*'
-};
 
-app.use('/.well-known/openid-configuration', cors(wellKnownCorsOptions), require('./routes/api/oauth/openid-configuration.js')); // No limit (public endpoint)
-app.use('/.well-known/jwks.json', cors(wellKnownCorsOptions), require('./routes/api/oauth/jwks-info.js')); // No limit (public endpoint)
+app.use('/.well-known/openid-configuration', require('./routes/api/oauth/openid-configuration.js')); // No limit (public endpoint)
+app.use('/.well-known/jwks.json', require('./routes/api/oauth/jwks-info.js')); // No limit (public endpoint)
+
+// OIDC Discovery Endpoints - Allow CORS from all origins
+// const wellKnownCorsOptions = {
+//   origin: '*'
+// };
+
+// app.use('/.well-known/openid-configuration', cors(wellKnownCorsOptions), require('./routes/api/oauth/openid-configuration.js')); // No limit (public endpoint)
+// app.use('/.well-known/jwks.json', cors(wellKnownCorsOptions), require('./routes/api/oauth/jwks-info.js')); // No limit (public endpoint)
 
 // Health Check Endpoints
 app.use('/api/health', require('./routes/api/health/health.js')); // No limit (public endpoint)
