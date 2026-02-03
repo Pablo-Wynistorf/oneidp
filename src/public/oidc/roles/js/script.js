@@ -1,3 +1,7 @@
+let allOAuthApps = [];
+let allRoles = [];
+let selectedAppId = null;
+
 async function fetchOAuthApps() {
   try {
     const response = await fetch("/api/oauth/settings/apps/get", {
@@ -11,6 +15,7 @@ async function fetchOAuthApps() {
       return;
     }
     const data = await response.json();
+    allOAuthApps = data.oauthApps || [];
     displayOAuthApps(data);
   } catch (error) {
     displayAlertError("Error fetching OAuth apps: " + error.message);
@@ -18,36 +23,99 @@ async function fetchOAuthApps() {
 }
 
 function displayOAuthApps(data) {
-  const select = document.getElementById("oauth-app-select");
-  select.innerHTML = "";
-
-  data.oauthApps.forEach(app => {
-    const option = document.createElement("option");
-    option.value = app.oauthClientAppId;
-    option.textContent = app.oauthAppName;
-    option.className = "text-white bg-gray-900";
-    select.appendChild(option);
+  const searchInput = document.getElementById("app-search-input");
+  const dropdown = document.getElementById("app-dropdown");
+  const selectedAppDisplay = document.getElementById("selected-app-display");
+  
+  function renderAppDropdown(filter = "") {
+    dropdown.innerHTML = "";
+    const lowerFilter = filter.toLowerCase();
+    const filteredApps = allOAuthApps.filter(app =>
+      app.oauthAppName.toLowerCase().includes(lowerFilter) ||
+      app.clientId.toLowerCase().includes(lowerFilter)
+    );
+    
+    if (filteredApps.length === 0) {
+      const noResults = document.createElement("div");
+      noResults.className = "p-3 text-gray-400 text-center";
+      noResults.textContent = "No apps found";
+      dropdown.appendChild(noResults);
+    } else {
+      filteredApps.forEach(app => {
+        const item = document.createElement("div");
+        item.className = "p-3 hover:bg-gray-700 cursor-pointer text-white transition-colors";
+        item.innerHTML = `
+          <div class="font-medium">${app.oauthAppName}</div>
+          <div class="text-xs text-gray-400 truncate">${app.clientId}</div>
+        `;
+        item.addEventListener("click", () => selectApp(app));
+        dropdown.appendChild(item);
+      });
+    }
+  }
+  
+  function selectApp(app) {
+    selectedAppId = app.oauthClientAppId;
+    selectedAppDisplay.innerHTML = `
+      <span class="font-medium">${app.oauthAppName}</span>
+      <button id="clear-app-selection" class="ml-2 text-gray-400 hover:text-white">&times;</button>
+    `;
+    selectedAppDisplay.classList.remove("hidden");
+    searchInput.value = "";
+    dropdown.classList.add("hidden");
+    
+    document.getElementById("clear-app-selection").addEventListener("click", (e) => {
+      e.stopPropagation();
+      clearAppSelection();
+    });
+    
+    currentRole = null;
+    displayOAuthRoles({ oauthRoles: [] });
+    fetchData(selectedAppId);
+    
+    const url = new URL(window.location);
+    url.searchParams.set("oauthAppId", selectedAppId);
+    history.pushState({}, '', url);
+  }
+  
+  function clearAppSelection() {
+    selectedAppId = null;
+    selectedAppDisplay.classList.add("hidden");
+    selectedAppDisplay.innerHTML = "";
+    searchInput.value = "";
+    displayOAuthRoles({ oauthRoles: [] });
+    
+    const url = new URL(window.location);
+    url.searchParams.delete("oauthAppId");
+    history.pushState({}, '', url);
+  }
+  
+  // Search input handlers
+  searchInput.addEventListener("focus", () => {
+    renderAppDropdown(searchInput.value);
+    dropdown.classList.remove("hidden");
   });
-
-  select.value = "";
-
-  select.addEventListener("change", async () => {
-    const selectedAppId = select.value;
-    if (selectedAppId) {
-      currentRole = null;
-      displayOAuthRoles({ oauthRoles: [] });
-      await fetchData(selectedAppId);
-      const url = new URL(window.location);
-      url.searchParams.set("oauthAppId", selectedAppId);
-      history.pushState({}, '', url);
+  
+  searchInput.addEventListener("input", (e) => {
+    renderAppDropdown(e.target.value);
+    dropdown.classList.remove("hidden");
+  });
+  
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#app-selector-container")) {
+      dropdown.classList.add("hidden");
     }
   });
 
+  // Check URL params for pre-selected app
   const urlParams = new URLSearchParams(window.location.search);
-  const selectedAppId = urlParams.get("oauthAppId");
-  if (selectedAppId) {
-    select.value = selectedAppId;
-    fetchData(selectedAppId);
+  const urlAppId = urlParams.get("oauthAppId");
+  if (urlAppId) {
+    const app = allOAuthApps.find(a => a.oauthClientAppId == urlAppId);
+    if (app) {
+      selectApp(app);
+    }
   }
 }
 
@@ -65,10 +133,33 @@ async function fetchData(oauthClientAppId) {
       return;
     }
     const data = await response.json();
+    allRoles = data.oauthRoles || [];
     displayOAuthRoles(data);
+    setupRoleSearch();
   } catch (error) {
     displayAlertError("Error fetching data: " + error.message);
   }
+}
+
+function setupRoleSearch() {
+  const searchInput = document.getElementById("role-search-input");
+  if (!searchInput) return;
+  
+  if (searchInput._handler) {
+    searchInput.removeEventListener("input", searchInput._handler);
+  }
+  
+  const handler = (e) => {
+    const filter = e.target.value.toLowerCase();
+    const filteredRoles = allRoles.filter(role =>
+      role.oauthRoleName.toLowerCase().includes(filter) ||
+      role.oauthRoleId.toLowerCase().includes(filter)
+    );
+    displayOAuthRoles({ oauthRoles: filteredRoles });
+  };
+  
+  searchInput.addEventListener("input", handler);
+  searchInput._handler = handler;
 }
 
 let currentRole = null;
@@ -419,7 +510,7 @@ function confirmDeleteRole(roleId) {
   
   document.getElementById('delete-button').onclick = async () => {
     try {
-      const oauthClientAppId = document.getElementById('oauth-app-select').value;
+      const oauthClientAppId = selectedAppId;
       const response = await fetch("/api/oauth/settings/roles/delete", {
         method: "POST",
         headers: {
@@ -486,7 +577,7 @@ document.getElementById('create-role-submit').addEventListener('click', async ()
     return;
   }
 
-  const oauthClientAppId = document.getElementById('oauth-app-select').value;
+  const oauthClientAppId = selectedAppId;
   if (!oauthClientAppId) {
     displayAlertError('Please select an OAuth application');
     return;

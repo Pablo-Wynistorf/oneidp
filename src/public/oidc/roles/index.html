@@ -89,11 +89,16 @@
                 <div class="space-y-6">
                     <h3 class="text-xl text-center mb-4 text-gray-100">Select an OAuth Application</h3>
                     <div class="space-y-4">
-                        <div class="form-group">
-                            <select id="oauth-app-select"
-                                class="w-full p-3 bg-gray-900 text-gray-100 text-lg rounded-lg">
-                                <!-- Options will be populated by JavaScript -->
-                            </select>
+                        <div class="form-group" id="app-selector-container">
+                            <div id="selected-app-display" class="hidden mb-2 p-3 bg-gray-800 text-white rounded-lg flex items-center justify-between">
+                            </div>
+                            <div class="relative">
+                                <input type="text" id="app-search-input" 
+                                    class="w-full p-3 bg-gray-900 text-gray-100 text-lg rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Search apps by name or client ID...">
+                                <div id="app-dropdown" class="hidden absolute z-10 w-full mt-1 bg-gray-800 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="text-center">
@@ -103,7 +108,15 @@
                     </div>
                 </div>
             </div>
-            <div id="oauth-apps-container" class="block w-full overflow-auto text-ellipsis mt-6">
+            
+            <!-- Role Search -->
+            <div class="mt-4">
+                <input type="text" id="role-search-input" 
+                    class="w-full p-3 bg-gray-700 text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Search roles by name or ID...">
+            </div>
+            
+            <div id="oauth-apps-container" class="block w-full overflow-auto text-ellipsis mt-4">
                 <table class="w-full bg-gray-700 rounded-lg">
                     <thead>
                         <tr>

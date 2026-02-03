@@ -186,10 +186,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const data = await response.json();
-      const container = document.getElementById("oauth-apps-container");
-      const newAppBox = createAppBox(data);
-      container.appendChild(newAppBox);
-      attachCopyListeners(data);
+      
+      // Refetch all apps so the new app is searchable
+      await fetchData();
 
       nameField.value = "";
       redirectField.value = "";
