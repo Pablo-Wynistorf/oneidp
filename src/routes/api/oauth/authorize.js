@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { oAuthClientAppDB } = require('../../../database/mongodb.js');
+const { oAuthClientAppDB, userAppConsentDB } = require('../../../database/mongodb.js');
 const redisCache = require('../../../database/redis.js');
 const { notifyError } = require('../../../notify/notifications.js');
 
@@ -74,6 +74,50 @@ router.get('/', async (req, res) => {
       if (redirect_uri !== allowed_redirect_uri) {
         return res.status(405).json({ error: 'Invalid Request', error_description: 'Provided redirect_uri not allowed' });
       }
+
+      // Check if user has already consented to this app with the requested scopes
+      const existingConsent = await userAppConsentDB.findOne({
+        userId,
+        clientId: client_id
+      });
+
+      if (!existingConsent) {
+        // No consent exists, redirect to consent page
+        const consentParams = new URLSearchParams({
+          client_id,
+          redirect_uri,
+          scope,
+          state: state || '',
+          nonce: nonce || '',
+          code_challenge: code_challenge || '',
+          code_challenge_method: code_challenge_method || ''
+        });
+        return res.redirect(`/consent?${consentParams.toString()}`);
+      }
+
+      // Check if new scopes are being requested
+      const consentedScopes = existingConsent.consentedScopes || [];
+      const newScopes = requestedScopes.filter(s => !consentedScopes.includes(s));
+
+      if (newScopes.length > 0) {
+        // New scopes requested, redirect to consent page
+        const consentParams = new URLSearchParams({
+          client_id,
+          redirect_uri,
+          scope,
+          state: state || '',
+          nonce: nonce || '',
+          code_challenge: code_challenge || '',
+          code_challenge_method: code_challenge_method || ''
+        });
+        return res.redirect(`/consent?${consentParams.toString()}`);
+      }
+
+      // Update last auth timestamp
+      await userAppConsentDB.updateOne(
+        { userId, clientId: client_id },
+        { $set: { lastAuthAt: new Date() } }
+      );
       
       const authorizationCode = await generateRandomString(32);
 

@@ -146,6 +146,7 @@ app.use('/recovery', existingToken, express.static(path.join(__dirname, 'public/
 app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
 app.use('/oidc/apps', verifyToken, express.static(path.join(__dirname, 'public/oidc/apps')));
 app.use('/oidc/roles', verifyToken, express.static(path.join(__dirname, 'public/oidc/roles')));
+app.use('/consent', verifyToken, express.static(path.join(__dirname, 'public/consent')));
 
 
 // Authentication Endpoints
@@ -186,6 +187,7 @@ app.use('/api/oauth/settings/roles/delete', require('./routes/api/oauth/settings
 
 // OAuth Endpoints
 app.use('/api/oauth/authorize', require('./routes/api/oauth/authorize.js')); // 5 requests per second
+app.use('/api/oauth/consent', require('./routes/api/oauth/consent.js')); // consent handling
 app.use('/api/oauth/token', require('./routes/api/oauth/token.js')); // 5 requests per second
 app.use('/api/oauth/userinfo', require('./routes/api/oauth/userinfo.js')); // 50 requests per second
 app.use('/api/oauth/users', require('./routes/api/oauth/users.js')); // 30 requests per minute

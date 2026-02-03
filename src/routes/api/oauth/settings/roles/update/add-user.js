@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
-const { userDB, oAuthRolesDB, oAuthClientAppDB } = require('../../../../../../database/mongodb.js');
+const { userDB, oAuthRolesDB, oAuthClientAppDB, userAppConsentDB } = require('../../../../../../database/mongodb.js');
 const redisCache = require('../../../../../../database/redis.js');
 
 const router = express.Router();
@@ -11,6 +11,15 @@ const JWT_PUBLIC_KEY = `
 ${process.env.JWT_PUBLIC_KEY}
 -----END PUBLIC KEY-----
 `.trim();
+
+// Helper function to check if user has consented to the app
+async function hasUserConsented(userId, oauthClientAppId) {
+  const app = await oAuthClientAppDB.findOne({ oauthClientAppId });
+  if (!app) return false;
+  
+  const consent = await userAppConsentDB.findOne({ userId, clientId: app.clientId });
+  return !!consent;
+}
 
 router.post('/', async (req, res) => {
   const basicAuth = req.headers.authorization;
@@ -73,6 +82,12 @@ router.post('/', async (req, res) => {
             return res.status(404).json({ success: false, error: 'Username not found' });
           }
           userId = user.userId;
+        }
+
+        // Check if user has consented to this app
+        const userHasConsented = await hasUserConsented(userId, basicAuth_oauthClientAppId);
+        if (!userHasConsented) {
+          return res.status(403).json({ success: false, error: 'User has not authorized this application' });
         }
 
         oauthRoleUserIds = [userId];
@@ -142,19 +157,28 @@ router.post('/', async (req, res) => {
         if (userId_or_username === '*') {
           oauthRoleUserIds = '*';
         } else {
+          let targetUserId;
           if (/^\d+$/.test(userId_or_username)) {
             const user = await userDB.findOne({ userId: userId_or_username });
             if (!user) {
               return res.status(404).json({ success: false, error: 'UserId not found' });
             }
-            oauthRoleUserIds = [userId_or_username];
+            targetUserId = userId_or_username;
           } else {
             const user = await userDB.findOne({ username: userId_or_username });
             if (!user) {
               return res.status(404).json({ success: false, error: 'Username not found' });
             }
-            oauthRoleUserIds = [user.userId];
+            targetUserId = user.userId;
           }
+
+          // Check if user has consented to this app
+          const userHasConsented = await hasUserConsented(targetUserId, oauthClientAppId);
+          if (!userHasConsented) {
+            return res.status(403).json({ success: false, error: 'User has not authorized this application' });
+          }
+
+          oauthRoleUserIds = [targetUserId];
 
           if (existingRole && existingRole.oauthUserIds === '*') {
             oauthRoleUserIds = '*';

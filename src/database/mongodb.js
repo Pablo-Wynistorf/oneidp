@@ -74,13 +74,27 @@ const oAuthRolesSchema = new Schema({
   timestamps: true
 });
 
+const userAppConsentSchema = new Schema({
+  consentId: String,
+  userId: String,
+  oauthClientAppId: String,
+  clientId: String,
+  consentedScopes: [String],
+  firstAuthAt: Date,
+  lastAuthAt: Date,
+}, {
+  timestamps: true
+});
+
 const userDB = mongoose.model('users', userSchema);
 const oAuthClientAppDB = mongoose.model('oauthClientApps', oAuthClientSchema);
 const oAuthRolesDB = mongoose.model('oauthRoles', oAuthRolesSchema);
+const userAppConsentDB = mongoose.model('userAppConsents', userAppConsentSchema);
 
 module.exports = {
   connectToDatabase,
   userDB,
   oAuthClientAppDB,
   oAuthRolesDB,
+  userAppConsentDB,
 };

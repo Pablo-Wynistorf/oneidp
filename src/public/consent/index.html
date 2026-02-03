@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Authorize Application</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/noty/3.1.4/noty.min.js"></script>
+  <link rel="stylesheet" href="/css/tailwind/tailwind.min.css">
+  <link rel="icon" sizes="32x32" href="images/favicon.ico">
+  <script src="js/index.js"></script>
+</head>
+
+<body class="antialiased bg-body text-body font-body">
+  <div>
+    <section class="py-18 md:py-36">
+      <div class="container px-4 mx-auto">
+        <div class="relative max-w-lg mx-auto pt-16 pb-16 px-6 md:px-10 lg:px-16 bg-gray-500 rounded-xl">
+          <a class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2" href="">
+            <img class="" width="100px" height="100px" src="images/loginapp.png" alt="">
+          </a>
+          <div class="relative max-w-md mx-auto text-center">
+            <h2 class="text-2xl text-gray-100 font-semibold mb-2">Authorize Application</h2>
+            <p class="text-gray-300 font-medium mb-6">
+              <span id="app-name" class="text-blue-400 font-semibold">Application</span> wants to access your account
+            </p>
+            
+            <div class="bg-gray-600 rounded-lg p-4 mb-6 text-left">
+              <p class="text-gray-200 font-medium mb-3">This application will be able to:</p>
+              <ul id="scope-list" class="space-y-2">
+                <!-- Scopes will be populated by JS -->
+              </ul>
+            </div>
+
+            <div class="bg-gray-700 rounded-lg p-3 mb-6 text-left">
+              <p class="text-xs text-gray-400">
+                By authorizing, you allow this app to access your data according to the permissions above. 
+                You can revoke access at any time from your settings.
+              </p>
+            </div>
+
+            <div class="flex flex-col space-y-3">
+              <button type="button" id="authorize-button"
+                class="w-full py-4 leading-6 text-white font-semibold bg-blue-500 hover:bg-blue-600 rounded-lg transition duration-200">
+                Authorize
+              </button>
+              <button type="button" id="deny-button"
+                class="w-full py-4 leading-6 text-gray-300 font-semibold bg-gray-600 hover:bg-gray-700 rounded-lg transition duration-200">
+                Deny
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+
+</html>

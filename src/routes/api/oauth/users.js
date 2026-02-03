@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { userDB } = require('../../../database/mongodb.js');
+const { userDB, userAppConsentDB, oAuthClientAppDB } = require('../../../database/mongodb.js');
 const redisCache = require('../../../database/redis.js');
 const { notifyError } = require('../../../notify/notifications.js');
 require('dotenv').config();
@@ -33,7 +33,7 @@ router.get('/search', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Access Token is invalid' });
     }
 
-    const { userId, clientId, sid, osid } = tokenData;
+    const { userId, sid, osid } = tokenData;
 
     try {
       let redisKey;
@@ -49,11 +49,41 @@ router.get('/search', async (req, res) => {
         return res.status(401).json({ success: false, error: 'Access Token is invalid' });
       }
 
-      const { query } = req.query;
+      const { query, oauthClientAppId } = req.query;
       if (!query || query.trim() === "") {
         return res.status(400).json({ success: false, error: 'Search query not provided' });
       }
 
+      // If oauthClientAppId is provided, filter users by those who have consented to the app
+      if (oauthClientAppId) {
+        // Get the clientId for this app
+        const oauthApp = await oAuthClientAppDB.findOne({ oauthClientAppId });
+        if (!oauthApp) {
+          return res.status(404).json({ success: false, error: 'OAuth app not found' });
+        }
+
+        // Get all users who have consented to this app
+        const consents = await userAppConsentDB.find({ clientId: oauthApp.clientId }).lean();
+        const consentedUserIds = consents.map(c => c.userId);
+
+        if (consentedUserIds.length === 0) {
+          return res.status(200).json({ success: true, userName: [] });
+        }
+
+        // Search only among consented users
+        const users = await userDB.find({
+          userId: { $in: consentedUserIds },
+          $or: [
+            { username: { $regex: query, $options: 'i' } },
+            { userId: { $regex: query, $options: 'i' } }
+          ]
+        }).lean();
+
+        const userName = users.map(user => user.username);
+        return res.status(200).json({ success: true, userName });
+      }
+
+      // Default behavior: search all users (for backward compatibility)
       const users = await userDB.find({ 
         $or: [
           { username: { $regex: query, $options: 'i' } },

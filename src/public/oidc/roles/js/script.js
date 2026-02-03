@@ -619,9 +619,9 @@ document.getElementById('userid_or_username').addEventListener('input', function
 
     // Set a new timeout to wait before making the API call
     timeout = setTimeout(async () => {
-        if (query.length > 0) {
+        if (query.length > 0 && selectedAppId) {
             try {
-                const response = await fetch(`/api/oauth/users/search?query=${encodeURIComponent(query)}`);
+                const response = await fetch(`/api/oauth/users/search?query=${encodeURIComponent(query)}&oauthClientAppId=${encodeURIComponent(selectedAppId)}`);
                 const users = await response.json();
                 if (response.ok) {
                     showUserSuggestions(users);
