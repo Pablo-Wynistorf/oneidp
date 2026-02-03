@@ -1,10 +1,11 @@
+let allApps = [];
+let pendingRevokeClientId = null;
+
 document.addEventListener('DOMContentLoaded', function() {
   fetchAuthorizedApps();
-  fetchUserData();
+  setupSearch();
   setupDialogHandlers();
 });
-
-let pendingRevokeClientId = null;
 
 function fetchAuthorizedApps() {
   fetch('/api/oauth/user-consents', {
@@ -16,38 +17,48 @@ function fetchAuthorizedApps() {
     return response.json();
   })
   .then(data => {
-    displayAuthorizedApps(data.apps || []);
+    allApps = data.apps || [];
+    displayAuthorizedApps(allApps);
   })
   .catch(error => {
     document.getElementById('authorized-apps-container').innerHTML = 
-      '<div class="text-gray-400 text-center py-4">Failed to load authorized apps</div>';
+      '<div class="text-gray-400 text-center py-4 col-span-full">Failed to load authorized apps</div>';
+  });
+}
+
+function setupSearch() {
+  const searchInput = document.getElementById('search-input');
+  let timeout;
+  
+  searchInput.addEventListener('input', (e) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      const query = e.target.value.toLowerCase().trim();
+      if (!query) {
+        displayAuthorizedApps(allApps);
+        return;
+      }
+      const filtered = allApps.filter(app => 
+        app.appName.toLowerCase().includes(query) ||
+        app.clientId.toLowerCase().includes(query)
+      );
+      displayAuthorizedApps(filtered);
+    }, 200);
   });
 }
 
 function displayAuthorizedApps(apps) {
   const container = document.getElementById('authorized-apps-container');
   const countBadge = document.getElementById('apps-count');
-  const viewAllContainer = document.getElementById('view-all-container');
   
   countBadge.textContent = apps.length;
 
   if (apps.length === 0) {
-    container.innerHTML = '<div class="text-gray-400 text-center py-4 col-span-full">No authorized applications yet</div>';
-    viewAllContainer.classList.add('hidden');
+    container.innerHTML = '<div class="text-gray-400 text-center py-4 col-span-full">No applications found</div>';
     return;
   }
 
-  // Show max 10 apps on dashboard
-  const displayApps = apps.slice(0, 10);
-  
-  // Show "View All" button if more than 10 apps
-  if (apps.length > 10) {
-    viewAllContainer.classList.remove('hidden');
-  } else {
-    viewAllContainer.classList.add('hidden');
-  }
-
-  container.innerHTML = displayApps.map(app => {
+  container.innerHTML = apps.map(app => {
     const appDomain = getAppDomain(app.redirectUri);
     return `
     <div class="bg-gray-700 rounded-lg p-4">
@@ -68,7 +79,7 @@ function displayAuthorizedApps(apps) {
         `).join('')}
       </div>
       <div class="mt-2 text-xs text-gray-300">
-        Last used: ${formatDate(app.lastAuthAt)}
+        First authorized: ${formatDate(app.firstAuthAt)} · Last used: ${formatDate(app.lastAuthAt)}
       </div>
       <div class="flex items-center gap-2 mt-3">
         ${appDomain ? `
@@ -120,6 +131,8 @@ function revokeAccess() {
     document.getElementById('revoke-dialog').close();
     pendingRevokeClientId = null;
     displaySuccess('App access revoked successfully');
+    // Remove from local array and re-render
+    allApps = allApps.filter(app => app.clientId !== pendingRevokeClientId);
     fetchAuthorizedApps();
   })
   .catch(error => {
@@ -135,53 +148,6 @@ function setupDialogHandlers() {
       const dialog = button.closest('dialog');
       if (dialog) dialog.close();
     });
-  });
-}
-
-function fetchUserData() {
-  fetch('/api/oauth/userinfo', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  })
-  .then(response => {
-    if (!response.ok) throw new Error('Failed to fetch user data');
-    return response.json();
-  })
-  .then(data => {
-    document.getElementById('userid-input').textContent = data.userId;
-    document.getElementById('first-name-input').textContent = data.firstName;
-    document.getElementById('last-name-input').textContent = data.lastName;
-    document.getElementById('username-input').textContent = data.username;
-    document.getElementById('email-input').textContent = data.email;
-
-    // Handle roles as orange boxes
-    const rolesContainer = document.getElementById('roles-input');
-    rolesContainer.innerHTML = '';
-    let roles = [];
-    if (Array.isArray(data.providerRoles)) {
-      roles = data.providerRoles;
-    } else if (typeof data.providerRoles === 'string') {
-      roles = data.providerRoles.split(',').map(r => r.trim());
-    }
-    if (roles.length === 0) {
-      rolesContainer.textContent = 'N/A';
-    } else {
-      roles.forEach(role => {
-        const roleBox = document.createElement('span');
-        roleBox.textContent = role;
-        roleBox.className = 'bg-orange-500 text-white px-3 py-1 rounded-lg text-sm font-semibold shadow-md';
-        rolesContainer.appendChild(roleBox);
-      });
-    }
-
-    document.getElementById('mfa-enabled-input').textContent = data.mfaEnabled ? 'Yes' : 'No';
-
-    sha256(data.email).then(hash => {
-      document.getElementById('avatar').src = `https://www.gravatar.com/avatar/${hash}?&d=identicon&r=PG`;
-    });
-  })
-  .catch(error => {
-    window.location.href = '/login';
   });
 }
 
@@ -203,12 +169,4 @@ function displaySuccess(message) {
 
 function displayError(message) {
   new Noty({ type: 'error', layout: 'topRight', text: message, timeout: 5000 }).show();
-}
-
-async function sha256(str) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
 }

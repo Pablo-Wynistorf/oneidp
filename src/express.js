@@ -147,6 +147,7 @@ app.use('/mfa', express.static(path.join(__dirname, 'public/mfa')));
 app.use('/oidc/apps', verifyToken, express.static(path.join(__dirname, 'public/oidc/apps')));
 app.use('/oidc/roles', verifyToken, express.static(path.join(__dirname, 'public/oidc/roles')));
 app.use('/consent', verifyToken, express.static(path.join(__dirname, 'public/consent')));
+app.use('/authorized-apps', verifyToken, express.static(path.join(__dirname, 'public/authorized-apps')));
 
 
 // Authentication Endpoints
