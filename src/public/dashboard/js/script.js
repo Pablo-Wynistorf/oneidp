@@ -58,7 +58,6 @@ function displayAuthorizedApps(apps) {
           </div>
           <div class="min-w-0">
             <h3 class="text-white font-semibold truncate">${escapeHtml(app.appName)}</h3>
-            <p class="text-gray-400 text-xs truncate">${escapeHtml(app.clientId)}</p>
           </div>
         </div>
       </div>
