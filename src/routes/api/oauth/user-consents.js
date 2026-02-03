@@ -49,6 +49,7 @@ router.get('/', async (req, res) => {
       return {
         appName: app ? app.oauthAppName : 'Unknown App',
         clientId: consent.clientId,
+        redirectUri: app ? app.redirectUri : null,
         consentedScopes: consent.consentedScopes,
         firstAuthAt: consent.firstAuthAt,
         lastAuthAt: consent.lastAuthAt

@@ -35,7 +35,9 @@ function displayAuthorizedApps(apps) {
     return;
   }
 
-  container.innerHTML = apps.map(app => `
+  container.innerHTML = apps.map(app => {
+    const appDomain = getAppDomain(app.redirectUri);
+    return `
     <div class="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
       <div class="flex-1">
         <div class="flex items-center gap-3">
@@ -49,19 +51,37 @@ function displayAuthorizedApps(apps) {
         </div>
         <div class="mt-3 flex flex-wrap gap-2">
           ${app.consentedScopes.map(scope => `
-            <span class="bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs">${escapeHtml(scope)}</span>
+            <span class="bg-gray-600 text-gray-200 px-2 py-1 rounded text-xs">${escapeHtml(scope)}</span>
           `).join('')}
         </div>
-        <div class="mt-2 text-xs text-gray-500">
+        <div class="mt-2 text-xs text-gray-300">
           First authorized: ${formatDate(app.firstAuthAt)} · Last used: ${formatDate(app.lastAuthAt)}
         </div>
       </div>
-      <button onclick="confirmRevoke('${escapeHtml(app.clientId)}', '${escapeHtml(app.appName)}')" 
-        class="ml-4 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors">
-        Revoke
-      </button>
+      <div class="flex items-center gap-2 ml-4">
+        ${appDomain ? `
+          <a href="${escapeHtml(appDomain)}" target="_blank" rel="noopener noreferrer"
+            class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors">
+            Open
+          </a>
+        ` : ''}
+        <button onclick="confirmRevoke('${escapeHtml(app.clientId)}', '${escapeHtml(app.appName)}')" 
+          class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors">
+          Revoke
+        </button>
+      </div>
     </div>
-  `).join('');
+  `}).join('');
+}
+
+function getAppDomain(redirectUri) {
+  if (!redirectUri) return null;
+  try {
+    const url = new URL(redirectUri);
+    return url.origin;
+  } catch {
+    return null;
+  }
 }
 
 function confirmRevoke(clientId, appName) {
