@@ -57,7 +57,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="/authorized-apps/"
+                        <a href="/oidc/apps/authorized/"
                             class="flex items-center p-3 text-gray-300 rounded-xl text-sm font-semibold transition-colors duration-300 ease-in-out hover:bg-gray-600">
                             <img src="svg/authorized-apps.svg" class="w-6 h-6" alt="Authorized Apps">
                             <span class="ml-3">Authorized Apps</span>
@@ -88,7 +88,7 @@
 
         <!-- Create Application Modal -->
         <dialog id="create-app-modal"
-            class="bg-gray-600 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50 w-full max-w-md">
+            class="bg-gray-600 p-6 rounded-lg shadow-lg backdrop:bg-black/50 w-full max-w-md fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 m-0">
             <h2 class="text-lg mb-4 text-white">Create OAuth Application</h2>
             <form class="space-y-4">
                 <div class="form-group">
@@ -130,7 +130,7 @@
         </dialog>
 
         <!-- Edit Application Modal -->
-        <dialog id="edit-app-modal" class="bg-gray-600 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50 w-2/5">
+        <dialog id="edit-app-modal" class="bg-gray-600 p-6 rounded-lg shadow-lg backdrop:bg-black/50 w-full max-w-lg fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 m-0">
             <h2 class="text-lg mb-4 text-white">Edit OAuth Application</h2>
             <form id="edit-app-form" class="space-y-4">
                 <div class="form-group">
@@ -223,7 +223,7 @@
 
     <!-- Confirmation dialog for deletion -->
     <dialog data-modal id="confirmation-box"
-        class="bg-gray-900 p-6 rounded-lg shadow-lg backdrop:backdrop-brightness-50">
+        class="bg-gray-900 p-6 rounded-lg shadow-lg backdrop:bg-black/50 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 m-0">
         <h2 class="text-lg mb-4 text-white">Do you really want to delete this app?</h2>
         <div class="flex justify-center space-x-4">
             <button type="button" class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg" data-close-modal>No</button>
