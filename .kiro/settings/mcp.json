@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "shadcn@latest",
+        "mcp"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "get_project_registries",
+        "list_items_in_registries"
+      ]
+    }
+  }
+}

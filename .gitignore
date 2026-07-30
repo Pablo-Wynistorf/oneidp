@@ -1,11 +1,48 @@
-/src/node_modules/
-/src/.env
-/deployment/kubernetes/secrets-with-credentials.yaml
-/deployment/helm/oneidp/values-with-credentials.yaml
-/deployment/terraform/.terraform
-/deployment/terraform/.terraform.lock.hcl
-/deployment/terraform/.terraform.tfstate.lock.info
-/deployment/terraform/terraform.tfstate
-/deployment/terraform/terraform.tfstate.backup
-/deployment/terraform/terraform.tfvars
-/deployment/terraform/lambda_code/lambda_code.zip
+# ---- OS / editor ----
+.DS_Store
+**/.DS_Store
+Thumbs.db
+*.swp
+
+# ---- Node ----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+*.tsbuildinfo
+.eslintcache
+
+# ---- Secrets / local env ----
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# ---- Frontend build output ----
+frontend/dist/
+frontend/.vite/
+
+# ---- Terraform (any directory) ----
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ---- Lambda / packaging artifacts ----
+terraform/build/
+*.zip
+
+# ---- Deployment files containing credentials ----
+deployment/kubernetes/secrets-with-credentials.yaml
+deployment/helm/oneidp/values-with-credentials.yaml

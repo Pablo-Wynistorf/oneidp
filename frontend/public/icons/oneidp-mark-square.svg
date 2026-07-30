@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="ONEIDP">
+  <title>ONEIDP</title>
+  <!--
+    Full-bleed variant. Source for the rasterised platform icons (apple-touch-icon,
+    PWA icons) where the OS applies its own corner mask, so the artwork must not
+    carry its own rounded corners. The glyph sits inside the maskable safe zone.
+  -->
+  <defs>
+    <linearGradient id="oneidpMarkSquare" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7c5cff" />
+      <stop offset="1" stop-color="#22d3ee" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" fill="url(#oneidpMarkSquare)" />
+  <g fill="#ffffff" transform="translate(32 32) scale(0.82) translate(-32 -32)">
+    <circle cx="32" cy="24" r="10" />
+    <rect x="28" y="27" width="8" height="23" rx="4" />
+  </g>
+</svg>

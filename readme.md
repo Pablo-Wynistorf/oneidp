@@ -11,6 +11,15 @@ For alerting and log we use discord webhook. Create a channel in a discord serve
 
 ## Use this oidc provider
 You can use this provider with several librarys or build your own oidc client.
+
+**Integration docs are in [`/docs`](./docs/README.md):**
+
+- [Quickstart](./docs/quickstart.md) - register a client and complete a login
+- [Endpoint reference](./docs/endpoints.md) - every OIDC endpoint, parameters, responses, errors
+- [Tokens and claims](./docs/tokens.md) - token formats, lifetimes, validation
+- [Client registration](./docs/client-registration.md) - client types, management API, roles
+- [Notes and limitations](./docs/notes-and-limitations.md) - where ONEIDP deviates from the specs
+
 Here are some examples on how to implement oneidp as oidc provider in you express applications:
 https://github.com/Pablo-Wynistorf/oneidp-client-demo
 
