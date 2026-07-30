@@ -272,10 +272,24 @@ function CreateUserModal({ open, onClose, onCreated }) {
         </>
       }
     >
+      {/* This provisions someone else's account, so the identity fields opt out
+          of autofill. Only the password keeps `new-password`, which lets a
+          manager generate a strong temporary one without offering to save the
+          admin's own credentials against it. */}
       <form id="admin-create-user" onSubmit={submit} className="space-y-4" noValidate>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <TextInput label="First name" value={form.firstName} onChange={update('firstName')} />
-          <TextInput label="Last name" value={form.lastName} onChange={update('lastName')} />
+          <TextInput
+            label="First name"
+            value={form.firstName}
+            onChange={update('firstName')}
+            autoComplete="off"
+          />
+          <TextInput
+            label="Last name"
+            value={form.lastName}
+            onChange={update('lastName')}
+            autoComplete="off"
+          />
         </div>
         <TextInput
           label="Username"
@@ -283,6 +297,7 @@ function CreateUserModal({ open, onClose, onCreated }) {
           onChange={update('username')}
           hint="3-20 characters: letters, numbers and dashes."
           autoCapitalize="off"
+          autoComplete="off"
           required
         />
         <TextInput
@@ -292,10 +307,12 @@ function CreateUserModal({ open, onClose, onCreated }) {
           value={form.email}
           onChange={update('email')}
           autoCapitalize="off"
+          autoComplete="off"
           required
         />
         <PasswordInput
           label="Temporary password"
+          name="newUserPassword"
           value={form.password}
           onChange={update('password')}
           hint="At least 8 characters with upper and lower case, a digit and a symbol."

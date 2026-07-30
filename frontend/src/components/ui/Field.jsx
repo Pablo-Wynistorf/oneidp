@@ -95,13 +95,16 @@ export function TextInput({
 }
 
 /** Password input with a show/hide toggle. */
-export function PasswordInput({ label = 'Password', autoComplete, ...props }) {
+export function PasswordInput({ label = 'Password', autoComplete, name = 'password', ...props }) {
   const [visible, setVisible] = useState(false);
 
   return (
     <TextInput
       label={label}
+      // Revealing the value keeps `name`/`autocomplete` intact, so password
+      // managers still recognise the field while it is shown as plain text.
       type={visible ? 'text' : 'password'}
+      name={name}
       autoComplete={autoComplete}
       autoCapitalize="off"
       autoCorrect="off"
@@ -118,6 +121,35 @@ export function PasswordInput({ label = 'Password', autoComplete, ...props }) {
         </button>
       }
       {...props}
+    />
+  );
+}
+
+/**
+ * Off-screen username field for password forms that do not show one.
+ *
+ * A password manager needs to know which account a `new-password` belongs to.
+ * When changing or resetting a password the identifier is not part of the
+ * visible form, so this read-only copy gives managers the anchor they look for
+ * and lets them update the right entry instead of creating a new one.
+ *
+ * It is positioned off-screen rather than `display: none` — several managers
+ * ignore hidden inputs — and kept out of the tab order and the a11y tree since
+ * it carries no information for the person filling the form in.
+ */
+export function HiddenUsername({ value, autoComplete = 'username' }) {
+  if (!value) return null;
+
+  return (
+    <input
+      type="text"
+      name="username"
+      autoComplete={autoComplete}
+      value={value}
+      readOnly
+      tabIndex={-1}
+      aria-hidden
+      className="sr-only"
     />
   );
 }

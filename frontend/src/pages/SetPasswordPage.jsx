@@ -73,9 +73,20 @@ export function SetPasswordPage() {
       subtitle="Pick something you have not used here before."
       width="sm"
     >
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      {/* No username field here: the account is identified by the reset cookie
+          and is not known to the client, so managers are left to match on the
+          origin alone. */}
+      <form
+        id="set-password-form"
+        onSubmit={handleSubmit}
+        className="space-y-4"
+        aria-label="Choose a new password"
+        noValidate
+      >
         <PasswordInput
           label="New password"
+          id="new-password"
+          name="newPassword"
           value={password}
           onChange={(event) => {
             setPassword(event.target.value);

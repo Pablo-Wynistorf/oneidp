@@ -112,6 +112,8 @@ export function RecoveryPage() {
       >
         <TextInput
           label="Email"
+          id="email"
+          name="email"
           type="email"
           inputMode="email"
           value={email}

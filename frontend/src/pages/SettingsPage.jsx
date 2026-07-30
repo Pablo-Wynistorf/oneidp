@@ -5,7 +5,7 @@ import { Button, IconButton } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader, EmptyState } from '@/components/ui/Card';
 import { CodeInput } from '@/components/ui/CodeInput';
 import { CopyButton } from '@/components/ui/CopyField';
-import { PasswordInput } from '@/components/ui/Field';
+import { HiddenUsername, PasswordInput } from '@/components/ui/Field';
 import { IconDevice, IconKey, IconLogout, IconShield } from '@/components/ui/Icons';
 import { ConfirmDialog, Modal } from '@/components/ui/Modal';
 import { Skeleton, Spinner } from '@/components/ui/Spinner';
@@ -295,6 +295,7 @@ function PasskeyCard() {
 
 function PasswordCard() {
   const toast = useToast();
+  const { user } = useSession();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [errors, setErrors] = useState({});
@@ -336,9 +337,18 @@ function PasswordCard() {
     <Card>
       <CardHeader title="Password" description="Change the password used to sign in." />
       <CardBody>
-        <form onSubmit={submit} className="space-y-4" noValidate>
+        <form
+          id="change-password-form"
+          onSubmit={submit}
+          className="space-y-4"
+          aria-label="Change password"
+          noValidate
+        >
+          <HiddenUsername value={user?.username || user?.email} />
           <PasswordInput
             label="Current password"
+            id="current-password"
+            name="currentPassword"
             value={currentPassword}
             onChange={(event) => setCurrentPassword(event.target.value)}
             error={errors.currentPassword}
@@ -347,6 +357,8 @@ function PasswordCard() {
           />
           <PasswordInput
             label="New password"
+            id="new-password"
+            name="newPassword"
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
             error={errors.newPassword}

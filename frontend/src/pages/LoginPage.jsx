@@ -135,9 +135,20 @@ export function LoginPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      {/* The id/name pairs below are what password managers key off when they
+          decide whether a form is a sign-in form, alongside `autocomplete`. */}
+      <form
+        id="login-form"
+        name="login"
+        onSubmit={handleSubmit}
+        className="space-y-4"
+        aria-label="Sign in"
+        noValidate
+      >
         <TextInput
           label="Username or email"
+          id="username"
+          name="username"
           value={identifier}
           onChange={(event) => setIdentifier(event.target.value)}
           autoComplete="username"
@@ -152,6 +163,8 @@ export function LoginPage() {
 
         <div className="space-y-1.5">
           <PasswordInput
+            id="current-password"
+            name="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="current-password"

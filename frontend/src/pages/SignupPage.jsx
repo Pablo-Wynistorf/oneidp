@@ -205,10 +205,21 @@ export function SignupPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      {/* Explicit id/name pairs let password managers see this as a
+          registration form and offer to generate and save credentials. */}
+      <form
+        id="signup-form"
+        name="register"
+        onSubmit={handleSubmit}
+        className="space-y-4"
+        aria-label={invite ? 'Accept invitation' : 'Create account'}
+        noValidate
+      >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextInput
             label="First name"
+            id="given-name"
+            name="firstName"
             value={form.firstName}
             onChange={update('firstName')}
             autoComplete="given-name"
@@ -219,6 +230,8 @@ export function SignupPage() {
           />
           <TextInput
             label="Last name"
+            id="family-name"
+            name="lastName"
             value={form.lastName}
             onChange={update('lastName')}
             autoComplete="family-name"
@@ -229,6 +242,8 @@ export function SignupPage() {
 
         <TextInput
           label="Email"
+          id="email"
+          name="email"
           type="email"
           inputMode="email"
           value={form.email}
@@ -241,13 +256,17 @@ export function SignupPage() {
           enterKeyHint="next"
           required
           // The invitation is bound to one address, so it cannot be changed.
+          // `readOnly` rather than `disabled`: a disabled field is skipped by
+          // password managers, which would cost them the invited address.
           readOnly={Boolean(invite)}
-          disabled={Boolean(invite)}
+          className={invite ? 'cursor-not-allowed opacity-60' : undefined}
           hint={invite ? 'Fixed by your invitation.' : undefined}
         />
 
         <TextInput
           label="Username"
+          id="username"
+          name="username"
           value={form.username}
           onChange={update('username')}
           error={errors.username}
@@ -260,6 +279,8 @@ export function SignupPage() {
         />
 
         <PasswordInput
+          id="new-password"
+          name="password"
           value={form.password}
           onChange={update('password')}
           error={errors.password}
