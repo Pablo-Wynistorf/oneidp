@@ -70,7 +70,7 @@ function renderEmail({ preheader, heading, greeting, paragraphs, action, note })
     .join('');
 
   return `<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" style="background-color:${COLORS.canvas}">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" style="Margin:0;padding:0;width:100%;background-color:${COLORS.canvas}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -93,9 +93,11 @@ function renderEmail({ preheader, heading, greeting, paragraphs, action, note })
       line-height: inherit !important;
     }
     #outlook a { padding: 0; }
+    html, body { Margin: 0 !important; padding: 0 !important; width: 100% !important; }
+    body { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    img { -ms-interpolation-mode: bicubic; }
     @media only screen and (max-width: 600px) {
-      .shell { width: 100% !important; }
-      .gutter { padding-left: 20px !important; padding-right: 20px !important; }
+      .gutter { padding-left: 16px !important; padding-right: 16px !important; }
       .card-pad { padding: 28px 22px !important; }
       .h1 { font-size: 26px !important; line-height: 32px !important; }
       .btn { display: block !important; }
@@ -105,12 +107,13 @@ function renderEmail({ preheader, heading, greeting, paragraphs, action, note })
     }
   </style>
 </head>
-<body class="canvas" style="Margin:0;padding:0;width:100%;background-color:${COLORS.canvas}">
+<body class="canvas" style="Margin:0;padding:0;width:100%;min-width:100%;background-color:${COLORS.canvas}">
   <div style="display:none;font-size:0;line-height:0;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all">${preheader}</div>
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${COLORS.canvas}" style="border-collapse:collapse;background-color:${COLORS.canvas}">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" bgcolor="${COLORS.canvas}" style="width:100%;min-width:100%;border-collapse:collapse;background-color:${COLORS.canvas}">
     <tr>
       <td align="center" class="gutter" style="padding:40px 24px">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="shell" style="width:600px;max-width:600px;border-collapse:collapse">
+        <!--[if mso]><table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;border-collapse:collapse"><tr><td><![endif]-->
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" class="shell" style="width:100%;max-width:600px;border-collapse:collapse">
 
           <!-- Brand lockup -->
           <tr>
@@ -139,9 +142,9 @@ function renderEmail({ preheader, heading, greeting, paragraphs, action, note })
                         <td align="center" style="padding:12px 0 8px">${renderButton(action)}</td>
                       </tr>
                     </table>
-                    <p style="Margin:20px 0 0;font-family:${FONT_STACK};font-size:12px;line-height:20px;color:${COLORS.inkFaint};word-break:break-all">
+                    <p style="Margin:20px 0 0;font-family:${FONT_STACK};font-size:12px;line-height:20px;color:${COLORS.inkFaint};word-break:break-all;word-wrap:break-word;overflow-wrap:anywhere">
                       If the button does not work, paste this link into your browser:<br>
-                      <a href="${action.url}" target="_blank" style="color:${COLORS.accent};text-decoration:underline">${action.url}</a>
+                      <a href="${action.url}" target="_blank" style="color:${COLORS.accent};text-decoration:underline;word-break:break-all;word-wrap:break-word;overflow-wrap:anywhere">${action.url}</a>
                     </p>
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
                       <tr>
@@ -167,6 +170,7 @@ function renderEmail({ preheader, heading, greeting, paragraphs, action, note })
           </tr>
 
         </table>
+        <!--[if mso]></td></tr></table><![endif]-->
       </td>
     </tr>
   </table>

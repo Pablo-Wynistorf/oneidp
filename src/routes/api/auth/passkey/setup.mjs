@@ -3,10 +3,11 @@ import jwt from 'jsonwebtoken';
 import { generateRegistrationOptions, verifyRegistrationResponse } from '@simplewebauthn/server';
 import redisCache from '../../../../database/redis.mjs';
 import { userDB } from '../../../../database/mongodb.mjs';
+import { getRpID } from '../../../../utils/webauthn.mjs';
 
 const router = express.Router();
 
-const { DOMAIN, URL } = process.env;
+const { URL } = process.env;
 
 const JWT_PUBLIC_KEY = `
 -----BEGIN PUBLIC KEY-----
@@ -41,7 +42,7 @@ router.post('/generate', async (req, res) => {
 
     const options = await generateRegistrationOptions({
       rpName: 'Oneidp',
-      rpID: DOMAIN,
+      rpID: getRpID(),
       userName: user.username,
       userDisplayName: user.username,
       timeout: 60000,
@@ -91,7 +92,7 @@ router.post('/verify', async (req, res) => {
       response,
       expectedChallenge,
       expectedOrigin: URL,
-      expectedRPID: DOMAIN,
+      expectedRPID: getRpID(),
       requireUserVerification: false,
     })
 

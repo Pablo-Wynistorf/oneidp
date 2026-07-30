@@ -48,10 +48,11 @@ function presentUser(user, settings) {
     appsAllowedForEveryone: Boolean(settings?.allowAllUsersManageApps),
     // Why a recovery email cannot be sent, or null when it can. Mirrors exactly
     // what `POST /:userId/send-recovery` enforces, so the console can disable the
-    // button and say why instead of surfacing an error after the fact.
-    passwordRecoveryBlocker: settings?.passwordResetEnabled === false
-      ? 'disabled'
-      : passwordResetBlocker(user),
+    // button and say why instead of surfacing an error after the fact. The
+    // instance-wide `passwordResetEnabled` switch is deliberately not consulted:
+    // it only governs the self-service flow, while an operator sending a link on
+    // the user's behalf is always an option.
+    passwordRecoveryBlocker: passwordResetBlocker(user),
     banned: Boolean(user.banned),
     bannedAt: user.bannedAt || null,
     bannedReason: user.bannedReason || null,
@@ -310,7 +311,7 @@ router.get('/:userId', async (req, res) => {
 });
 
 /* -------------------------------------------------------------------------- */
-/* Moderation actions                                                        */
+/* Mutations                                                                 */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -338,6 +339,120 @@ async function loadMutableTarget(req, res, { allowSelf = false } = {}) {
 
   return user;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Identity details                                                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Correct a user's identity details: name, username and email address.
+ *
+ * Partial update — only the fields present in the body are considered, and a
+ * field that already holds the submitted value is not reported as changed, so
+ * the audit trail says what actually moved.
+ *
+ * The same username/email rules as signup apply, and uniqueness is enforced
+ * here because the collection's indexes are not unique. Both fields decide how
+ * a local account signs in, so an edit changes the user's credentials: the
+ * operator is expected to tell them.
+ *
+ * A new address arrives unverified unless the operator asserts it with
+ * `emailVerified: true`, mirroring account creation. Dropping verification
+ * matters beyond a badge — an unverified address blocks password recovery and
+ * admin access — so it is never carried over silently to an address nobody has
+ * proven control of. `emailVerified` is ignored when the address is unchanged;
+ * `POST /:userId/verify-email` remains the way to confirm an existing one.
+ */
+router.patch('/:userId', async (req, res) => {
+  try {
+    const user = await loadMutableTarget(req, res);
+    if (!user) return undefined;
+
+    const changes = {};
+
+    // Names are free-form and optional: blank is a legitimate value, so only
+    // the length is bounded.
+    for (const field of ['firstName', 'lastName']) {
+      if (req.body?.[field] === undefined) continue;
+      const value = String(req.body[field]).trim().slice(0, 100);
+      if (value !== (user[field] || '')) changes[field] = value;
+    }
+
+    if (req.body?.username !== undefined) {
+      const username = String(req.body.username).trim();
+      if (!USERNAME_REGEX.test(username)) {
+        return res.status(400).json({
+          error: 'Username must be 3-20 characters and contain only letters, numbers and dashes',
+        });
+      }
+      if (username !== user.username) changes.username = username;
+    }
+
+    if (req.body?.email !== undefined) {
+      const email = String(req.body.email).trim().toLowerCase();
+      if (!EMAIL_REGEX.test(email)) {
+        return res.status(400).json({ error: 'Enter a valid email address' });
+      }
+      if (email !== String(user.email || '').toLowerCase()) changes.email = email;
+    }
+
+    // Admin rights are keyed on the email allow-list, so assigning an
+    // allow-listed address here would promote an account the console would then
+    // refuse to touch. Admin membership stays a configuration decision.
+    if (changes.email && isAdminEmail(changes.email)) {
+      return res.status(409).json({
+        error:
+          'That address is on the administrator allow-list. Change ADMIN_EMAILS instead of granting admin rights from here',
+      });
+    }
+
+    const [emailTaken, usernameTaken] = await Promise.all([
+      changes.email
+        ? userDB.findOne({ email: changes.email, userId: { $ne: user.userId } }).lean()
+        : null,
+      changes.username
+        ? userDB.findOne({ username: changes.username, userId: { $ne: user.userId } }).lean()
+        : null,
+    ]);
+    if (emailTaken) return res.status(409).json({ error: 'Email already in use' });
+    if (usernameTaken) return res.status(409).json({ error: 'Username already taken' });
+
+    if (changes.email) {
+      const verified = req.body?.emailVerified === true;
+      if (verified !== Boolean(user.emailVerified)) changes.emailVerified = verified;
+    }
+
+    const changed = Object.keys(changes);
+    const settings = await getSettings();
+
+    if (changed.length === 0) {
+      return res.json({ success: true, user: presentUser(user, settings), changed });
+    }
+
+    const previous = { email: user.email, username: user.username };
+
+    Object.assign(user, changes);
+    await user.save();
+
+    await recordAdminAction(req, 'user.update', {
+      targetUserId: user.userId,
+      targetEmail: user.email,
+      changed,
+      ...(changes.email && { previousEmail: previous.email }),
+      ...(changes.username && { previousUsername: previous.username }),
+      ...(changes.emailVerified !== undefined && { emailVerified: changes.emailVerified }),
+    });
+
+    return res.json({ success: true, user: presentUser(user, settings), changed });
+  } catch (error) {
+    notifyError(error);
+    return res.status(500).json({ error: 'Something went wrong, try again later' });
+  }
+});
+
+/* -------------------------------------------------------------------------- */
+/* Moderation actions                                                        */
+/* -------------------------------------------------------------------------- */
 
 router.post('/:userId/ban', async (req, res) => {
   try {
@@ -539,8 +654,10 @@ router.post('/:userId/reset-passkey', async (req, res) => {
 /**
  * Email a password recovery link on the user's behalf.
  *
- * Gated on the same `passwordResetEnabled` switch as the self-service flow: if
- * an operator has turned recovery off, the console must not be a way around it.
+ * Not gated on `passwordResetEnabled`: that switch turns off the *self-service*
+ * flow, where anyone can trigger a mail by typing an address. An operator acting
+ * on an account they are already authorised to manage stays available, so support
+ * can still unblock a locked-out user on an instance that hides the public form.
  * The link is identical to a self-requested one, which means it also signs the
  * user out everywhere — the reset handle and their sessions share a keyspace, so
  * issuing one necessarily clears the other.
@@ -548,11 +665,6 @@ router.post('/:userId/reset-passkey', async (req, res) => {
 router.post('/:userId/send-recovery', async (req, res) => {
   try {
     const settings = await getSettings();
-    if (!settings.passwordResetEnabled) {
-      return res.status(403).json({
-        error: 'Self-service password recovery is disabled for this instance',
-      });
-    }
 
     const user = await loadMutableTarget(req, res);
     if (!user) return undefined;

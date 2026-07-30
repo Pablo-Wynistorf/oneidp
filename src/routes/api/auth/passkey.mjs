@@ -5,11 +5,12 @@ import { userDB } from '../../../database/mongodb.mjs';
 import redisCache from '../../../database/redis.mjs';
 import { notifyError, notifyLogin } from '../../../notify/notifications.mjs';
 import { rejectIfBanned } from '../../../utils/account-status.mjs';
+import { getRpID } from '../../../utils/webauthn.mjs';
 import base64url from 'base64url';
 
 const router = express.Router();
 
-const { DOMAIN, URL } = process.env;
+const { URL } = process.env;
 
 const JWT_PRIVATE_KEY = `
 -----BEGIN PRIVATE KEY-----
@@ -23,7 +24,7 @@ function generateRandomString(length) {
 
 router.post('/', async (req, res) => {
   const options = await generateAuthenticationOptions({
-    rpID: DOMAIN,
+    rpID: getRpID(),
     userVerification: 'preferred',
     residentKey: 'preferred',
   });
@@ -72,7 +73,7 @@ router.post('/verify', async (req, res) => {
       response,
       expectedChallenge,
       expectedOrigin: URL,
-      expectedRPID: DOMAIN,
+      expectedRPID: getRpID(),
       requireUserVerification: false,
       credential: {
         id: user.passkeyId,
@@ -109,7 +110,9 @@ router.post('/verify', async (req, res) => {
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    notifyError('Passkey verification error', err);
+    // notifyError takes a single argument: keep the real error in the message,
+    // otherwise the cause never reaches the logs.
+    notifyError(`Passkey verification error: ${err?.stack || err}`);
     return res.status(500).json({ success: false, error: 'Failed to verify passkey' });
   }
 });

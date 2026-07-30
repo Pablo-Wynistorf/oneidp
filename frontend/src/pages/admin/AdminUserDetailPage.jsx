@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader, EmptyState } from '@/components/ui/Card';
 import { CopyField } from '@/components/ui/CopyField';
 import { Switch, TextArea, TextInput } from '@/components/ui/Field';
-import { IconBack, IconDevice, IconExternal, IconShield } from '@/components/ui/Icons';
+import { IconBack, IconDevice, IconEdit, IconExternal, IconShield } from '@/components/ui/Icons';
 import { ConfirmDialog, Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
@@ -15,8 +15,8 @@ import { formatDate, formatDateTime, initial, originOf } from '@/lib/format';
 /**
  * Why "Send recovery email" is unavailable, in the operator's terms.
  *
- * `disabled` is absent on purpose: when recovery is off instance-wide the button
- * is not rendered at all, so there is nothing to explain next to it.
+ * Only account-level reasons appear here: the instance-wide self-service switch
+ * does not block an operator-sent link, so the button is always rendered.
  */
 const RECOVERY_BLOCKED_HINT = {
   social: 'This account signs in through an external provider, so it has no password to recover.',
@@ -32,6 +32,7 @@ export function AdminUserDetailPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [banOpen, setBanOpen] = useState(false);
   const [banReason, setBanReason] = useState('');
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -149,13 +150,19 @@ export function AdminUserDetailPage() {
                 {user.emailVerified ? 'Email verified' : 'Email unverified'}
               </Badge>
               <Badge tone="neutral">{user.identityProvider}</Badge>
-              {user.providerRoles.map((role) => (
-                <Badge key={role} tone="warning">
-                  {role}
-                </Badge>
-              ))}
             </div>
           </div>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            className="shrink-0"
+            disabled={user.isAdmin}
+            onClick={() => setEditOpen(true)}
+          >
+            <IconEdit size={15} />
+            Edit details
+          </Button>
         </CardBody>
 
         <CardBody className="grid grid-cols-1 gap-4 border-t border-hairline sm:grid-cols-2">
@@ -302,26 +309,24 @@ export function AdminUserDetailPage() {
             </Button>
           )}
 
-          {user.passwordRecoveryBlocker !== 'disabled' && (
-            <Button
-              variant="secondary"
-              loading={busy === 'recovery'}
-              disabled={user.isAdmin || Boolean(user.passwordRecoveryBlocker)}
-              onClick={() =>
-                setConfirmAction({
-                  key: 'recovery',
-                  path: '/send-recovery',
-                  destructive: false,
-                  title: 'Send a password recovery email?',
-                  description: `${user.email} receives a link that is valid for 30 minutes. Sending it signs the user out of every device.`,
-                  confirmLabel: 'Send email',
-                  message: 'Recovery email sent.',
-                })
-              }
-            >
-              Send recovery email
-            </Button>
-          )}
+          <Button
+            variant="secondary"
+            loading={busy === 'recovery'}
+            disabled={user.isAdmin || Boolean(user.passwordRecoveryBlocker)}
+            onClick={() =>
+              setConfirmAction({
+                key: 'recovery',
+                path: '/send-recovery',
+                destructive: false,
+                title: 'Send a password recovery email?',
+                description: `${user.email} receives a link that is valid for 30 minutes. Sending it signs the user out of every device.`,
+                confirmLabel: 'Send email',
+                message: 'Recovery email sent.',
+              })
+            }
+          >
+            Send recovery email
+          </Button>
 
           <Button
             variant="outlineDanger"
@@ -557,6 +562,16 @@ export function AdminUserDetailPage() {
       )}
 
       {/* Dialogs ------------------------------------------------------------- */}
+      <EditDetailsModal
+        open={editOpen}
+        user={user}
+        onClose={() => setEditOpen(false)}
+        onSaved={async () => {
+          await load();
+          setEditOpen(false);
+        }}
+      />
+
       <Modal
         open={banOpen}
         onClose={() => setBanOpen(false)}
@@ -648,5 +663,169 @@ export function AdminUserDetailPage() {
         }}
       />
     </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+
+/** The editable subset of an account, as form values. */
+function detailsOf(user) {
+  return {
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    username: user.username || '',
+    email: user.email || '',
+  };
+}
+
+/**
+ * Correct a user's identity details.
+ *
+ * Username and email are how a local account signs in, so the dialog says as
+ * much rather than presenting them as cosmetic profile fields. A new address is
+ * treated as unproven: verification is only carried over when the operator
+ * explicitly vouches for it.
+ */
+function EditDetailsModal({ open, user, onClose, onSaved }) {
+  const toast = useToast();
+  const [form, setForm] = useState(() => detailsOf(user));
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [pending, setPending] = useState(false);
+
+  // Reseed each time the dialog opens, so an abandoned edit is not still
+  // sitting in the fields the next time it is opened.
+  useEffect(() => {
+    if (!open) return;
+    setForm(detailsOf(user));
+    setEmailVerified(false);
+  }, [open, user]);
+
+  const update = (field) => (event) =>
+    setForm((current) => ({ ...current, [field]: event.target.value }));
+
+  const emailChanged =
+    form.email.trim().toLowerCase() !== (user.email || '').toLowerCase();
+  const usernameChanged = form.username.trim() !== (user.username || '');
+  const dirty =
+    emailChanged ||
+    usernameChanged ||
+    form.firstName.trim() !== (user.firstName || '') ||
+    form.lastName.trim() !== (user.lastName || '');
+
+  const canSubmit = dirty && form.username.trim() && form.email.trim();
+
+  const submit = async (event) => {
+    event.preventDefault();
+    if (!canSubmit || pending) return;
+
+    setPending(true);
+    try {
+      await api.patch(`/api/admin/users/${encodeURIComponent(user.userId)}`, {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        username: form.username.trim(),
+        email: form.email.trim(),
+        emailVerified,
+      });
+      toast.success('Details updated.');
+      await onSaved();
+    } catch (requestError) {
+      toast.error(requestError.message || 'Could not update these details.');
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Edit details"
+      description="Name, username and email address for this account."
+      footer={
+        <>
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            disabled={pending}
+            fullWidth
+            className="sm:w-auto"
+          >
+            Cancel
+          </Button>
+          <Button
+            form="admin-edit-user"
+            type="submit"
+            loading={pending}
+            disabled={!canSubmit}
+            fullWidth
+            className="sm:w-auto"
+          >
+            Save changes
+          </Button>
+        </>
+      }
+    >
+      <form id="admin-edit-user" onSubmit={submit} className="space-y-4" noValidate>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <TextInput label="First name" value={form.firstName} onChange={update('firstName')} />
+          <TextInput label="Last name" value={form.lastName} onChange={update('lastName')} />
+        </div>
+
+        <TextInput
+          label="Username"
+          value={form.username}
+          onChange={update('username')}
+          hint={
+            usernameChanged
+              ? 'Changing this changes how the user signs in — tell them.'
+              : '3-20 characters: letters, numbers and dashes.'
+          }
+          autoCapitalize="off"
+          autoComplete="off"
+          required
+        />
+
+        <TextInput
+          label="Email"
+          type="email"
+          inputMode="email"
+          value={form.email}
+          onChange={update('email')}
+          hint={
+            emailChanged
+              ? 'Also the sign-in identifier for a local account, and where recovery links are sent.'
+              : undefined
+          }
+          autoCapitalize="off"
+          autoComplete="off"
+          required
+        />
+
+        {emailChanged && (
+          <div className="space-y-3 rounded-xl border border-hairline bg-surface p-3.5">
+            <Switch
+              label="New address is already verified"
+              description="Only turn on if you know this address belongs to the user."
+              checked={emailVerified}
+              onChange={setEmailVerified}
+            />
+            {!emailVerified && (
+              <p className="text-xs text-ink-faint">
+                The account will be marked unverified, which blocks password recovery until you mark
+                the address verified from the actions below.
+              </p>
+            )}
+          </div>
+        )}
+
+        {user.identityProvider !== 'local' && (
+          <p className="rounded-xl border border-hairline bg-surface px-3.5 py-3 text-xs text-ink-muted">
+            This account signs in through {user.identityProvider}, so these values are only used for
+            display and for the claims issued to applications.
+          </p>
+        )}
+      </form>
+    </Modal>
   );
 }
