@@ -85,7 +85,7 @@ router.post('/', async (req, res) => {
     // Awaited, unlike the other transactional emails: an invitation that was
     // never delivered is dead, so the failure is reported instead of swallowed.
     try {
-      await sendInviteEmail(email, token, req.adminUser.email);
+      await sendInviteEmail(email, token);
     } catch (mailError) {
       await invitationDB.deleteOne({ inviteId });
       notifyError(mailError);
@@ -132,7 +132,7 @@ router.post('/:inviteId/resend', async (req, res) => {
     await invitation.save();
 
     try {
-      await sendInviteEmail(invitation.email, token, req.adminUser.email);
+      await sendInviteEmail(invitation.email, token);
     } catch (mailError) {
       notifyError(mailError);
       return res.status(502).json({ error: 'Could not send the invitation email' });

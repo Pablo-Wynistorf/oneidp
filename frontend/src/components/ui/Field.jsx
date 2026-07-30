@@ -46,6 +46,10 @@ export function TextInput({
   hint,
   error,
   id,
+  // Written out rather than left to the HTML default: `input[type="text"]`
+  // selectors do not match an input with no `type` attribute, and that is how
+  // several password managers enumerate the fields of a form.
+  type = 'text',
   className,
   containerClassName,
   required,
@@ -74,6 +78,7 @@ export function TextInput({
         )}
         <input
           id={inputId}
+          type={type}
           required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={hint || error ? describedBy : undefined}

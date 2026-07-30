@@ -143,6 +143,11 @@ export function LoginPage() {
         id="login-form"
         name="login"
         data-form-type="login"
+        // The submit is handled in JS, but `action`/`method` are still declared:
+        // form classifiers read them as part of deciding that this is a
+        // credential form, and an attribute-less <form> reads as inert.
+        action="/api/auth/login"
+        method="post"
         onSubmit={handleSubmit}
         className="space-y-4"
         aria-label="Sign in"

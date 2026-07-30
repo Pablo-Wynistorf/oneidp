@@ -56,7 +56,7 @@ variable "frontend_cache_ttl_seconds" {
 variable "lambda_runtime" {
   description = "Node.js runtime for the Lambda function."
   type        = string
-  default     = "nodejs22.x"
+  default     = "nodejs24.x"
 }
 
 variable "lambda_memory_size" {
@@ -100,7 +100,6 @@ variable "admin_emails" {
     account. Every /api/admin request re-checks this list.
   EOT
   type        = string
-  default     = "admin@onedns.ch"
 }
 
 variable "mongodb_uri" {

@@ -308,15 +308,14 @@ async function sendVerificationEmail(username, email, email_verification_token) 
  * fire-and-forget helpers above: if an invitation email does not arrive, the
  * invitation is useless and the operator needs to know.
  */
-function sendInviteEmail(email, invite_token, invitedBy) {
-  const inviter = invitedBy ? `${escapeHtml(invitedBy)} has invited you` : 'You have been invited';
-
+function sendInviteEmail(email, invite_token) {
   const content = {
     preheader: 'Accept your invitation and create your ONEIDP account.',
     heading: 'You have been invited',
     greeting: '',
     paragraphs: [
-      `${inviter} to create a ONEIDP account for <strong style="color:${COLORS.ink}">${escapeHtml(email)}</strong>. `
+      'You have been invited to create a ONEIDP account for '
+      + `<strong style="color:${COLORS.ink}">${escapeHtml(email)}</strong>. `
       + 'Use the button below to choose a username and password.',
     ],
     action: {
