@@ -2,58 +2,86 @@
 # Build & package the Lambda bundle
 ###############################################################################
 
-# Rebuild whenever any source file changes (hash of all files under src, minus
-# node_modules which is not committed).
-resource "null_resource" "build" {
-  triggers = {
-    source_hash = sha1(join("", [
-      for f in fileset(local.src_dir, "**") :
-      filesha1("${local.src_dir}/${f}") if !startswith(f, "node_modules/")
-    ]))
-  }
+locals {
+  # Identifies a build. node_modules is excluded because it is not committed and
+  # gets installed by the build itself.
+  lambda_source_hash = sha1(join("", [
+    for f in fileset(local.src_dir, "**") :
+    filesha1("${local.src_dir}/${f}") if !startswith(f, "node_modules/")
+  ]))
 
-  # Build the Lambda bundle: copy the app source into a clean build directory
-  # and install production dependencies.
-  provisioner "local-exec" {
-    interpreter = ["/bin/bash", "-c"]
-    command     = <<-EOT
-      set -euo pipefail
-      echo "==> Cleaning build directory: ${local.build_dir}"
-      rm -rf '${local.build_dir}'
-      mkdir -p '${local.build_dir}'
+  # Holds the hash of the last successful build so that plans against unchanged
+  # sources skip npm entirely instead of rebuilding on every run.
+  lambda_build_stamp = "${path.module}/.lambda-build-hash"
+}
 
-      echo "==> Copying source from ${local.src_dir}"
-      cp -R '${local.src_dir}/.' '${local.build_dir}/'
+# data.archive_file is read during plan, so the bundle has to exist by then. A
+# local-exec provisioner would only run on apply, which makes plan-only runs
+# (CI) fail with "could not archive missing directory: ./build". Building through
+# data.external keeps the packaging step ahead of the archive read in both
+# phases, and mirrors how the frontend is built.
+data "external" "lambda_build" {
+  program = ["/bin/bash", "-c", <<-EOT
+    set -euo pipefail
+
+    src='${local.src_dir}'
+    build='${local.build_dir}'
+    stamp='${local.lambda_build_stamp}'
+    want='${local.lambda_source_hash}'
+
+    have=''
+    if [ -f "$stamp" ]; then
+      have="$(cat "$stamp")"
+    fi
+
+    # stdout carries the JSON result, so every build message goes to stderr.
+    if [ ! -f "$build/lambda.mjs" ] || [ ! -d "$build/node_modules" ] || [ "$have" != "$want" ]; then
+      command -v npm >/dev/null || { echo "npm is required to build the Lambda bundle" >&2; exit 1; }
+
+      echo "==> Cleaning build directory: $build" >&2
+      rm -rf "$build"
+      mkdir -p "$build"
+
+      echo "==> Copying source from $src" >&2
+      cp -R "$src/." "$build/"
 
       # Drop files that must never ship inside the Lambda package. `public/` is
       # excluded because the frontend is now served from S3/CloudFront and the
       # Express app no longer mounts any static routes.
       rm -rf \
-        '${local.build_dir}/node_modules' \
-        '${local.build_dir}/public' \
-        '${local.build_dir}/.env' \
-        '${local.build_dir}/Dockerfile' \
-        '${local.build_dir}/.DS_Store'
+        "$build/node_modules" \
+        "$build/public" \
+        "$build/.env" \
+        "$build/Dockerfile" \
+        "$build/.DS_Store"
 
-      echo "==> Installing production dependencies"
-      cd '${local.build_dir}'
-      if [ -f package-lock.json ]; then
-        npm ci --omit=dev --no-audit --no-fund
-      else
-        npm install --omit=dev --no-audit --no-fund
-      fi
+      echo "==> Installing production dependencies" >&2
+      (
+        cd "$build"
+        if [ -f package-lock.json ]; then
+          npm ci --omit=dev --no-audit --no-fund >&2
+        else
+          npm install --omit=dev --no-audit --no-fund >&2
+        fi
+      )
 
-      echo "==> Build complete"
-    EOT
-  }
+      test -f "$build/lambda.mjs" || { echo "build produced no lambda.mjs" >&2; exit 1; }
+      printf '%s' "$want" > "$stamp"
+      echo "==> Build complete" >&2
+    fi
+
+    printf '{"build_dir":"%s","source_hash":"%s"}' "$build" "$want"
+  EOT
+  ]
 }
 
 data "archive_file" "lambda_zip" {
-  type        = "zip"
-  source_dir  = local.build_dir
-  output_path = "${path.module}/lambda.zip"
+  type = "zip"
 
-  depends_on = [null_resource.build]
+  # Referencing the build output creates the ordering dependency, so no
+  # depends_on is needed here.
+  source_dir  = data.external.lambda_build.result.build_dir
+  output_path = "${path.module}/lambda.zip"
 }
 
 resource "random_id" "suffix" {
