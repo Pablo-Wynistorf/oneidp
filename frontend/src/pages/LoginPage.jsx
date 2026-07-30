@@ -135,11 +135,14 @@ export function LoginPage() {
         </div>
       )}
 
-      {/* The id/name pairs below are what password managers key off when they
-          decide whether a form is a sign-in form, alongside `autocomplete`. */}
+      {/* Two annotations per field, because managers disagree on what they read:
+          `autocomplete` plus id/name for the browser, Bitwarden and 1Password,
+          and `data-form-type` (Dashlane's SAWF spec) for Dashlane, which does
+          not infer sign-in forms from `autocomplete` alone. */}
       <form
         id="login-form"
         name="login"
+        data-form-type="login"
         onSubmit={handleSubmit}
         className="space-y-4"
         aria-label="Sign in"
@@ -152,6 +155,7 @@ export function LoginPage() {
           value={identifier}
           onChange={(event) => setIdentifier(event.target.value)}
           autoComplete="username"
+          data-form-type="username,email"
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}
@@ -168,6 +172,7 @@ export function LoginPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="current-password"
+            data-form-type="password"
             enterKeyHint="go"
             required
           />
@@ -175,6 +180,7 @@ export function LoginPage() {
             <div className="flex justify-end">
               <Link
                 to={withRedirectUri('/recovery', redirectUri)}
+                data-form-type="action,forgot_password"
                 className="rounded text-xs text-ink-muted transition-colors hover:text-ink"
               >
                 Forgot your password?
@@ -183,7 +189,14 @@ export function LoginPage() {
           )}
         </div>
 
-        <Button type="submit" fullWidth size="lg" loading={pending} disabled={!canSubmit}>
+        <Button
+          type="submit"
+          fullWidth
+          size="lg"
+          loading={pending}
+          disabled={!canSubmit}
+          data-form-type="action,login"
+        >
           Sign in
         </Button>
       </form>
@@ -196,6 +209,8 @@ export function LoginPage() {
             size="lg"
             onClick={handlePasskey}
             loading={passkeyPending}
+            // Sits outside the credential form; not the form's submit control.
+            data-form-type="other"
           >
             <IconKey size={18} />
             Sign in with a passkey

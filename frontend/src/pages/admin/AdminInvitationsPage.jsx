@@ -128,7 +128,9 @@ export function AdminInvitationsPage() {
                   <div className="flex shrink-0 flex-wrap items-center gap-2">
                     {invitation.canManageApps && <Badge tone="cyan">App manager</Badge>}
                     <Badge tone={STATUS_TONE[invitation.status]}>{invitation.status}</Badge>
-                    {invitation.status !== 'accepted' && (
+                    {/* Revoked and accepted invitations are final: a new link
+                        has to be issued through "Invite someone". */}
+                    {(invitation.status === 'pending' || invitation.status === 'expired') && (
                       <>
                         <Button
                           variant="secondary"

@@ -112,6 +112,9 @@ export function PasswordInput({ label = 'Password', autoComplete, name = 'passwo
       trailing={
         <button
           type="button"
+          // Keeps managers from reading the in-field toggle as the submit
+          // control, or as a field they should annotate.
+          data-form-type="other"
           onClick={() => setVisible((value) => !value)}
           aria-label={visible ? 'Hide password' : 'Show password'}
           aria-pressed={visible}
@@ -145,6 +148,7 @@ export function HiddenUsername({ value, autoComplete = 'username' }) {
       type="text"
       name="username"
       autoComplete={autoComplete}
+      data-form-type="username"
       value={value}
       readOnly
       tabIndex={-1}

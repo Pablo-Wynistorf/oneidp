@@ -273,22 +273,30 @@ function CreateUserModal({ open, onClose, onCreated }) {
       }
     >
       {/* This provisions someone else's account, so the identity fields opt out
-          of autofill. Only the password keeps `new-password`, which lets a
-          manager generate a strong temporary one without offering to save the
-          admin's own credentials against it. */}
-      <form id="admin-create-user" onSubmit={submit} className="space-y-4" noValidate>
+          of autofill (`other` is how Dashlane is told to skip a field). Only
+          the password stays annotated, so a manager can still generate a strong
+          temporary one without filing it under the admin's own login. */}
+      <form
+        id="admin-create-user"
+        data-form-type="other"
+        onSubmit={submit}
+        className="space-y-4"
+        noValidate
+      >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextInput
             label="First name"
             value={form.firstName}
             onChange={update('firstName')}
             autoComplete="off"
+            data-form-type="other"
           />
           <TextInput
             label="Last name"
             value={form.lastName}
             onChange={update('lastName')}
             autoComplete="off"
+            data-form-type="other"
           />
         </div>
         <TextInput
@@ -298,6 +306,7 @@ function CreateUserModal({ open, onClose, onCreated }) {
           hint="3-20 characters: letters, numbers and dashes."
           autoCapitalize="off"
           autoComplete="off"
+          data-form-type="other"
           required
         />
         <TextInput
@@ -308,6 +317,7 @@ function CreateUserModal({ open, onClose, onCreated }) {
           onChange={update('email')}
           autoCapitalize="off"
           autoComplete="off"
+          data-form-type="other"
           required
         />
         <PasswordInput
@@ -317,6 +327,7 @@ function CreateUserModal({ open, onClose, onCreated }) {
           onChange={update('password')}
           hint="At least 8 characters with upper and lower case, a digit and a symbol."
           autoComplete="new-password"
+          data-form-type="password,new"
           required
         />
 

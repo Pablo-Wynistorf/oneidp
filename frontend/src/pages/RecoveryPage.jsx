@@ -103,11 +103,14 @@ export function RecoveryPage() {
       }
     >
       <form
+        id="recovery-form"
+        data-form-type="forgot_password"
         onSubmit={(event) => {
           event.preventDefault();
           sendLink();
         }}
         className="space-y-4"
+        aria-label="Reset your password"
         noValidate
       >
         <TextInput
@@ -119,6 +122,7 @@ export function RecoveryPage() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           autoComplete="email"
+          data-form-type="email"
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}
@@ -127,7 +131,14 @@ export function RecoveryPage() {
           // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
         />
-        <Button type="submit" fullWidth size="lg" loading={pending} disabled={!isValid}>
+        <Button
+          type="submit"
+          fullWidth
+          size="lg"
+          loading={pending}
+          disabled={!isValid}
+          data-form-type="action,forgot_password"
+        >
           Send reset link
         </Button>
       </form>

@@ -62,8 +62,12 @@ export function CodeInput({
           onBlur={() => setFocused(false)}
           disabled={disabled}
           type="text"
+          name="otp"
           inputMode="numeric"
           autoComplete="one-time-code"
+          // Dashlane's annotation for a one-time code, so it offers the TOTP it
+          // holds for the account instead of ignoring the field.
+          data-form-type="otp"
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck={false}

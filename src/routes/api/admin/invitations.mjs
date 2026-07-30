@@ -105,7 +105,12 @@ router.post('/', async (req, res) => {
   }
 });
 
-/** Resend: issues a fresh token and invalidates the previous link. */
+/**
+ * Resend: issues a fresh token and invalidates the previous link.
+ *
+ * A revoked invitation stays revoked; reviving it here would turn "revoke"
+ * into an undoable state. Invite the address again to issue a new one.
+ */
 router.post('/:inviteId/resend', async (req, res) => {
   try {
     const { inviteId } = req.params;
@@ -115,11 +120,15 @@ router.post('/:inviteId/resend', async (req, res) => {
     if (invitation.acceptedAt) {
       return res.status(409).json({ error: 'That invitation has already been accepted' });
     }
+    if (invitation.revokedAt) {
+      return res.status(409).json({
+        error: 'That invitation was revoked. Invite the address again to send a new link.',
+      });
+    }
 
     const token = generateInviteToken();
     invitation.tokenHash = hashInviteToken(token);
     invitation.expiresAt = new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000);
-    invitation.revokedAt = undefined;
     await invitation.save();
 
     try {

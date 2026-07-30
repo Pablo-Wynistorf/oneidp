@@ -78,6 +78,7 @@ export function SetPasswordPage() {
           origin alone. */}
       <form
         id="set-password-form"
+        data-form-type="change_password"
         onSubmit={handleSubmit}
         className="space-y-4"
         aria-label="Choose a new password"
@@ -95,12 +96,20 @@ export function SetPasswordPage() {
           error={error}
           hint={PASSWORD_RULE}
           autoComplete="new-password"
+          data-form-type="password,new"
           enterKeyHint="go"
           required
           // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
         />
-        <Button type="submit" fullWidth size="lg" loading={pending} disabled={!password}>
+        <Button
+          type="submit"
+          fullWidth
+          size="lg"
+          loading={pending}
+          disabled={!password}
+          data-form-type="action,change_password"
+        >
           Save new password
         </Button>
       </form>

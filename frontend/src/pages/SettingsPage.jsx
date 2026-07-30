@@ -339,6 +339,7 @@ function PasswordCard() {
       <CardBody>
         <form
           id="change-password-form"
+          data-form-type="change_password"
           onSubmit={submit}
           className="space-y-4"
           aria-label="Change password"
@@ -353,6 +354,7 @@ function PasswordCard() {
             onChange={(event) => setCurrentPassword(event.target.value)}
             error={errors.currentPassword}
             autoComplete="current-password"
+            data-form-type="password"
             required
           />
           <PasswordInput
@@ -364,9 +366,16 @@ function PasswordCard() {
             error={errors.newPassword}
             hint={PASSWORD_RULE}
             autoComplete="new-password"
+            data-form-type="password,new"
             required
           />
-          <Button type="submit" fullWidth loading={pending} disabled={!canSubmit}>
+          <Button
+            type="submit"
+            fullWidth
+            loading={pending}
+            disabled={!canSubmit}
+            data-form-type="action,change_password"
+          >
             Change password
           </Button>
         </form>

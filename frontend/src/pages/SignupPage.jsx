@@ -205,11 +205,13 @@ export function SignupPage() {
         </div>
       )}
 
-      {/* Explicit id/name pairs let password managers see this as a
-          registration form and offer to generate and save credentials. */}
+      {/* id/name pairs and `autocomplete` cover the browser and most managers;
+          `data-form-type` is Dashlane's own annotation (SAWF) and is what makes
+          it offer to generate and save a credential here. */}
       <form
         id="signup-form"
         name="register"
+        data-form-type="register"
         onSubmit={handleSubmit}
         className="space-y-4"
         aria-label={invite ? 'Accept invitation' : 'Create account'}
@@ -223,6 +225,7 @@ export function SignupPage() {
             value={form.firstName}
             onChange={update('firstName')}
             autoComplete="given-name"
+            data-form-type="name,first"
             enterKeyHint="next"
             required
             // eslint-disable-next-line jsx-a11y/no-autofocus
@@ -235,6 +238,7 @@ export function SignupPage() {
             value={form.lastName}
             onChange={update('lastName')}
             autoComplete="family-name"
+            data-form-type="name,last"
             enterKeyHint="next"
             required
           />
@@ -250,6 +254,7 @@ export function SignupPage() {
           onChange={update('email')}
           error={errors.email}
           autoComplete="email"
+          data-form-type="email"
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}
@@ -271,6 +276,7 @@ export function SignupPage() {
           onChange={update('username')}
           error={errors.username}
           autoComplete="username"
+          data-form-type="username"
           autoCapitalize="off"
           autoCorrect="off"
           spellCheck={false}
@@ -286,11 +292,19 @@ export function SignupPage() {
           error={errors.password}
           hint={PASSWORD_RULE}
           autoComplete="new-password"
+          data-form-type="password,new"
           enterKeyHint="go"
           required
         />
 
-        <Button type="submit" fullWidth size="lg" loading={pending} disabled={!canSubmit}>
+        <Button
+          type="submit"
+          fullWidth
+          size="lg"
+          loading={pending}
+          disabled={!canSubmit}
+          data-form-type="action,register"
+        >
           {invite ? 'Accept invitation' : 'Create account'}
         </Button>
       </form>
