@@ -1,0 +1,14 @@
+# Local terraform state & config
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+terraform.tfvars
+*.tfvars.json
+
+# Build artifacts produced by build.sh / archive_file
+build/
+lambda.zip
+
+# Marker recording the source hash of the last SPA build
+.frontend-build-hash

@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { Link } from 'react-router-dom';
 import { Brand } from '@/components/Brand';
+import { DocsLink } from '@/components/DocsLink';
 import { useDecorativeEffects } from '@/hooks/use-media';
 import { cn } from '@/lib/cn';
 
@@ -70,6 +71,9 @@ export function AuthLayout({ title, subtitle, children, footer, width = 'md' }) 
       </main>
 
       <footer className="relative z-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] text-xs text-ink-faint">
+        <DocsLink to="/docs" className="rounded transition-colors hover:text-ink-muted">
+          Docs
+        </DocsLink>
         <Link to="/privacy-policy" className="rounded transition-colors hover:text-ink-muted">
           Privacy policy
         </Link>

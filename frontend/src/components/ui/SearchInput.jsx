@@ -3,7 +3,14 @@ import { cn } from '@/lib/cn';
 import { IconClose, IconSearch } from './Icons';
 
 /** Filter box with a leading magnifier and a clear button once populated. */
-export function SearchInput({ value, onChange, placeholder = 'Search…', label, className }) {
+export function SearchInput({
+  value,
+  onChange,
+  placeholder = 'Search…',
+  label,
+  className,
+  ...props
+}) {
   const id = useId();
 
   return (
@@ -32,6 +39,7 @@ export function SearchInput({ value, onChange, placeholder = 'Search…', label,
           // Safari renders its own clear button for type=search; we supply ours.
           '[&::-webkit-search-cancel-button]:appearance-none',
         )}
+        {...props}
       />
       {value && (
         <button

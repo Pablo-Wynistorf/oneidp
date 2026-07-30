@@ -27,7 +27,7 @@ function LegalLayout({ title, tagline, children }) {
         <h1 className="text-2xl font-semibold sm:text-3xl">{title}</h1>
         <p className="mt-1.5 text-sm text-ink-muted">{tagline}</p>
 
-        <dl className="mt-8 grid gap-3 rounded-[var(--radius-card)] border border-hairline bg-surface p-5 sm:grid-cols-3">
+        <dl className="mt-8 grid grid-cols-1 gap-3 rounded-[var(--radius-card)] border border-hairline bg-surface p-5 sm:grid-cols-3">
           {COMPANY.map(([label, value]) => (
             <div key={label}>
               <dt className="text-xs font-medium tracking-wide text-ink-faint uppercase">

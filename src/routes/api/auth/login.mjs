@@ -1,11 +1,14 @@
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { sendVerificationEmail } = require('../../../utils/send-emails.js');
-const { notifyError, notifyLogin } = require('../../../notify/notifications');
+import express from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { sendVerificationEmail } from '../../../utils/send-emails.mjs';
+import { notifyError, notifyLogin } from '../../../notify/notifications.mjs';
 
-const { userDB } = require('../../../database/mongodb.js');
-const redisCache = require('../../../database/redis.js');
+import { userDB } from '../../../database/mongodb.mjs';
+import redisCache from '../../../database/redis.mjs';
+import { rejectIfBanned } from '../../../utils/account-status.mjs';
+import { getSettings } from '../../../utils/app-settings.mjs';
+import { isAdminEmail } from '../../../utils/admin-auth.mjs';
 
 const JWT_PRIVATE_KEY = `
 -----BEGIN PRIVATE KEY-----
@@ -29,6 +32,23 @@ router.post('/', async (req, res) => {
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(462).json({ success: false, error: 'Invalid username or password' });
+    }
+
+    // Checked only after the password, so a banned account is indistinguishable
+    // from any other until valid credentials are supplied.
+    if (rejectIfBanned(user, res)) {
+      return undefined;
+    }
+
+    // Maintenance mode locks everyone out except the operators who need to get
+    // in and turn it back off.
+    const settings = await getSettings();
+    if (settings.maintenanceMode && !isAdminEmail(user.email)) {
+      return res.status(503).json({
+        success: false,
+        error: settings.maintenanceMessage || 'ONEIDP is temporarily unavailable for maintenance.',
+        maintenance: true,
+      });
     }
 
     if (!user.emailVerified) {
@@ -62,7 +82,9 @@ const handleUnverifiedEmail = async (user, res) => {
 
   const email_verification_token = jwt.sign({ userId: user.userId, pevSid: verifySid }, JWT_PRIVATE_KEY, { algorithm: 'RS256', expiresIn: '30m' });
 
-  sendVerificationEmail(user.username, user.email, email_verification_token);
+  // Awaited on purpose: Lambda freezes the container once the response is
+  // returned, which would abort the outbound MailRift request mid-flight.
+  await sendVerificationEmail(user.username, user.email, email_verification_token);
 
   const signup_token = jwt.sign(
     { userId: user.userId },
@@ -149,4 +171,4 @@ async function generateRandomString(length) {
 }
 
 
-module.exports = router;
+export default router;

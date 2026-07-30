@@ -13,7 +13,6 @@ import {
   AuthorizedAppSkeleton,
   useAuthorizedApps,
 } from '@/features/authorized-apps';
-import { toRoleList } from '@/lib/format';
 import { useSession } from '@/session/SessionProvider';
 
 const DASHBOARD_LIMIT = 6;
@@ -25,7 +24,6 @@ export function DashboardPage() {
   const [target, setTarget] = useState(null);
   const [revoking, setRevoking] = useState(false);
 
-  const roles = toRoleList(user?.providerRoles);
   const visible = apps?.slice(0, DASHBOARD_LIMIT) ?? [];
   const hasMore = (apps?.length ?? 0) > DASHBOARD_LIMIT;
 
@@ -49,7 +47,7 @@ export function DashboardPage() {
         description="Your identity, connected applications and security status."
       />
 
-      <div className="grid gap-4 lg:grid-cols-3 lg:gap-5">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-5">
         {/* Security summary — first on mobile because it is the most scannable. */}
         <Card className="lg:col-span-1">
           <CardHeader title="Security" />
@@ -73,27 +71,13 @@ export function DashboardPage() {
         {/* Profile */}
         <Card className="lg:col-span-2">
           <CardHeader title="Your profile" />
-          <CardBody className="grid gap-4 sm:grid-cols-2">
+          <CardBody className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <CopyField label="User ID" value={user?.userId ?? ''} />
             <CopyField label="Username" value={user?.username ?? ''} mono={false} />
             <CopyField label="First name" value={user?.firstName ?? ''} mono={false} />
             <CopyField label="Last name" value={user?.lastName ?? ''} mono={false} />
             <div className="sm:col-span-2">
               <CopyField label="Email" value={user?.email ?? ''} mono={false} />
-            </div>
-            <div className="sm:col-span-2">
-              <p className="text-xs font-medium tracking-wide text-ink-faint uppercase">Roles</p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {roles.length > 0 ? (
-                  roles.map((role) => (
-                    <Badge key={role} tone="warning">
-                      {role}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-sm text-ink-muted">No roles assigned</span>
-                )}
-              </div>
             </div>
           </CardBody>
         </Card>
@@ -118,7 +102,7 @@ export function DashboardPage() {
           />
           <CardBody>
             {apps === null ? (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, index) => (
                   <AuthorizedAppSkeleton key={index} />
                 ))}
@@ -132,7 +116,7 @@ export function DashboardPage() {
                 description="Applications appear here once you sign in to them with ONEIDP."
               />
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {visible.map((app) => (
                   <AuthorizedAppCard key={app.clientId} app={app} onRevoke={setTarget} />
                 ))}

@@ -176,6 +176,13 @@ export const IconMenu = (p) => (
   </Icon>
 );
 
+export const IconBook = (p) => (
+  <Icon {...p}>
+    <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10a2 2 0 0 1 2 2v13a1.8 1.8 0 0 0-1.8-1.6H5.5A1.5 1.5 0 0 1 4 15.9z" />
+    <path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H14a2 2 0 0 0-2 2v13a1.8 1.8 0 0 1 1.8-1.6h4.7a1.5 1.5 0 0 0 1.5-1.5z" />
+  </Icon>
+);
+
 export const IconBack = (p) => (
   <Icon {...p}>
     <path d="m14 6-6 6 6 6" />

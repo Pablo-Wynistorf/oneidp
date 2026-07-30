@@ -53,12 +53,6 @@ router.post('/', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Access Token is invalid' });
     }
 
-    const userAccess = await userDB.findOne({ userId, providerRoles: 'oauthUser' });
-
-    if (!userAccess) {
-      return res.status(460).json({ error: 'User has no permissions to manage oauth apps' });
-    }
-
     const oauthApps = await oAuthClientAppDB.find({ owner: userId });
 
     if (oauthApps.length === 0) {
@@ -70,10 +64,15 @@ router.post('/', async (req, res) => {
       return res.status(461).json({ error: 'User does not have access to this app' });
     }
 
-    const existingRole = await oAuthRolesDB.findOne({ oauthRoleId, oauthClientAppId, owner: userId });
+    // Authorization is already established by `userApp` above: the caller owns
+    // the application, and the role is scoped to that same application. The
+    // previous `owner` filter on the role added nothing on top of that and
+    // locked out roles created before the field existed, which is why the other
+    // role endpoints do not use it.
+    const existingRole = await oAuthRolesDB.findOne({ oauthRoleId, oauthClientAppId });
 
     if (!existingRole) {
-      return res.status(404).json({ error: 'User has no access to manage this role' });
+      return res.status(404).json({ error: 'OAuth role not found' });
     }
 
     if (

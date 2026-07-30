@@ -1,8 +1,8 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const { notifyError } = require('../../../notify/notifications');
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import { notifyError } from '../../../notify/notifications.mjs';
 
-const redisCache = require('../../../database/redis.js');
+import redisCache from '../../../database/redis.mjs';
 
 const router = express.Router();
 
@@ -57,4 +57,4 @@ async function endUserSessions(userId) {
   }
 };
 
-module.exports = router;
+export default router;

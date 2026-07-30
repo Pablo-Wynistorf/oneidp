@@ -1,9 +1,11 @@
 import { Suspense, lazy, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Brand } from '@/components/Brand';
+import { DocsLink } from '@/components/DocsLink';
 import { Button, IconButton } from '@/components/ui/Button';
 import {
   IconApps,
+  IconBook,
   IconCheck,
   IconClose,
   IconDevice,
@@ -80,7 +82,7 @@ const FEATURES = [
   {
     icon: IconSettings,
     title: 'Switches, not redeploys',
-    body: 'Registration, password reset, social login, app creation, default roles and maintenance mode are runtime settings.',
+    body: 'Registration, password reset, social login, app creation and maintenance mode are runtime settings.',
   },
 ];
 
@@ -153,7 +155,8 @@ const NAV_LINKS = [
   { href: '#open-source', label: 'Open source' },
 ];
 
-const LEGAL_LINKS = [
+const FOOTER_LINKS = [
+  { to: '/docs', label: 'Docs', component: DocsLink },
   { to: '/privacy-policy', label: 'Privacy' },
   { to: '/imprint', label: 'Imprint' },
 ];
@@ -246,6 +249,13 @@ export function HomePage() {
                 {link.label}
               </a>
             ))}
+            <DocsLink
+              to="/docs"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+            >
+              <IconBook size={16} />
+              Docs
+            </DocsLink>
             <a
               href={REPO_URL}
               target="_blank"
@@ -295,6 +305,14 @@ export function HomePage() {
                   {link.label}
                 </a>
               ))}
+              <DocsLink
+                to="/docs"
+                onClick={() => setMenuOpen(false)}
+                className="tap-target flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+              >
+                <IconBook size={16} />
+                Docs
+              </DocsLink>
               <a
                 href={REPO_URL}
                 target="_blank"
@@ -396,7 +414,7 @@ export function HomePage() {
             enterprise tier.
           </SectionHeading>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((feature) => {
               const Icon = feature.icon;
               return (
@@ -417,7 +435,7 @@ export function HomePage() {
 
           <div className="mt-4 rounded-[var(--radius-card)] border border-hairline bg-surface p-6 backdrop-blur-xl sm:p-8">
             <h3 className="text-base font-semibold text-ink">Boring where it counts</h3>
-            <ul className="mt-4 grid gap-3 text-sm text-ink-muted sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="mt-4 grid grid-cols-1 gap-3 text-sm text-ink-muted sm:grid-cols-2 lg:grid-cols-3">
               {SECURITY_POINTS.map((point) => (
                 <li key={point} className="flex items-start gap-2.5">
                   <IconCheck size={16} className="mt-0.5 shrink-0 text-positive" />
@@ -435,7 +453,7 @@ export function HomePage() {
             a serverless identity provider on a URL you control.
           </SectionHeading>
 
-          <div className="mt-10 grid items-start gap-4 lg:grid-cols-2">
+          <div className="mt-10 grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
             <CodeCard label="oneidp/terraform">
               {TERMINAL_LINES.map((line, index) => (
                 <span key={index} className={TERMINAL_TONE[line.kind]}>
@@ -458,7 +476,17 @@ export function HomePage() {
               <p className="mt-5 border-t border-hairline pt-5 text-sm text-ink-muted text-pretty">
                 It scales to zero between logins, so a small instance costs cents rather than a
                 per-user subscription. Prefer containers? There is a Docker image, a Helm chart and
-                plain Kubernetes manifests in the same repo.
+                plain Kubernetes manifests in the same repo —{' '}
+                <a
+                  href={`${REPO_URL}#deployment-on-kubernetes`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-ink underline decoration-hairline-strong underline-offset-4 transition-colors hover:decoration-accent"
+                >
+                  see the deploy guide
+                  <IconExternal size={14} />
+                </a>
+                .
               </p>
             </div>
           </div>
@@ -471,7 +499,7 @@ export function HomePage() {
             it already speaks ONEIDP.
           </SectionHeading>
 
-          <div className="mt-10 grid items-start gap-4 lg:grid-cols-2">
+          <div className="mt-10 grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
             <ol className="grid gap-4">
               {STEPS.map((step, index) => (
                 <li
@@ -507,6 +535,15 @@ export function HomePage() {
                 <span className="text-ink-faint">{'  ...\n'}</span>
                 {'}'}
               </CodeCard>
+              <div className="flex flex-col gap-3 px-1 sm:flex-row">
+                <Button as={DocsLink} to="/docs" variant="secondary">
+                  <IconBook size={17} />
+                  Read the integration docs
+                </Button>
+                <Button as={DocsLink} to="/docs/quickstart" variant="ghost">
+                  Quickstart
+                </Button>
+              </div>
               <p className="px-1 text-sm text-ink-muted text-pretty">
                 Working client examples for Express live in{' '}
                 <a
@@ -530,7 +567,7 @@ export function HomePage() {
           className="mx-auto max-w-6xl scroll-mt-24 px-5 py-14 sm:px-6 sm:py-20"
         >
           <div className="overflow-hidden rounded-[var(--radius-card)] border border-hairline bg-surface backdrop-blur-xl">
-            <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
+            <div className="grid grid-cols-1 gap-8 p-6 sm:p-10 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
               <div>
                 <p className="text-xs font-medium tracking-[0.16em] text-accent uppercase">
                   Open source
@@ -549,20 +586,14 @@ export function HomePage() {
                     <IconGitHub size={18} />
                     Browse the source
                   </Button>
-                  <Button
-                    as="a"
-                    href={`${REPO_URL}#deployment-on-kubernetes`}
-                    target="_blank"
-                    rel="noreferrer"
-                    variant="secondary"
-                    size="lg"
-                  >
-                    Read the deploy guide
+                  <Button as={DocsLink} to="/docs" variant="secondary" size="lg">
+                    <IconBook size={18} />
+                    Read the docs
                   </Button>
                 </div>
               </div>
 
-              <dl className="grid gap-4 sm:grid-cols-2 lg:content-start">
+              <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:content-start">
                 {[
                   ['MIT', 'License, no strings'],
                   ['1 apply', 'From clone to live URL'],
@@ -613,11 +644,15 @@ export function HomePage() {
       <footer className="relative z-10 border-t border-hairline">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-5 py-8 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:flex-row sm:justify-between sm:px-6">
           <Brand size="sm" />
-          <nav className="flex items-center gap-5 text-sm text-ink-muted" aria-label="Legal">
-            {LEGAL_LINKS.map((link) => (
-              <Link key={link.to} to={link.to} className="rounded transition-colors hover:text-ink">
+          <nav className="flex flex-wrap items-center justify-center gap-5 text-sm text-ink-muted" aria-label="Footer">
+            {FOOTER_LINKS.map(({ component: LinkComponent = Link, ...link }) => (
+              <LinkComponent
+                key={link.to}
+                to={link.to}
+                className="rounded transition-colors hover:text-ink"
+              >
                 {link.label}
-              </Link>
+              </LinkComponent>
             ))}
             <a
               href={REPO_URL}

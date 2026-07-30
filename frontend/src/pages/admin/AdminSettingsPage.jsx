@@ -21,7 +21,6 @@ export function AdminSettingsPage() {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(null);
   const [domains, setDomains] = useState('');
-  const [roles, setRoles] = useState('');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -30,7 +29,6 @@ export function AdminSettingsPage() {
       .then(({ data }) => {
         setSettings(data.settings);
         setDomains((data.settings.allowedEmailDomains ?? []).join(', '));
-        setRoles((data.settings.defaultProviderRoles ?? []).join(', '));
         setMessage(data.settings.maintenanceMessage ?? '');
       })
       .catch((requestError) => setError(requestError.message || 'Could not load settings.'));
@@ -155,9 +153,9 @@ export function AdminSettingsPage() {
         <Card>
           <CardHeader
             title="Signup restrictions"
-            description="Applied to public signups. Invitations bypass these."
+            description="Applied to public signups. Invitations bypass this."
           />
-          <CardBody className="space-y-4">
+          <CardBody>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <TextInput
                 label="Allowed email domains"
@@ -174,28 +172,6 @@ export function AdminSettingsPage() {
                 loading={saving === 'allowedEmailDomains'}
                 onClick={() =>
                   patch('allowedEmailDomains', { allowedEmailDomains: domains }, 'Domains saved.')
-                }
-              >
-                Save
-              </Button>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <TextInput
-                label="Default roles for new accounts"
-                value={roles}
-                onChange={(event) => setRoles(event.target.value)}
-                placeholder="standardUser, oauthUser"
-                hint="Comma separated. Written into new users' providerRoles."
-                containerClassName="flex-1"
-                autoCapitalize="off"
-                spellCheck={false}
-              />
-              <Button
-                variant="secondary"
-                loading={saving === 'defaultProviderRoles'}
-                onClick={() =>
-                  patch('defaultProviderRoles', { defaultProviderRoles: roles }, 'Roles saved.')
                 }
               >
                 Save

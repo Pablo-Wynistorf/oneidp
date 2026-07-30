@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Brand } from '@/components/Brand';
+import { DocsLink } from '@/components/DocsLink';
 import { Button, IconButton } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import {
   IconApps,
+  IconBook,
   IconClose,
+  IconExternal,
   IconGrid,
   IconLogout,
   IconMenu,
@@ -20,21 +23,29 @@ import { gravatarUrl, initial } from '@/lib/format';
 import { useSession } from '@/session/SessionProvider';
 
 /**
- * Primary navigation.
- *
- * `primary: false` items are reachable from the desktop sidebar and the mobile
- * drawer, but are kept out of the mobile tab bar so it stays at four items —
- * more than that and the labels become unreadable on a small phone.
+ * Primary navigation. One list drives the desktop sidebar and the mobile
+ * drawer, so both surfaces always offer the same destinations.
  */
 const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Overview', icon: IconGrid, primary: true },
-  { to: '/oidc/apps/authorized', label: 'Authorized', icon: IconShield, primary: true },
+  { to: '/dashboard', label: 'Overview', icon: IconGrid },
+  { to: '/oidc/apps/authorized', label: 'Authorized', icon: IconShield },
   // Shown only to accounts holding the canManageApps capability.
   { to: '/oidc/apps', label: 'OIDC apps', icon: IconApps, requires: 'canManageApps' },
   { to: '/oidc/roles', label: 'Roles', icon: IconRoles, requires: 'canManageApps' },
-  { to: '/settings', label: 'Settings', icon: IconSettings, primary: true },
-  { to: '/admin', label: 'Admin', icon: IconShieldAlert, requires: 'isAdmin', primary: true },
+  { to: '/settings', label: 'Settings', icon: IconSettings },
+  { to: '/admin', label: 'Admin', icon: IconShieldAlert, requires: 'isAdmin' },
+  // Public integration docs: belongs in the nav so it is reachable without
+  // going back to the marketing site, but opens in a new tab so reading it
+  // never costs you the page you were working on.
+  { to: '/docs', label: 'Docs', icon: IconBook, newTab: true },
 ];
+
+const NAV_ITEM_CLASS = [
+  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium tap-target',
+  'transition-colors duration-150',
+].join(' ');
+
+const NAV_ITEM_IDLE_CLASS = 'text-ink-muted hover:bg-surface hover:text-ink';
 
 /**
  * Filter the navigation to what this account can actually reach.
@@ -71,6 +82,24 @@ function useLogout() {
 
 function NavItem({ item, onNavigate }) {
   const Icon = item.icon;
+
+  // A new-tab destination never becomes the current route, so it is a plain
+  // link rather than a NavLink and carries an external-link hint instead.
+  if (item.newTab) {
+    return (
+      <DocsLink
+        to={item.to}
+        onClick={onNavigate}
+        className={cn(NAV_ITEM_CLASS, NAV_ITEM_IDLE_CLASS)}
+      >
+        <Icon size={19} />
+        <span className="truncate">{item.label}</span>
+        <IconExternal size={14} aria-hidden className="ml-auto shrink-0 text-ink-faint" />
+        <span className="sr-only">(opens in a new tab)</span>
+      </DocsLink>
+    );
+  }
+
   return (
     <NavLink
       to={item.to}
@@ -78,11 +107,10 @@ function NavItem({ item, onNavigate }) {
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium tap-target',
-          'transition-colors duration-150',
+          NAV_ITEM_CLASS,
           isActive
             ? 'bg-accent/15 text-ink shadow-[inset_0_0_0_1px_var(--color-accent-soft)]'
-            : 'text-ink-muted hover:bg-surface hover:text-ink',
+            : NAV_ITEM_IDLE_CLASS,
         )
       }
     >
@@ -119,9 +147,11 @@ function UserChip({ user, avatar, className }) {
 /**
  * Shell for the signed-in area.
  *
- * Desktop gets a persistent sidebar. Mobile gets a compact top bar, a slide-in
- * drawer for the full nav, and a fixed bottom tab bar for the main
- * destinations — all respecting iOS safe-area insets.
+ * Desktop gets a persistent sidebar. Mobile gets a compact top bar plus a
+ * slide-in drawer, and that drawer is the *only* mobile nav: a bottom tab bar
+ * on top of it duplicated the same links, could not hold the role-dependent
+ * items (admins see seven) or sign-out, and sat directly under the browser's
+ * own toolbar. Safe-area insets are respected on both.
  */
 export function AppLayout() {
   const { user } = useSession();
@@ -160,8 +190,6 @@ export function AppLayout() {
   }, [drawerOpen]);
 
   const navItems = visibleNavItems(user);
-  // The tab bar holds at most four items so labels stay legible on a phone.
-  const tabItems = navItems.filter((item) => item.primary).slice(0, 4);
 
   const sidebarBody = (onNavigate) => (
     <>
@@ -205,21 +233,30 @@ export function AppLayout() {
         {sidebarBody()}
       </aside>
 
-      {/* Mobile top bar */}
-      <header className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-hairline bg-canvas/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl md:hidden">
-        <div className="flex h-14 items-center">
+      {/* Mobile top bar — the single entry point to the mobile nav */}
+      <header className="sticky top-0 z-40 flex w-full items-center justify-between gap-3 border-b border-hairline bg-canvas/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-xl md:hidden">
+        <div className="flex h-14 min-w-0 items-center">
           <Link to="/dashboard" aria-label="ONEIDP dashboard" className="rounded-lg">
             <Brand size="sm" />
           </Link>
         </div>
-        <IconButton
-          label="Open menu"
+        <button
+          type="button"
           onClick={() => setDrawerOpen(true)}
           aria-expanded={drawerOpen}
           aria-controls="mobile-drawer"
+          className="flex shrink-0 items-center gap-2 rounded-full border border-hairline bg-surface py-1.5 pr-3 pl-1.5 text-ink-muted tap-target transition-colors hover:bg-surface-strong hover:text-ink"
         >
-          <IconMenu />
-        </IconButton>
+          <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-accent to-cyan text-xs font-semibold text-white">
+            {avatar ? (
+              <img src={avatar} alt="" width={32} height={32} className="size-full object-cover" />
+            ) : (
+              initial(user?.firstName || user?.username)
+            )}
+          </span>
+          <IconMenu size={20} />
+          <span className="sr-only">Open menu</span>
+        </button>
       </header>
 
       {/* Mobile drawer */}
@@ -229,14 +266,14 @@ export function AppLayout() {
             type="button"
             aria-label="Close menu"
             onClick={() => setDrawerOpen(false)}
-            className="absolute inset-0 bg-black/65 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/65 backdrop-blur-sm [animation:oneidp-fade-in_0.18s_ease-out]"
           />
           <div
             id="mobile-drawer"
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"
-            className="absolute inset-y-0 right-0 flex w-[min(19rem,85vw)] flex-col border-l border-hairline bg-canvas-raised pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shadow-2xl"
+            className="absolute inset-y-0 right-0 flex w-[min(19rem,85vw)] flex-col border-l border-hairline bg-canvas-raised pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] shadow-2xl [animation:oneidp-drawer-in_0.22s_ease-out]"
           >
             <div className="flex items-center justify-between px-4 py-4">
               <Brand size="sm" />
@@ -253,55 +290,11 @@ export function AppLayout() {
       <div className="min-w-0 flex-1">
         <main
           id="main"
-          className="mx-auto w-full max-w-6xl px-4 py-5 pb-[calc(env(safe-area-inset-bottom)+5.5rem)] sm:px-6 sm:py-7 md:pb-10"
+          className="mx-auto w-full max-w-6xl px-4 py-5 pb-[calc(env(safe-area-inset-bottom)+2.5rem)] sm:px-6 sm:py-7 md:pb-10"
         >
           <Outlet />
         </main>
       </div>
-
-      {/* Mobile bottom tab bar */}
-      <nav
-        aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-canvas/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
-      >
-        <ul
-          className="grid"
-          style={{ gridTemplateColumns: `repeat(${tabItems.length}, minmax(0, 1fr))` }}
-        >
-          {tabItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.to}>
-                <NavLink
-                  to={item.to}
-                  end={item.to === '/oidc/apps'}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex flex-col items-center gap-1 px-1 py-2.5 text-[0.68rem] font-medium',
-                      'transition-colors duration-150',
-                      isActive ? 'text-accent' : 'text-ink-faint',
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <Icon size={22} />
-                      <span className="truncate">{item.label}</span>
-                      <span
-                        aria-hidden
-                        className={cn(
-                          'h-0.5 w-6 rounded-full transition-colors',
-                          isActive ? 'bg-accent' : 'bg-transparent',
-                        )}
-                      />
-                    </>
-                  )}
-                </NavLink>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
     </div>
   );
 }

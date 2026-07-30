@@ -1,6 +1,6 @@
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const redisCache = require('../../../database/redis.js');
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import redisCache from '../../../database/redis.mjs';
 
 const router = express.Router();
 
@@ -49,4 +49,4 @@ async function endUserSession(userId, sid) {
 };
 
 
-module.exports = router;
+export default router;

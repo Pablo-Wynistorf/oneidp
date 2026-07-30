@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { Button } from '@/components/ui/Button';
 import { PasswordInput } from '@/components/ui/Field';
 import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/api';
-import { leaveTo, readRedirectUri } from '@/lib/redirect-uri';
+import { withRedirectUri, readRedirectUri } from '@/lib/redirect-uri';
+import { useSession } from '@/session/SessionProvider';
 
 const PASSWORD_RULE =
   'At least 8 characters, with an uppercase and a lowercase letter, a digit and a symbol.';
@@ -17,6 +19,8 @@ const PASSWORD_RULE =
  */
 export function SetPasswordPage() {
   const toast = useToast();
+  const navigate = useNavigate();
+  const { clear } = useSession();
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [pending, setPending] = useState(false);
@@ -37,7 +41,13 @@ export function SetPasswordPage() {
       );
 
       if (status === 200) {
-        leaveTo(redirectUri);
+        // Recovery does not sign anyone in: the new password has to be used
+        // once. `clear()` drops any stale authenticated state so the
+        // signed-out-only /login route does not bounce back to the dashboard,
+        // and a client-side navigation keeps the confirmation toast on screen.
+        clear();
+        toast.success('Password updated. Sign in with your new password.');
+        navigate(withRedirectUri('/login', redirectUri), { replace: true });
         return;
       }
 

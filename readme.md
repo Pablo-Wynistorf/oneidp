@@ -5,14 +5,15 @@ Use predeployed provider under: https://oneidp.ch
 This loginapp can be placed in front of practically ever application to authenticate their users. After a successful login, the api sends back a session cookie to authenticate the user.
 
 The app is build with express js and a mongodb backend. 
-For mail delievery we use mailjet. Create a account to get the api key. https://app.mailjet.com/signin
+For mail delievery we use MailRift. Create a account to get the api key. https://mailrift.io
 
 For alerting and log we use discord webhook. Create a channel in a discord server and get the webhook url. https://discord.com
 
 ## Use this oidc provider
 You can use this provider with several librarys or build your own oidc client.
 
-**Integration docs are in [`/docs`](./docs/README.md):**
+**Integration docs are in [`/docs`](./docs/README.md), and every instance serves
+them rendered at [`/docs`](https://oneidp.ch/docs):**
 
 - [Quickstart](./docs/quickstart.md) - register a client and complete a login
 - [Endpoint reference](./docs/endpoints.md) - every OIDC endpoint, parameters, responses, errors
@@ -42,9 +43,9 @@ REDIS_URI= # Add the Redis Cache uri
 API_PORT= # Enter the api port you want to use. 
 JWT_PUBLIC_KEY=
 JWT_PRIVATE_KEY=
-MJ_APIKEY_PUBLIC= # Enter the mailjet public api key
-MJ_APIKEY_PRIVATE= # Enter the mailjet private api key
-MJ_SENDER_EMAIL= # Enter the email address the verification codes should be sent from. You need to configure it in the mailjet dashboard. 
+MAILRIFT_API_KEY= # Enter the MailRift REST api key (mrft_rest_...) with the mail:send permission
+MAILRIFT_SENDER_EMAIL= # Enter the email address the verification codes should be sent from. It must be a mailbox on a verified domain in the MailRift dashboard.
+MAILRIFT_API_URL= # Optional, defaults to https://api.mailrift.io/v1
 DC_MONITORING_WEBHOOK_URL= # Enter the discord webhook url.
 GOOGLE_CLIENT_ID= # Enter the clientId for google oauth
 GOOGLE_CLIENT_SECRET= # Enter the clientSecret for google oauth

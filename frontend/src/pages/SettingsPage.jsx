@@ -25,7 +25,7 @@ export function SettingsPage() {
         title="Settings"
         description="Manage how you sign in and which devices have access."
       />
-      <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
         <MfaCard />
         <PasskeyCard />
         <PasswordCard />

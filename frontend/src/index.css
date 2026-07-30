@@ -91,6 +91,25 @@
   }
 }
 
+@keyframes oneidp-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Mobile navigation drawer sliding in from the right edge. */
+@keyframes oneidp-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 @keyframes oneidp-sheet-up {
   from {
     opacity: 0;
@@ -122,8 +141,13 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* Room for the mobile tab bar + iOS home indicator. */
     overscroll-behavior-y: none;
+    /*
+     * Never let a stray wide child turn the page into a horizontally
+     * scrollable canvas on a phone — mobile browsers respond by shrinking the
+     * whole layout to fit, which reads as a broken design.
+     */
+    overflow-x: clip;
   }
 
   /* A single soft aurora wash so every page has depth without a WebGL canvas. */

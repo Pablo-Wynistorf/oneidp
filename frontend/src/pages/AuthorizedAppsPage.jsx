@@ -82,7 +82,7 @@ export function AuthorizedAppsPage() {
         />
         <CardBody>
           {filtered === null ? (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: 6 }).map((_, index) => (
                 <AuthorizedAppSkeleton key={index} />
               ))}
@@ -100,7 +100,7 @@ export function AuthorizedAppsPage() {
               }
             />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {filtered.map((app) => (
                 <AuthorizedAppCard key={app.clientId} app={app} onRevoke={setTarget} />
               ))}

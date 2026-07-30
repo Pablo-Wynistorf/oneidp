@@ -1,12 +1,20 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/layouts/AppLayout';
+import { DocsLink } from '@/components/DocsLink';
 import { Badge } from '@/components/ui/Badge';
 import { Button, IconButton } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader, EmptyState } from '@/components/ui/Card';
 import { CopyField } from '@/components/ui/CopyField';
 import { Switch, TextInput } from '@/components/ui/Field';
-import { IconApps, IconEdit, IconPlus, IconRoles, IconTrash } from '@/components/ui/Icons';
+import {
+  IconApps,
+  IconBook,
+  IconEdit,
+  IconPlus,
+  IconRoles,
+  IconTrash,
+} from '@/components/ui/Icons';
 import { ConfirmDialog, Modal } from '@/components/ui/Modal';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { Skeleton } from '@/components/ui/Spinner';
@@ -53,8 +61,8 @@ export function OidcAppsPage() {
     const needle = deferredQuery.trim().toLowerCase();
     if (!needle) return apps;
     return apps.filter((app) =>
-      [app.oauthAppName, app.clientId, app.redirectUri].some((field) =>
-        field?.toLowerCase().includes(needle),
+      [app.oauthAppName, app.oauthClientAppId, app.clientId, app.redirectUri].some((field) =>
+        String(field ?? '').toLowerCase().includes(needle),
       ),
     );
   }, [apps, deferredQuery]);
@@ -103,7 +111,7 @@ export function OidcAppsPage() {
               <SearchInput
                 value={query}
                 onChange={setQuery}
-                placeholder="Search name, client ID or URI"
+                placeholder="Search name, ID or URI"
                 label="Search applications"
                 className="w-full sm:w-72"
               />
@@ -111,7 +119,7 @@ export function OidcAppsPage() {
           />
           <CardBody>
             {filtered === null ? (
-              <div className="grid gap-3 xl:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
                 {Array.from({ length: 4 }).map((_, index) => (
                   <Skeleton key={index} className="h-52 w-full rounded-xl" />
                 ))}
@@ -137,7 +145,7 @@ export function OidcAppsPage() {
                 }
               />
             ) : (
-              <div className="grid gap-3 xl:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
                 {filtered.map((app) => (
                   <AppCard
                     key={app.oauthClientAppId}
@@ -200,8 +208,14 @@ function EndpointsCard() {
       <CardHeader
         title="Integration endpoints"
         description="Point your OpenID Connect client at these URLs. Refresh tokens are valid for 20 days."
+        actions={
+          <Button as={DocsLink} to="/docs/endpoints" variant="secondary" size="sm">
+            <IconBook size={16} />
+            Endpoint reference
+          </Button>
+        }
       />
-      <CardBody className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+      <CardBody className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
         {endpoints.map((endpoint) => (
           <CopyField key={endpoint.label} label={endpoint.label} value={endpoint.value} />
         ))}
@@ -249,6 +263,7 @@ function AppCard({ app, onEdit, onDelete }) {
       </div>
 
       <div className="mt-4 space-y-3">
+        <CopyField label="Application ID" value={app.oauthClientAppId} />
         <CopyField label="Client ID" value={app.clientId} />
         {!app.isPublicClient && (
           <CopyField label="Client secret" value={app.clientSecret} secret />

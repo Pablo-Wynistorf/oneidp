@@ -1,9 +1,13 @@
-const express = require('express');
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const jwt = require('jsonwebtoken');
-const { userDB } = require('../../../database/mongodb.js');
-const redisCache = require('../../../database/redis.js');
+import express from 'express';
+import passport from 'passport';
+import GoogleStrategyModule from 'passport-google-oauth20';
+const GoogleStrategy = GoogleStrategyModule.Strategy;
+import jwt from 'jsonwebtoken';
+import { userDB } from '../../../database/mongodb.mjs';
+import redisCache from '../../../database/redis.mjs';
+import { isBanned } from '../../../utils/account-status.mjs';
+import { getSettings, isEmailDomainAllowed } from '../../../utils/app-settings.mjs';
+import { isAdminEmail } from '../../../utils/admin-auth.mjs';
 
 const router = express.Router();
 
@@ -16,6 +20,11 @@ ${process.env.JWT_PRIVATE_KEY}
 -----END PRIVATE KEY-----
 `.trim();
 
+// Only register the strategy when credentials are provided. Otherwise the app
+// would crash on startup (passport throws if clientID is missing).
+const googleConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
+
+if (googleConfigured) {
 passport.use(new GoogleStrategy({
     clientID: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
@@ -25,11 +34,32 @@ passport.use(new GoogleStrategy({
     try {
       let userId;
       let existingUserId;
+      const settings = await getSettings();
       let existingUser = await userDB.findOne({ identityProviderUserId: profile.id });
       let username = profile.emails[0].value.split('@')[0];
       let existingUserName = await userDB.findOne({ username: username });
 
+      // `done(null, false, info)` is a clean authentication failure rather than
+      // a server error, so the callback can turn it into a message on /login.
+      if (existingUser && isBanned(existingUser)) {
+        return done(null, false, { reason: 'banned' });
+      }
+
+      if (existingUser && settings.maintenanceMode && !isAdminEmail(existingUser.email)) {
+        return done(null, false, { reason: 'maintenance' });
+      }
+
       if (!existingUser) {
+        // Signing in with a provider for the first time creates an account, so
+        // it is subject to the same registration gates as the signup form.
+        if (!settings.registrationEnabled) {
+          return done(null, false, { reason: 'registration_closed' });
+        }
+
+        if (!isEmailDomainAllowed(profile.emails[0].value, settings.allowedEmailDomains)) {
+          return done(null, false, { reason: 'domain_not_allowed' });
+        }
+
         if (existingUserName) {
           username = `${username}_${generateRandomString(3)}`;
         }
@@ -54,7 +84,9 @@ passport.use(new GoogleStrategy({
           email: profile.emails[0].value,
           emailVerified: true,
           mfaEnabled: false,
-          providerRoles: ['standardUser', 'oauthUser'],
+          banned: false,
+          providerRoles: [],
+          canManageApps: false,
           identityProvider: 'google',
           identityProviderUserId: profile.id,
         });
@@ -80,10 +112,22 @@ passport.use(new GoogleStrategy({
     }
   }
 ));
+}
 
 router.use(passport.initialize());
 
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
+  if (!googleConfigured) {
+    return res.status(503).json({ error: 'Google login is not configured on this server.' });
+  }
+
+  // Refuse before starting the handshake, so a disabled provider never sends
+  // the visitor to Google only to reject them on the way back.
+  const settings = await getSettings();
+  if (!settings.socialLoginEnabled) {
+    return res.redirect('/login?error=social_disabled');
+  }
+
   const { redirectUri, redirect_uri } = req.query;
 
   let fullRedirectUri = '';
@@ -104,7 +148,26 @@ router.get('/', (req, res, next) => {
 });
 
 
-router.get('/callback', passport.authenticate('google', { session: false }), async (req, res) => {
+/**
+ * A custom passport callback is used so a refusal from the strategy (banned
+ * account, closed registration, disallowed domain) becomes a readable message
+ * on the login page instead of a generic 500 from the Express error handler.
+ */
+router.get('/callback', (req, res, next) => {
+  if (!googleConfigured) {
+    return res.status(503).json({ error: 'Google login is not configured on this server.' });
+  }
+
+  passport.authenticate('google', { session: false }, (error, user, info) => {
+    if (error) return next(error);
+    if (!user) {
+      const reason = info?.reason || 'social_failed';
+      return res.redirect(`/login?error=${encodeURIComponent(reason)}`);
+    }
+    req.user = user;
+    return next();
+  })(req, res, next);
+}, async (req, res) => {
   const { access_token, userId, sid } = req.user;
   let redirectUri = req.query.state ? Buffer.from(req.query.state, 'base64').toString('utf-8') : '/dashboard';
 
@@ -127,4 +190,4 @@ async function generateRandomString(length) {
   return [...Array(length)].map(() => Math.random().toString(36)[2]).join('');
 }
 
-module.exports = router;
+export default router;

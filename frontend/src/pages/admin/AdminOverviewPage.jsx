@@ -17,6 +17,7 @@ const ACTION_LABELS = {
   'user.resetMfa': 'Reset two-factor authentication',
   'user.resetPasskey': 'Removed a passkey',
   'user.verifyEmail': 'Verified an email address',
+  'user.sendRecovery': 'Sent a password recovery email',
   'user.revokeConsent': 'Revoked an app consent',
   'user.setPermissions': 'Changed permissions',
   'invitation.create': 'Sent an invitation',
@@ -55,7 +56,7 @@ export function AdminOverviewPage() {
 
   if (!data) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, index) => (
           <Skeleton key={index} className="h-24 w-full rounded-[var(--radius-card)]" />
         ))}
@@ -76,13 +77,13 @@ export function AdminOverviewPage() {
 
   return (
     <div className="space-y-4 lg:space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
         <Card>
           <CardHeader title="Growth" description="New accounts over recent periods." />
           <CardBody className="space-y-3">

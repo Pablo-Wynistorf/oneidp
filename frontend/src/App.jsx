@@ -20,6 +20,9 @@ import { SetPasswordPage } from '@/pages/SetPasswordPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 
 const HomePage = lazy(() => import('@/pages/HomePage').then((m) => ({ default: m.HomePage })));
+// The docs carry the markdown for every guide plus the renderer, so they stay
+// in their own chunk and are only fetched when someone opens /docs.
+const DocsPage = lazy(() => import('@/pages/DocsPage').then((m) => ({ default: m.DocsPage })));
 const ConsentPage = lazy(() =>
   import('@/pages/ConsentPage').then((m) => ({ default: m.ConsentPage })),
 );
@@ -88,6 +91,8 @@ export function App() {
       <Routes>
         {/* Public */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/docs" element={<DocsPage />} />
+        <Route path="/docs/:slug" element={<DocsPage />} />
         <Route path="/imprint" element={<ImprintPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
 

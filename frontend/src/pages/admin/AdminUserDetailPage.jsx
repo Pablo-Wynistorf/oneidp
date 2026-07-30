@@ -12,6 +12,18 @@ import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/api';
 import { formatDate, formatDateTime, initial, originOf } from '@/lib/format';
 
+/**
+ * Why "Send recovery email" is unavailable, in the operator's terms.
+ *
+ * `disabled` is absent on purpose: when recovery is off instance-wide the button
+ * is not rendered at all, so there is nothing to explain next to it.
+ */
+const RECOVERY_BLOCKED_HINT = {
+  social: 'This account signs in through an external provider, so it has no password to recover.',
+  unverifiedEmail: 'Mark the email address as verified before sending a recovery link to it.',
+  banned: 'Restore the account before sending a recovery link.',
+};
+
 export function AdminUserDetailPage() {
   const { userId } = useParams();
   const toast = useToast();
@@ -146,7 +158,7 @@ export function AdminUserDetailPage() {
           </div>
         </CardBody>
 
-        <CardBody className="grid gap-4 border-t border-hairline sm:grid-cols-2">
+        <CardBody className="grid grid-cols-1 gap-4 border-t border-hairline sm:grid-cols-2">
           <CopyField label="User ID" value={user.userId} />
           <CopyField label="Username" value={user.username} mono={false} />
           <div>
@@ -214,7 +226,7 @@ export function AdminUserDetailPage() {
       {/* Actions ------------------------------------------------------------- */}
       <Card>
         <CardHeader title="Actions" description="Account and support operations." />
-        <CardBody className="grid gap-2.5 sm:grid-cols-2">
+        <CardBody className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {user.banned ? (
             <Button
               variant="secondary"
@@ -290,6 +302,27 @@ export function AdminUserDetailPage() {
             </Button>
           )}
 
+          {user.passwordRecoveryBlocker !== 'disabled' && (
+            <Button
+              variant="secondary"
+              loading={busy === 'recovery'}
+              disabled={user.isAdmin || Boolean(user.passwordRecoveryBlocker)}
+              onClick={() =>
+                setConfirmAction({
+                  key: 'recovery',
+                  path: '/send-recovery',
+                  destructive: false,
+                  title: 'Send a password recovery email?',
+                  description: `${user.email} receives a link that is valid for 30 minutes. Sending it signs the user out of every device.`,
+                  confirmLabel: 'Send email',
+                  message: 'Recovery email sent.',
+                })
+              }
+            >
+              Send recovery email
+            </Button>
+          )}
+
           <Button
             variant="outlineDanger"
             disabled={user.isAdmin}
@@ -301,6 +334,13 @@ export function AdminUserDetailPage() {
             Delete account
           </Button>
         </CardBody>
+        {!user.isAdmin && RECOVERY_BLOCKED_HINT[user.passwordRecoveryBlocker] && (
+          <CardBody className="border-t border-hairline pt-3">
+            <p className="text-xs text-ink-faint">
+              {RECOVERY_BLOCKED_HINT[user.passwordRecoveryBlocker]}
+            </p>
+          </CardBody>
+        )}
         {user.isAdmin && (
           <CardBody className="border-t border-hairline pt-3">
             <p className="text-xs text-ink-faint">
@@ -363,19 +403,60 @@ export function AdminUserDetailPage() {
           {ownedApps.length === 0 ? (
             <p className="text-sm text-ink-muted">This user has not registered any applications.</p>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {ownedApps.map((app) => (
-                <div key={app.oauthClientAppId} className="rounded-xl border border-hairline bg-surface p-3.5">
-                  <p className="truncate text-sm font-medium">{app.oauthAppName}</p>
-                  <p className="truncate font-mono text-[0.7rem] text-ink-faint">{app.clientId}</p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <Badge tone={app.isPublicClient ? 'cyan' : 'accent'}>
-                      {app.isPublicClient ? 'Public' : 'Confidential'}
-                    </Badge>
-                    <Badge tone="neutral">{app.accessTokenValidity}s</Badge>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {ownedApps.map((app) => {
+                const appOrigin = originOf(app.redirectUri);
+                return (
+                  <div
+                    key={app.oauthClientAppId}
+                    className="flex flex-col rounded-xl border border-hairline bg-surface p-3.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{app.oauthAppName}</p>
+                        <p className="truncate font-mono text-[0.7rem] text-ink-faint">
+                          {app.clientId}
+                        </p>
+                      </div>
+                      {appOrigin && (
+                        <Button
+                          as="a"
+                          href={appOrigin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          variant="secondary"
+                          size="sm"
+                          aria-label={`Open ${app.oauthAppName} at ${appOrigin}`}
+                          title={appOrigin}
+                        >
+                          <IconExternal size={15} />
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <Badge tone={app.isPublicClient ? 'cyan' : 'accent'}>
+                        {app.isPublicClient ? 'Public' : 'Confidential'}
+                      </Badge>
+                      <Badge tone="neutral">{app.accessTokenValidity}s</Badge>
+                      {app.disabled && <Badge tone="danger">Disabled</Badge>}
+                    </div>
+
+                    {/* Deep-links into the applications console filtered to this
+                        client, which is where its full record can be inspected. */}
+                    <Button
+                      as={Link}
+                      to={`/admin/apps?query=${encodeURIComponent(app.clientId)}`}
+                      variant="secondary"
+                      size="sm"
+                      fullWidth
+                      className="mt-3"
+                    >
+                      Open application
+                    </Button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardBody>
@@ -552,7 +633,7 @@ export function AdminUserDetailPage() {
         open={Boolean(confirmAction)}
         onClose={() => setConfirmAction(null)}
         loading={busy === confirmAction?.key}
-        destructive
+        destructive={confirmAction?.destructive !== false}
         title={confirmAction?.title}
         description={confirmAction?.description}
         confirmLabel={confirmAction?.confirmLabel}

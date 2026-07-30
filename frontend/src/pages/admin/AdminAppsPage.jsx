@@ -13,6 +13,20 @@ import { useToast } from '@/components/ui/Toast';
 import { api } from '@/lib/api';
 import { formatDate } from '@/lib/format';
 
+/**
+ * Why an application is switched off. The state is derived from its owner, so
+ * the label names the owner's situation rather than an action taken on the app.
+ */
+const DISABLED_LABELS = {
+  owner_access_revoked: 'Disabled: owner access revoked',
+  owner_suspended: 'Disabled: owner suspended',
+  owner_missing: 'Disabled: owner missing',
+};
+
+function disabledLabel(reason) {
+  return DISABLED_LABELS[reason] ?? 'Disabled';
+}
+
 export function AdminAppsPage() {
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -96,7 +110,7 @@ export function AdminAppsPage() {
         />
         <CardBody>
           {result === null ? (
-            <div className="grid gap-3 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
               {Array.from({ length: 4 }).map((_, index) => (
                 <Skeleton key={index} className="h-44 w-full rounded-xl" />
               ))}
@@ -110,7 +124,7 @@ export function AdminAppsPage() {
               description="Nothing matches your search."
             />
           ) : (
-            <div className="grid gap-3 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
               {result.apps.map((app) => (
                 <article
                   key={app.oauthClientAppId}
@@ -155,7 +169,17 @@ export function AdminAppsPage() {
                     <Badge tone="neutral">{app.consentCount} users</Badge>
                     <Badge tone="neutral">{app.roleCount} roles</Badge>
                     {app.owner?.banned && <Badge tone="danger">Owner suspended</Badge>}
+                    {app.disabled && (
+                      <Badge tone="danger">{disabledLabel(app.disabledReason)}</Badge>
+                    )}
                   </div>
+
+                  {app.disabled && (
+                    <p className="mt-2 text-xs text-ink-muted">
+                      This application cannot be used to sign anyone in. It is restored
+                      automatically when its owner regains access to applications and roles.
+                    </p>
+                  )}
 
                   <div className="mt-3 space-y-2.5">
                     <CopyField label="Client ID" value={app.clientId} />

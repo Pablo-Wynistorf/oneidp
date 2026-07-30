@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useSession } from './SessionProvider';
 import { Spinner } from '@/components/ui/Spinner';
@@ -75,12 +76,33 @@ export function RequireAdmin() {
  *
  * Most accounts cannot manage applications, so these routes are hidden from
  * them entirely and they are sent back to the dashboard.
+ *
+ * The session is probed once on boot, so an admin granting the capability to a
+ * signed-in user would otherwise only take effect after a manual reload. Before
+ * turning anyone away, re-check with the server once.
  */
 export function RequireAppManagement() {
-  const { isLoading, isAuthenticated, user } = useSession();
+  const { isLoading, isAuthenticated, user, refresh } = useSession();
+  const [revalidated, setRevalidated] = useState(false);
+
+  const needsRecheck = isAuthenticated && !user?.canManageApps && !revalidated;
+
+  useEffect(() => {
+    if (!needsRecheck) return;
+
+    let active = true;
+    refresh().finally(() => {
+      if (active) setRevalidated(true);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [needsRecheck, refresh]);
 
   if (isLoading) return <SessionSplash />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (needsRecheck) return <SessionSplash />;
   if (!user?.canManageApps) return <Navigate to="/dashboard" replace />;
 
   return <Outlet />;

@@ -14,7 +14,7 @@ const TONES = {
  * Toast host. Replaces the Noty dependency the old pages loaded from a CDN.
  *
  * Notifications stack below the header on desktop and slide in from the top on
- * mobile, clear of the bottom tab bar.
+ * mobile, clear of the sticky top bar.
  */
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);

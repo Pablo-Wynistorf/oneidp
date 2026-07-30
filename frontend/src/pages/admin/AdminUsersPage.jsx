@@ -273,7 +273,7 @@ function CreateUserModal({ open, onClose, onCreated }) {
       }
     >
       <form id="admin-create-user" onSubmit={submit} className="space-y-4" noValidate>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextInput label="First name" value={form.firstName} onChange={update('firstName')} />
           <TextInput label="Last name" value={form.lastName} onChange={update('lastName')} />
         </div>
