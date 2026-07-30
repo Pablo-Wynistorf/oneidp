@@ -110,13 +110,28 @@ resource "aws_s3_bucket_policy" "frontend" {
 ###############################################################################
 
 locals {
-  # Identifies a build. node_modules and dist are excluded so the hash reflects
-  # real source edits only.
+  # The globs list the source paths explicitly instead of walking "**" and
+  # filtering afterwards. fileset() enumerates everything it is pointed at, and
+  # node_modules/ and dist/ do not hold still between the plan and the apply
+  # (npm rewrites one, the SPA build replaces the other). Terraform compares
+  # both evaluations and aborts the apply with "function returned an
+  # inconsistent result" as soon as the listing differs, so those two
+  # directories must stay out of the pattern.
+  #
+  # A new top-level directory under frontend/ has to be added here to take part
+  # in build-change detection.
+  frontend_source_globs = ["*", "src/**", "public/**", "scripts/**"]
+
+  frontend_source_files = sort(distinct(flatten([
+    for g in local.frontend_source_globs : tolist(fileset(local.frontend_dir, g))
+  ])))
+
+  # Identifies a build, and reflects real source edits only.
   frontend_source_hash = sha1(join("", concat(
     [
-      for f in fileset(local.frontend_dir, "**") :
+      for f in local.frontend_source_files :
       filesha1("${local.frontend_dir}/${f}")
-      if !startswith(f, "node_modules/") && !startswith(f, "dist/")
+      if !endswith(f, ".DS_Store")
     ],
     # The /docs route inlines the integration markdown at build time, so an
     # edit under docs/ has to republish the SPA as well.

@@ -3,11 +3,21 @@
 ###############################################################################
 
 locals {
-  # Identifies a build. node_modules is excluded because it is not committed and
-  # gets installed by the build itself.
+  # Same reasoning as frontend_source_globs: node_modules/ is left out of the
+  # pattern rather than filtered after the fact, because fileset() walks
+  # everything it is given and a listing that changes between plan and apply
+  # fails the apply. A new top-level directory under src/ has to be added here
+  # to take part in build-change detection.
+  lambda_source_globs = ["*", "database/**", "notify/**", "routes/**", "utils/**"]
+
+  lambda_source_files = sort(distinct(flatten([
+    for g in local.lambda_source_globs : tolist(fileset(local.src_dir, g))
+  ])))
+
+  # Identifies a build, and reflects real source edits only.
   lambda_source_hash = sha1(join("", [
-    for f in fileset(local.src_dir, "**") :
-    filesha1("${local.src_dir}/${f}") if !startswith(f, "node_modules/")
+    for f in local.lambda_source_files :
+    filesha1("${local.src_dir}/${f}") if !endswith(f, ".DS_Store")
   ]))
 
   # Holds the hash of the last successful build so that plans against unchanged
