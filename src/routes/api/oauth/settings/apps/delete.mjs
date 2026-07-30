@@ -1,8 +1,9 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 
-import { oAuthClientAppDB, oAuthRolesDB } from '../../../../../database/mongodb.mjs';
+import { oAuthClientAppDB } from '../../../../../database/mongodb.mjs';
 import redisCache from '../../../../../database/redis.mjs';
+import { deleteAppsCascade } from '../../../../../utils/app-deletion.mjs';
 
 const router = express.Router();
 
@@ -53,11 +54,11 @@ router.post('/', async (req, res) => {
           return res.status(465).json({ error: 'User does not have access to this app' });
         }
 
-        await oAuthClientAppDB.deleteOne({ oauthClientAppId });
-        // Match on the stored field instead of pattern-matching the role id.
-        // The old regex interpolated the app id unescaped and unanchored, which
-        // breaks on UUID hyphens and could over-match.
-        await oAuthRolesDB.deleteMany({ oauthClientAppId });
+        // Deleting the app on its own used to leave every other user's consent
+        // behind, which then showed up in their account as "Unknown App". The
+        // shared cascade removes the roles, those consents and the live sessions
+        // with it.
+        await deleteAppsCascade(userApp);
 
         res.status(200).json({ success: true, message: 'OAuth app has been successfully deleted' });
       } catch (error) {

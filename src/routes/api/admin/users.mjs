@@ -10,6 +10,7 @@ import redisCache from '../../../database/redis.mjs';
 import { notifyError } from '../../../notify/notifications.mjs';
 import { isAdminEmail, recordAdminAction } from '../../../utils/admin-auth.mjs';
 import { revokeAllSessions } from '../../../utils/account-status.mjs';
+import { deleteAppsCascade } from '../../../utils/app-deletion.mjs';
 import { getSettings } from '../../../utils/app-settings.mjs';
 import { issuePasswordReset, passwordResetBlocker } from '../../../utils/password-reset.mjs';
 import { canManageApps } from '../../../utils/permissions.mjs';
@@ -635,16 +636,11 @@ router.delete('/:userId', async (req, res) => {
     }
 
     const ownedApps = await oAuthClientAppDB.find({ owner: user.userId }).lean();
-    const ownedAppIds = ownedApps.map((app) => app.oauthClientAppId);
 
     await revokeAllSessions(user.userId);
 
-    const [consentsRemoved, rolesRemoved] = await Promise.all([
-      userAppConsentDB.deleteMany({ userId: user.userId }),
-      ownedAppIds.length
-        ? oAuthRolesDB.deleteMany({ oauthClientAppId: { $in: ownedAppIds } })
-        : Promise.resolve({ deletedCount: 0 }),
-    ]);
+    // The consents this user granted to other people's applications.
+    const consentsGiven = await userAppConsentDB.deleteMany({ userId: user.userId });
 
     // Also drop this user's membership from roles belonging to other owners.
     await oAuthRolesDB.updateMany(
@@ -652,27 +648,27 @@ router.delete('/:userId', async (req, res) => {
       { $pull: { oauthUserIds: user.userId } },
     );
 
-    if (ownedAppIds.length) {
-      await Promise.all([
-        oAuthClientAppDB.deleteMany({ oauthClientAppId: { $in: ownedAppIds } }),
-        userAppConsentDB.deleteMany({ oauthClientAppId: { $in: ownedAppIds } }),
-      ]);
-    }
+    // Their own applications go through the shared cascade, so every other
+    // user's consent for them is removed too rather than left orphaned.
+    const cascade = await deleteAppsCascade(ownedApps);
 
     await userDB.deleteOne({ userId: user.userId });
+
+    const consentsRemoved = (consentsGiven.deletedCount ?? 0) + cascade.consentsRemoved;
 
     await recordAdminAction(req, 'user.delete', {
       targetUserId: user.userId,
       targetEmail: user.email,
-      appsRemoved: ownedAppIds.length,
-      consentsRemoved: consentsRemoved.deletedCount ?? 0,
-      rolesRemoved: rolesRemoved.deletedCount ?? 0,
+      appsRemoved: cascade.appsRemoved,
+      consentsRemoved,
+      rolesRemoved: cascade.rolesRemoved,
+      sessionsRevoked: cascade.sessionsRevoked,
     });
 
     return res.json({
       success: true,
-      appsRemoved: ownedAppIds.length,
-      consentsRemoved: consentsRemoved.deletedCount ?? 0,
+      appsRemoved: cascade.appsRemoved,
+      consentsRemoved,
     });
   } catch (error) {
     notifyError(error);

@@ -42,14 +42,32 @@ router.get('/', async (req, res) => {
     // Get app details for each consent
     const clientIds = consents.map(c => c.clientId);
     const apps = await oAuthClientAppDB.find({ clientId: { $in: clientIds } }).lean();
+    const appByClientId = new Map(apps.map(app => [app.clientId, app]));
+
+    // A consent whose client no longer exists is dead weight: there is nothing
+    // left to grant access to, and showing it as "Unknown App" only invites the
+    // user to revoke something that is already gone. Deletion cascades consents
+    // now, so this is for rows orphaned before that — clear them on sight rather
+    // than leaving the account page to explain them.
+    const live = consents.filter(consent => appByClientId.has(consent.clientId));
+    const orphaned = consents.filter(consent => !appByClientId.has(consent.clientId));
+
+    if (orphaned.length > 0) {
+      try {
+        await userAppConsentDB.deleteMany({ _id: { $in: orphaned.map(c => c._id) } });
+      } catch (cleanupError) {
+        // Reading the list must not fail because the tidy-up did.
+        notifyError(cleanupError);
+      }
+    }
 
     // Map consents with app info
-    const result = consents.map(consent => {
-      const app = apps.find(a => a.clientId === consent.clientId);
+    const result = live.map(consent => {
+      const app = appByClientId.get(consent.clientId);
       return {
-        appName: app ? app.oauthAppName : 'Unknown App',
+        appName: app.oauthAppName,
         clientId: consent.clientId,
-        redirectUri: app ? app.redirectUri : null,
+        redirectUri: app.redirectUri,
         consentedScopes: consent.consentedScopes,
         firstAuthAt: consent.firstAuthAt,
         lastAuthAt: consent.lastAuthAt

@@ -136,7 +136,7 @@ async function purgeBatch(keys, wanted) {
   return doomed.length;
 }
 
-async function revokeAppSessions(appIds) {
+export async function revokeAppSessions(appIds) {
   if (appIds.length === 0) return 0;
 
   const wanted = new Set(appIds);

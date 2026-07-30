@@ -61,7 +61,7 @@ function renderButton({ label, url }) {
  * Shared shell: preheader, logo lockup, glass card with a violet-to-cyan
  * hairline, body copy, call to action, and footer.
  */
-function renderEmail({ title, preheader, heading, greeting, paragraphs, action, note }) {
+function renderEmail({ preheader, heading, greeting, paragraphs, action, note }) {
   const body = paragraphs
     .map(
       (text) => `
@@ -70,7 +70,7 @@ function renderEmail({ title, preheader, heading, greeting, paragraphs, action, 
     .join('');
 
   return `<!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" style="background-color:${COLORS.canvas}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -79,7 +79,7 @@ function renderEmail({ title, preheader, heading, greeting, paragraphs, action, 
   <meta name="format-detection" content="telephone=no">
   <meta name="color-scheme" content="dark">
   <meta name="supported-color-schemes" content="dark">
-  <title>${title}</title>
+  <!-- No <title>: Apple Mail renders it as visible text above the layout. -->
   <!--[if mso]>
   <xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
   <![endif]-->
@@ -230,7 +230,6 @@ function renderBodies(content) {
  */
 async function sendRecoveryEmail(username, email, password_reset_token) {
   const content = {
-    title: 'Reset your password',
     preheader: 'Set a new password for your ONEIDP account.',
     heading: 'Password reset',
     greeting: `Hello ${escapeHtml(username)}`,
@@ -269,7 +268,6 @@ async function sendRecoveryEmail(username, email, password_reset_token) {
  */
 async function sendVerificationEmail(username, email, email_verification_token) {
   const content = {
-    title: 'Confirm your email',
     preheader: 'Verify your email address to finish setting up your ONEIDP account.',
     heading: 'Confirm your email',
     greeting: `Hello ${escapeHtml(username)}`,
@@ -310,7 +308,6 @@ function sendInviteEmail(email, invite_token, invitedBy) {
   const inviter = invitedBy ? `${escapeHtml(invitedBy)} has invited you` : 'You have been invited';
 
   const content = {
-    title: 'You have been invited to ONEIDP',
     preheader: 'Accept your invitation and create your ONEIDP account.',
     heading: 'You have been invited',
     greeting: '',

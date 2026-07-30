@@ -88,16 +88,15 @@ resource "aws_cloudfront_function" "spa_router" {
     function handler(event) {
       var request = event.request;
       var uri = request.uri;
-
-      // Directory-style request: serve the index document.
-      if (uri.endsWith('/')) {
-        request.uri = uri + 'index.html';
-        return request;
-      }
-
-      // A file extension means a real asset; anything else is a client route.
       var lastSegment = uri.slice(uri.lastIndexOf('/') + 1);
-      if (lastSegment.indexOf('.') === -1) {
+
+      // The build produces a single index.html plus hashed assets, so no route
+      // has an index document of its own. A file extension means a real asset;
+      // everything else, trailing slash included, is a client route. Mapping
+      // "/dashboard/" to "/dashboard/index.html" is what made trailing-slash
+      // deep links come back as S3 AccessDenied; the SPA redirects them to the
+      // canonical path once it loads.
+      if (lastSegment === '' || lastSegment.indexOf('.') === -1) {
         request.uri = '/index.html';
       }
 

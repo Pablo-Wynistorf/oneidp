@@ -7,6 +7,7 @@ import {
 } from '../../../database/mongodb.mjs';
 import { notifyError } from '../../../notify/notifications.mjs';
 import { recordAdminAction } from '../../../utils/admin-auth.mjs';
+import { deleteAppsCascade } from '../../../utils/app-deletion.mjs';
 import { getSettings } from '../../../utils/app-settings.mjs';
 import { clientDisabledReason } from '../../../utils/client-status.mjs';
 
@@ -141,27 +142,19 @@ router.delete('/:oauthClientAppId', async (req, res) => {
       });
     }
 
-    const [roles, consents] = await Promise.all([
-      oAuthRolesDB.deleteMany({ oauthClientAppId }),
-      userAppConsentDB.deleteMany({ clientId: app.clientId }),
-    ]);
-
-    await oAuthClientAppDB.deleteOne({ oauthClientAppId });
+    const { rolesRemoved, consentsRemoved, sessionsRevoked } = await deleteAppsCascade(app);
 
     await recordAdminAction(req, 'app.delete', {
       oauthClientAppId,
       appName: app.oauthAppName,
       clientId: app.clientId,
       owner: app.owner ?? null,
-      rolesRemoved: roles.deletedCount ?? 0,
-      consentsRemoved: consents.deletedCount ?? 0,
+      rolesRemoved,
+      consentsRemoved,
+      sessionsRevoked,
     });
 
-    return res.json({
-      success: true,
-      rolesRemoved: roles.deletedCount ?? 0,
-      consentsRemoved: consents.deletedCount ?? 0,
-    });
+    return res.json({ success: true, rolesRemoved, consentsRemoved, sessionsRevoked });
   } catch (error) {
     notifyError(error);
     return res.status(500).json({ error: 'Something went wrong, try again later' });
