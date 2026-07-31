@@ -3,6 +3,13 @@
  *
  *   npm install express @oneidp/express
  *
+ * Configure it with a .env file next to this one:
+ *
+ *   cp example/.env.example example/.env   # then fill in the values
+ *   node example/server.mjs
+ *
+ * Or pass the variables inline, which override the file:
+ *
  *   ONEIDP_CLIENT_ID=... ONEIDP_CLIENT_SECRET=... \
  *   ONEIDP_COOKIE_SECRET="$(openssl rand -base64 32)" \
  *   node example/server.mjs
@@ -14,8 +21,30 @@
  * ONEIDP_COOKIE_SECRET.
  */
 
+import { existsSync } from 'node:fs';
+
 import express from 'express';
 import { bearerAuth, oneidp } from '@oneidp/express';
+
+// Load example/.env when it exists.
+//
+// `process.loadEnvFile` is built into Node, so the example needs no `dotenv`
+// dependency. The path is resolved relative to this file rather than the working
+// directory, so `node example/server.mjs` and `node server.mjs` both work.
+// Variables already in the environment win over the file, which is what you want
+// in a container.
+const envFile = new URL('.env', import.meta.url);
+
+if (existsSync(envFile)) {
+  if (typeof process.loadEnvFile === 'function') {
+    process.loadEnvFile(envFile);
+  } else {
+    console.warn(
+      'Reading .env needs Node 20.12 or newer. Either upgrade, or run:\n' +
+        '  node --env-file=example/.env example/server.mjs',
+    );
+  }
+}
 
 const {
   ONEIDP_ISSUER = 'https://oneidp.ch',

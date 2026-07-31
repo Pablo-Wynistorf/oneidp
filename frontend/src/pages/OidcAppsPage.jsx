@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useId, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/layouts/AppLayout';
 import { DocsLink } from '@/components/DocsLink';
@@ -287,6 +287,10 @@ function AppFormModal({ open, mode, app, onClose, onSaved }) {
   const toast = useToast();
   const [form, setForm] = useState(EMPTY_APP);
   const [pending, setPending] = useState(false);
+  // Closed modals keep their children mounted, so the create and edit
+  // instances coexist in the DOM. A shared form id would make the footer's
+  // `form=` button submit whichever form comes first in document order.
+  const formId = `app-form-${useId()}`;
 
   useEffect(() => {
     if (!open) return;
@@ -358,7 +362,7 @@ function AppFormModal({ open, mode, app, onClose, onSaved }) {
             Cancel
           </Button>
           <Button
-            form="app-form"
+            form={formId}
             type="submit"
             loading={pending}
             disabled={!canSubmit}
@@ -370,7 +374,7 @@ function AppFormModal({ open, mode, app, onClose, onSaved }) {
         </>
       }
     >
-      <form id="app-form" onSubmit={submit} className="space-y-4" noValidate>
+      <form id={formId} onSubmit={submit} className="space-y-4" noValidate>
         {mode === 'edit' && (
           <TextInput label="Application ID" value={app?.oauthClientAppId ?? ''} readOnly disabled />
         )}
