@@ -131,8 +131,13 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '24'
-          cache: npm
-          cache-dependency-path: sdk/express/package-lock.json
+          # No registry-url on purpose. It writes an .npmrc expecting
+          # NODE_AUTH_TOKEN, which makes npm take the token path and skip the
+          # OIDC exchange entirely. The token path below writes its own .npmrc.
+          #
+          # No dependency cache either: npm's guidance is to avoid caching in
+          # release builds, so the published tarball is built from a clean tree.
+          package-manager-cache: false
 
       - run: npm ci
 
@@ -146,6 +151,38 @@ jobs:
             npm install -g npm@latest
           fi
           npm -v
+
+      # Everything trusted publishing depends on, in one place. npm's failure for
+      # any of these is the same unhelpful ENEEDAUTH, so check them up front.
+      - name: Check the publish preconditions
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+
+          echo "node            $(node -v)"
+          echo "npm             $(npm -v)          (trusted publishing needs >= 11.5.1)"
+          echo "runner          GitHub-hosted (self-hosted runners are not supported)"
+          echo "event           $EVENT"
+          echo "workflow file   ${GITHUB_WORKFLOW_REF%%@*}"
+          echo "repository      $GITHUB_REPOSITORY"
+          echo "package repo    $(node -p 'require("./package.json").repository.url')"
+
+          # Proof that `id-token: write` took effect. The URL is not a secret;
+          # the request token it pairs with is never printed.
+          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "OIDC            available"
+          else
+            echo '::error::No OIDC token available. The publish job needs id-token: write.'
+            exit 1
+          fi
+
+          # npm validates the workflow filename against the trusted publisher, but
+          # for a manual run it can resolve the wrong workflow and fail with
+          # ENEEDAUTH even when everything is configured correctly.
+          if [ "$EVENT" = 'workflow_dispatch' ]; then
+            echo "::warning::Manual runs are a known weak spot for npm trusted publishing: it may validate the wrong workflow name and fail with ENEEDAUTH. Push a sdk-express-v* tag to publish for real."
+          fi
 
       - name: Choose an authentication method
         id: auth
@@ -173,10 +210,26 @@ jobs:
 
       - name: Publish
         if: needs.verify.outputs.publish == 'true'
-        # --provenance links the tarball to this workflow run and commit, so
-        # consumers can verify where it came from. --access public is required
-        # for the first publish of a scoped package.
-        run: npm publish --provenance --access public
+        env:
+          MODE: ${{ steps.auth.outputs.mode }}
+        # --provenance links the tarball to this workflow run and commit so
+        # consumers can verify where it came from. Trusted publishing adds
+        # provenance on its own, but the flag is harmless and keeps the token path
+        # covered too. --access public is required for a scoped package.
+        run: |
+          set -euo pipefail
+
+          if npm publish --provenance --access public; then
+            exit 0
+          fi
+
+          if [ "$MODE" = 'oidc' ]; then
+            echo "::error::Publish failed. For ENEEDAUTH, every one of these must be true: the trusted publisher on npmjs.com names repository ${GITHUB_REPOSITORY} and workflow file sdk-express-release.yml (case-sensitive, with the extension); the run was triggered by a sdk-express-v* tag push, not a manual dispatch; and package.json repository.url points at the same repository. Otherwise set an NPM_TOKEN secret to use a token instead."
+          else
+            echo '::error::Publish failed while authenticating with NPM_TOKEN. Check the token has publish rights to @oneidp and has not expired.'
+          fi
+
+          exit 1
 
       - name: Skip publishing (version already on npm)
         if: needs.verify.outputs.already_published == 'true'
