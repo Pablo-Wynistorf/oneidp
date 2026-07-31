@@ -1,0 +1,240 @@
+name: Express SDK release
+
+# Publishes @oneidp/express to npm.
+#
+# Release: bump the version in sdk/express/package.json, merge it, then push a
+# matching tag.
+#
+#   npm version 1.0.1 --workspaces false   # inside sdk/express
+#   git commit -am "express sdk 1.0.1" && git push
+#   git tag sdk-express-v1.0.1 && git push origin sdk-express-v1.0.1
+#
+# The tag version and package.json version must agree, and the version must not
+# already exist on npm. Both are checked before anything is published.
+#
+# Run manually with `dry_run: true` to rehearse the whole thing without
+# publishing.
+
+on:
+  push:
+    tags:
+      - 'sdk-express-v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run every check and a publish dry run, without publishing'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdk-express-release
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: sdk/express
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      publish: ${{ steps.version.outputs.publish }}
+      already_published: ${{ steps.version.outputs.already_published }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: sdk/express/package-lock.json
+
+      - run: npm ci
+
+      - name: Resolve and check the version
+        id: version
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          version=$(node -p 'require("./package.json").version')
+          name=$(node -p 'require("./package.json").name')
+          echo "Package: $name@$version"
+
+          if [ "$REF_TYPE" = 'tag' ]; then
+            tag="$REF_NAME"
+            tag_version="${tag#sdk-express-v}"
+
+            # A tag that disagrees with package.json would publish something
+            # other than what the tag names.
+            if [ "$tag_version" != "$version" ]; then
+              echo "::error::Tag $tag implies version $tag_version but package.json says $version"
+              exit 1
+            fi
+
+            publish=true
+          else
+            tag="sdk-express-v$version"
+            if [ "$DRY_RUN" = 'false' ]; then publish=true; else publish=false; fi
+          fi
+
+          # npm versions are immutable, so this version can never be replaced.
+          # Rather than fail, treat it as nothing to do: that makes the pipeline
+          # idempotent, so a rerun after a successful publish, or the tag for a
+          # version that was published by hand, is a clean no-op. The checks that
+          # actually protect anything (tag matches package.json, tests pass) still
+          # run, and no overwrite is ever attempted.
+          already_published=false
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            already_published=true
+            publish=false
+            echo "::warning::$name@$version is already on npm. Nothing will be published. Bump the version to release new code."
+          fi
+
+          {
+            echo "version=$version"
+            echo "tag=$tag"
+            echo "publish=$publish"
+            echo "already_published=$already_published"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Verify the installed package
+        run: npm run verify:package
+
+  publish:
+    name: Publish to npm
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      # Create the GitHub release.
+      contents: write
+      # Mint the OIDC token npm uses for provenance, and for trusted publishing.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: sdk/express/package-lock.json
+
+      - run: npm ci
+
+      - name: Ensure npm supports trusted publishing
+        run: |
+          set -euo pipefail
+          required=11.5.1
+          current=$(npm -v)
+          if [ "$(printf '%s\n%s\n' "$required" "$current" | sort -V | head -1)" != "$required" ]; then
+            echo "npm $current is older than $required, upgrading"
+            npm install -g npm@latest
+          fi
+          npm -v
+
+      - name: Choose an authentication method
+        id: auth
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "${NPM_TOKEN:-}" ]; then
+            # A classic automation token in the NPM_TOKEN secret.
+            echo 'mode=token' >> "$GITHUB_OUTPUT"
+          else
+            # No secret: rely on npm trusted publishing, which exchanges this
+            # workflow's OIDC identity for a short-lived token. Configure the
+            # trusted publisher once under the package's settings on npmjs.com.
+            echo 'mode=oidc' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Authenticate with the token
+        if: steps.auth.outputs.mode == 'token'
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # Written to the home directory, never the package directory, so it
+        # cannot end up anywhere near the tarball.
+        run: printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$HOME/.npmrc"
+
+      - name: Publish
+        if: needs.verify.outputs.publish == 'true'
+        # --provenance links the tarball to this workflow run and commit, so
+        # consumers can verify where it came from. --access public is required
+        # for the first publish of a scoped package.
+        run: npm publish --provenance --access public
+
+      - name: Skip publishing (version already on npm)
+        if: needs.verify.outputs.already_published == 'true'
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: echo "@oneidp/express@$VERSION is already on npm, so nothing was published."
+
+      - name: Publish (dry run)
+        if: needs.verify.outputs.publish != 'true' && needs.verify.outputs.already_published != 'true'
+        run: npm publish --dry-run --access public
+
+      # Runs for a tag even when the npm publish was skipped, so a version
+      # published by hand still gets its release and tarball.
+      - name: Create the GitHub release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.verify.outputs.tag }}
+          VERSION: ${{ needs.verify.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          npm pack --silent
+
+          # Notes go through a file: a heredoc keeps the markdown free of the
+          # workflow's own indentation.
+          notes="$RUNNER_TEMP/release-notes.md"
+          cat > "$notes" <<EOF
+          Published to npm: <https://www.npmjs.com/package/@oneidp/express/v/$VERSION>
+
+          \`\`\`bash
+          npm install @oneidp/express@$VERSION
+          \`\`\`
+
+          [Documentation](https://github.com/$REPO/blob/$TAG/sdk/express/README.md)
+          EOF
+
+          # Idempotent: a rerun of the same tag must not fail on an existing release.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists, leaving it alone."
+          else
+            gh release create "$TAG" \
+              --title "@oneidp/express v$VERSION" \
+              --notes-file "$notes" \
+              "./oneidp-express-$VERSION.tgz"
+          fi
+
+      - name: Summary
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+          PUBLISHED: ${{ needs.verify.outputs.publish }}
+          ALREADY: ${{ needs.verify.outputs.already_published }}
+        run: |
+          if [ "$PUBLISHED" = 'true' ]; then
+            echo "Published \`@oneidp/express@$VERSION\` with provenance." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$ALREADY" = 'true' ]; then
+            echo "\`@oneidp/express@$VERSION\` was already on npm. **Nothing was published.** Bump the version to release new code." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Dry run for \`@oneidp/express@$VERSION\`. Nothing was published." >> "$GITHUB_STEP_SUMMARY"
+          fi

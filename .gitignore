@@ -43,6 +43,9 @@ override.tf.json
 terraform/build/
 *.zip
 
+# ---- SDK packaging artifacts ----
+sdk/*/*.tgz
+
 # ---- Deployment files containing credentials ----
 deployment/kubernetes/secrets-with-credentials.yaml
 deployment/helm/oneidp/values-with-credentials.yaml

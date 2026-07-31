@@ -1,0 +1,118 @@
+name: Express SDK CI
+
+# Builds and tests @oneidp/express on every change to it. The release workflow
+# runs the same checks again before publishing, so a green run here is what makes
+# a tag safe to push.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sdk/express/**'
+      - '.github/workflows/sdk-express-ci.yml'
+  pull_request:
+    paths:
+      - 'sdk/express/**'
+      - '.github/workflows/sdk-express-ci.yml'
+  workflow_dispatch:
+
+# Only read the repository. Nothing here needs write access or a token.
+permissions:
+  contents: read
+
+concurrency:
+  group: sdk-express-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: sdk/express
+
+jobs:
+  test:
+    name: Test on Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 20 is the floor declared in `engines` (jose 6 and the SDK both need it).
+        # 24 is current LTS.
+        node: ['20', '22', '24']
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: sdk/express/package-lock.json
+
+      - run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  types:
+    name: Type declarations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: sdk/express/package-lock.json
+
+      - run: npm ci
+
+      # Compiles types/index.d.ts together with a smoke file that exercises the
+      # documented API, so a broken declaration fails here rather than in a
+      # consumer's editor.
+      - name: Typecheck
+        run: npm run typecheck
+
+  compat:
+    name: Express 4 compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: sdk/express/package-lock.json
+
+      - run: npm ci
+
+      # The peer range claims 4.18 and 5. The test suite runs against 5 by
+      # default, so run it against 4 as well rather than trusting the claim.
+      - name: Install Express 4
+        run: npm install --no-save express@^4.18.0
+
+      - name: Run tests
+        run: npm test
+
+  package:
+    name: Packaged artifact
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: sdk/express/package-lock.json
+
+      - run: npm ci
+
+      - name: List tarball contents
+        run: npm pack --dry-run
+
+      # Installs the real tarball into a throwaway project and drives a request
+      # through it. Catches a file missing from `files`, a broken `exports` map,
+      # or a dependency that only resolved inside this repo.
+      - name: Verify the installed package
+        run: npm run verify:package

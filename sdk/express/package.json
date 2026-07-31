@@ -1,0 +1,61 @@
+{
+  "name": "@oneidp/express",
+  "version": "2.0.0",
+  "description": "Express SDK for ONEIDP: sign-in, session handling, token refresh and role checks in a few lines",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./src/index.js"
+    }
+  },
+  "files": [
+    "src",
+    "types",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "typecheck": "tsc --project tsconfig.json",
+    "verify:package": "node scripts/verify-package.mjs",
+    "verify": "npm run typecheck && npm test && npm run verify:package"
+  },
+  "keywords": [
+    "oneidp",
+    "oidc",
+    "openid-connect",
+    "oauth2",
+    "express",
+    "authentication",
+    "pkce",
+    "sso"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pablo-Wynistorf/oneidp.git",
+    "directory": "sdk/express"
+  },
+  "homepage": "https://github.com/Pablo-Wynistorf/oneidp/tree/main/sdk/express#readme",
+  "bugs": {
+    "url": "https://github.com/Pablo-Wynistorf/oneidp/issues"
+  },
+  "author": "Pablo Wynistorf",
+  "license": "MIT",
+  "dependencies": {
+    "jose": "6.2.5"
+  },
+  "peerDependencies": {
+    "express": "^4.18.0 || ^5.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/node": "26.1.2",
+    "express": "5.2.1",
+    "typescript": "7.0.2"
+  }
+}
