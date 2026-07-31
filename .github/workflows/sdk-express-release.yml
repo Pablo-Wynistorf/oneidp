@@ -224,7 +224,20 @@ jobs:
           fi
 
           if [ "$MODE" = 'oidc' ]; then
-            echo "::error::Publish failed. For ENEEDAUTH, every one of these must be true: the trusted publisher on npmjs.com names repository ${GITHUB_REPOSITORY} and workflow file sdk-express-release.yml (case-sensitive, with the extension); the run was triggered by a sdk-express-v* tag push, not a manual dispatch; and package.json repository.url points at the same repository. Otherwise set an NPM_TOKEN secret to use a token instead."
+            # npm reports the same ENEEDAUTH whether it never attempted the OIDC
+            # exchange or the registry refused it. The debug log distinguishes the
+            # two. Filtered rather than dumped, so no credential material is echoed.
+            echo '--- OIDC-related lines from the npm debug log ---'
+            latest=$(ls -t "$HOME"/.npm/_logs/*-debug-0.log 2>/dev/null | head -1 || true)
+            if [ -n "$latest" ]; then
+              grep -iE 'oidc|id[-_ ]?token|trusted|exchange|audience|40[13]|unauthor' "$latest" \
+                | sed -E 's/(eyJ[A-Za-z0-9_-]{6})[A-Za-z0-9._-]+/\1<redacted>/g' \
+                | tail -40 || echo '(no OIDC lines found: npm never attempted the exchange)'
+            else
+              echo '(no debug log found)'
+            fi
+
+            echo "::error::Publish failed. Every one of these must hold: the trusted publisher on npmjs.com names organization and repository exactly as ${GITHUB_REPOSITORY} (case-sensitive) and workflow file sdk-express-release.yml; the run came from a sdk-express-v* tag push; and package.json repository.url points at the same repository. If 'Publishing access' is set to disallow bypass-2FA tokens, an NPM_TOKEN fallback will also be refused."
           else
             echo '::error::Publish failed while authenticating with NPM_TOKEN. Check the token has publish rights to @oneidp and has not expired.'
           fi
