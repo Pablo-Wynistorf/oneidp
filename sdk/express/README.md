@@ -114,10 +114,18 @@ app.get('/api/me', (req, res) => res.json({ sub: req.oneidp.user.sub }));
 Two cookies, both `HttpOnly` and both sealed with `A256GCM` authenticated
 encryption. The browser can neither read them nor alter them undetected.
 
-| Cookie | Holds | Lives |
-| --- | --- | --- |
-| `oneidp` | Profile, access token, refresh token, ID token | 12 hours by default |
-| `oneidp_tx` | One login in flight: `state`, `nonce`, PKCE verifier, `returnTo` | 10 minutes |
+| Cookie | Holds | Size | Lives |
+| --- | --- | --- | --- |
+| `oneidp` | Profile, access token, refresh token, ID token | ~2.5 KB | 12 hours by default |
+| `oneidp_tx` | One login in flight: `state`, `nonce`, PKCE verifier, `returnTo` | ~0.6 KB | 10 minutes |
+
+The payload is DEFLATE-compressed before encryption, which matters more than it
+sounds: JWTs are base64, so about a quarter of every token is redundancy the
+compressor reclaims. That takes a full three-token session from 4.2 KB to 2.2 KB
+and keeps it inside a single cookie, under the browser's 4 KB limit. Anything
+that does exceed the limit is split across `oneidp.0`, `oneidp.1`, ... and
+rejoined transparently, so a user with an unusual number of roles costs an extra
+cookie rather than a broken session.
 
 ```
 1. GET /auth/login
@@ -177,6 +185,11 @@ Deployment notes:
 - Set `app.set('trust proxy', 1)` behind a TLS-terminating proxy.
 - Rotate the secret without signing anyone out: deploy `secret: [new, old]`,
   wait longer than `cookie.maxAge`, then drop `old`.
+- **Upgrading from 1.0.x**: 1.1.0 compresses the cookie payload. New instances
+  read old cookies, but old instances cannot read new ones, so during a rolling
+  deploy a user served by a not-yet-updated replica is treated as signed out and
+  signs in again. It degrades to a login prompt, never an error, and clears once
+  the rollout finishes. Drain rather than mix versions if that matters to you.
 
 The one thing you give up by having no store: you cannot force-sign-out a
 specific user before their cookie expires. If you need that, keep
@@ -521,7 +534,8 @@ await client.buildLogoutUrl({ idToken: tokens.idToken });
 | Roles are stale | Roles are baked in at token issue time | `await req.oneidp.userinfo()`, or `refreshUserinfo: true` |
 | `getAccessToken()` returns null | Token expired and cannot be refreshed (public client or no refresh token) | Redirect to `req.oneidp.loginUrl()` |
 | Warning about refreshing after the response started | `getAccessToken()` was called after writing output | Call it before sending the response |
-| Session cookie split in two | Payload over 3800 bytes, usually many roles | Harmless. It rejoins automatically |
+| Session cookie split into `oneidp.0`/`oneidp.1` | Compressed payload still over 3800 bytes, usually an unusual number of roles | Harmless. It rejoins automatically |
+| Everyone signed out after deploying 1.1.0 | Old replicas cannot read the new compressed cookie | Finish the rollout, or drain instead of mixing versions |
 | Logout does not prompt on the next login | ONEIDP's own browser session survives for up to 14 days | Expected. See [notes-and-limitations](../../docs/notes-and-limitations.md) |
 | A user hits an ONEIDP JSON error page and never comes back | Authorize errors are not redirected to your callback | Nothing to fix in your app; check the client configuration |
 | `CallbackError: User denied the authorization request` | The user clicked Deny on the consent screen | Expected. Handle `error.code === 'access_denied'` as a cancel, as shown above |

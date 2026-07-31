@@ -5,11 +5,11 @@
  * here so the SDK works on Express 4 and 5 with zero extra dependencies.
  *
  * Browsers cap a cookie at roughly 4 KB including its name and attributes. A
- * sealed session holding an access token, a refresh token and an ID token lands
- * around 3.3 KB, which fits but leaves little room for a user with many roles.
- * Values over the limit are therefore split across `name.0`, `name.1`, ... and
- * rejoined on read, so a large session degrades into an extra cookie instead of
- * a silently truncated one.
+ * sealed session holding all three tokens compresses to about 2.5 KB (see
+ * `seal.js`), so it fits in one. Chunking is the safety net for the outliers: a
+ * value over the limit is split across `name.0`, `name.1`, ... and rejoined on
+ * read, so an unusually large session costs an extra cookie instead of being
+ * silently truncated.
  */
 
 /**

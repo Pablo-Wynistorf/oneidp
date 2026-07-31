@@ -138,6 +138,69 @@ describe('sealing', () => {
     }
   });
 
+  it('still opens cookies written by 1.0.x, so upgrading does not sign anyone out', async () => {
+    // 1.0.x sealed the claim set as uncompressed JSON with EncryptJWT. Rebuild one
+    // with the same derived key to prove the compatibility path.
+    const { EncryptJWT } = await import('jose');
+    const { hkdfSync } = await import('node:crypto');
+
+    const key = new Uint8Array(hkdfSync('sha256', SECRET, 'oneidp.express.v1', 'session', 32));
+    const now = Math.floor(Date.now() / 1000);
+
+    const legacy = await new EncryptJWT({ u: { sub: '482913' }, a: 'access-token' })
+      .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
+      .setIssuedAt(now)
+      .setExpirationTime(now + 3600)
+      .encrypt(key);
+
+    const opened = await createSealer({ secret: SECRET, purpose: 'session' }).unseal(legacy);
+
+    assert.equal(opened.u.sub, '482913');
+    assert.equal(opened.a, 'access-token');
+  });
+
+  it('enforces expiry on a legacy cookie too', async () => {
+    const { EncryptJWT } = await import('jose');
+    const { hkdfSync } = await import('node:crypto');
+
+    const key = new Uint8Array(hkdfSync('sha256', SECRET, 'oneidp.express.v1', 'session', 32));
+    const past = Math.floor(Date.now() / 1000) - 60;
+
+    const expired = await new EncryptJWT({ u: { sub: '1' } })
+      .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
+      .setIssuedAt(past - 60)
+      .setExpirationTime(past)
+      .encrypt(key);
+
+    assert.equal(await createSealer({ secret: SECRET, purpose: 'session' }).unseal(expired), null);
+  });
+
+  it('compresses a full session into a single cookie', async () => {
+    // Three real-shaped RS256 tokens plus the profile: the payload that needed two
+    // cookies before compression.
+    const token = (payloadBytes) =>
+      Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT', kid: 'ZmE4NjNiZDk' })).toString('base64url') +
+      '.' + Buffer.from('p'.repeat(payloadBytes)).toString('base64url') +
+      '.' + Buffer.from(crypto.getRandomValues(new Uint8Array(256))).toString('base64url');
+
+    const claims = {
+      iss: 'https://oneidp.ch', sub: '482913', aud: 'c'.repeat(64), osid: 'k8fj3nd0slq2mzx',
+      nonce: 'n'.repeat(43), username: 'ada', name: 'Ada Lovelace', given_name: 'Ada',
+      family_name: 'Lovelace', roles: ['admin', 'billing'], mfaEnabled: true, email: 'ada@example.com',
+    };
+
+    const sealed = await createSealer({ secret: SECRET, purpose: 'session' }).seal(
+      {
+        u: { sub: '482913', username: 'ada', name: 'Ada Lovelace', givenName: 'Ada', familyName: 'Lovelace',
+             email: 'ada@example.com', roles: ['admin', 'billing'], mfaEnabled: true, raw: claims },
+        a: token(300), r: token(300), i: token(430), x: Date.now() + 3600e3, t: Date.now(),
+      },
+      { maxAge: 43_200_000 },
+    );
+
+    assert.ok(sealed.length < 3800, `sealed session should fit one cookie, got ${sealed.length} bytes`);
+  });
+
   it('insists on a secret long enough to matter', () => {
     assert.throws(() => createSealer({ secret: undefined, purpose: 'session' }), ConfigurationError);
     assert.throws(() => createSealer({ secret: 'short', purpose: 'session' }), ConfigurationError);

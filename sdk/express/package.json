@@ -1,6 +1,6 @@
 {
   "name": "@oneidp/express",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Stateless ONEIDP sign-in for Express: sealed cookie sessions, PKCE, JWT verification, token refresh and role checks. No session store.",
   "type": "module",
   "main": "./src/index.js",
