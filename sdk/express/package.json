@@ -1,6 +1,6 @@
 {
   "name": "@oneidp/express",
-  "version": "2.0.0",
+  "version": "1.0.1",
   "description": "Express SDK for ONEIDP: sign-in, session handling, token refresh and role checks in a few lines",
   "type": "module",
   "main": "./src/index.js",
