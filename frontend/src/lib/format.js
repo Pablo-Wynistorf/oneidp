@@ -18,6 +18,32 @@ export function formatDateTime(value) {
   return date.toLocaleString();
 }
 
+const DURATION_UNITS = [
+  ['day', 86400],
+  ['hour', 3600],
+  ['minute', 60],
+  ['second', 1],
+];
+
+/**
+ * Human-readable duration from a number of seconds, e.g. 3600 -> "1 hour",
+ * 5400 -> "1 hour 30 minutes". Truncated to the two largest units.
+ */
+export function formatDuration(seconds) {
+  const total = Math.floor(Number(seconds));
+  if (!Number.isFinite(total) || total <= 0) return '—';
+
+  const parts = [];
+  let rest = total;
+  for (const [name, size] of DURATION_UNITS) {
+    const count = Math.floor(rest / size);
+    if (!count) continue;
+    parts.push(`${count} ${name}${count === 1 ? '' : 's'}`);
+    rest -= count * size;
+  }
+  return parts.slice(0, 2).join(' ');
+}
+
 /** Origin of a redirect URI, used to build "Open app" links. */
 export function originOf(url) {
   if (!url) return null;

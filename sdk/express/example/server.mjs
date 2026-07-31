@@ -131,6 +131,16 @@ app.use('/api', bearerAuth({ issuer: ONEIDP_ISSUER, clientId: ONEIDP_CLIENT_ID }
 app.get('/api/me', (req, res) => res.json({ sub: req.oneidp.user.sub }));
 
 app.use((error, req, res, _next) => {
+  // Declining the ONEIDP consent screen comes back as `access_denied`. That is a
+  // decision, not a failure, so no stack trace and no error page.
+  if (error.code === 'access_denied') {
+    res
+      .status(200)
+      .type('html')
+      .send('<h1>No problem</h1><p>You chose not to share your account.</p><p><a href="/">Back</a></p>');
+    return;
+  }
+
   console.error(error);
   const status = error.status && error.status < 500 ? 400 : 500;
   res

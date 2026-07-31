@@ -31,6 +31,9 @@ export function SearchInput({
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
+        // A filter box is never a credential; without this, Dashlane and
+        // friends paint their fill icon over the clear button.
+        data-form-type="other"
         className={cn(
           'w-full rounded-xl border border-hairline bg-canvas-raised/70 py-2.5 pr-10 pl-10',
           'text-[0.95rem] text-ink transition-[border-color,box-shadow] duration-150',

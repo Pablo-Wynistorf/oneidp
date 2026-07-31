@@ -524,6 +524,7 @@ await client.buildLogoutUrl({ idToken: tokens.idToken });
 | Session cookie split in two | Payload over 3800 bytes, usually many roles | Harmless. It rejoins automatically |
 | Logout does not prompt on the next login | ONEIDP's own browser session survives for up to 14 days | Expected. See [notes-and-limitations](../../docs/notes-and-limitations.md) |
 | A user hits an ONEIDP JSON error page and never comes back | Authorize errors are not redirected to your callback | Nothing to fix in your app; check the client configuration |
+| `CallbackError: User denied the authorization request` | The user clicked Deny on the consent screen | Expected. Handle `error.code === 'access_denied'` as a cancel, as shown above |
 
 ---
 
@@ -556,9 +557,18 @@ Handled for you:
 
 Still worth knowing, because no SDK can fix them:
 
-- **Authorize errors never reach your callback.** ONEIDP renders them as JSON in
-  the browser instead of redirecting with `?error=`, so a user who hits a
+- **Authorize errors mostly never reach your callback.** ONEIDP renders them as
+  JSON in the browser instead of redirecting with `?error=`, so a user who hits a
   misconfiguration, maintenance mode, or a banned account is left on an IdP page.
+  The one exception is declining the consent screen, which does redirect back with
+  `error=access_denied`. Treat that as a normal outcome, not a failure:
+
+  ```js
+  app.use((error, req, res, next) => {
+    if (error.code === 'access_denied') return res.redirect('/');  // user cancelled
+    next(error);
+  });
+  ```
 - **Logout is partial.** Only the OAuth session tied to that ID token ends; the
   ONEIDP browser session survives up to 14 days, so the next login is silent. The
   local cookie is always cleared first, so your app is signed out regardless.

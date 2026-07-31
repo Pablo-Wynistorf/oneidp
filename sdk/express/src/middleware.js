@@ -145,9 +145,14 @@ export function oneidp(options = {}) {
     try {
       const { code, state, error: oauthError, error_description: oauthDescription } = req.query;
 
-      // ONEIDP renders authorize errors as JSON in the browser rather than
-      // redirecting them here, so this branch is effectively unreachable. Handled
-      // because the spec says it should be, and a proxy may add it.
+      // The one OAuth error ONEIDP does redirect back: declining the consent
+      // screen arrives here as `error=access_denied`. Validation failures at the
+      // authorize endpoint are rendered as JSON on an IdP page instead and never
+      // reach this route.
+      //
+      // A denial is a normal outcome, not a fault. Branch on
+      // `error.code === 'access_denied'` in your error handler and send the user
+      // somewhere friendly rather than showing them a failure page.
       if (oauthError) {
         throw new CallbackError(oauthDescription || String(oauthError), {
           code: String(oauthError).toLowerCase().replace(/\s+/g, '_'),

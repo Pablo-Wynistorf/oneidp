@@ -208,6 +208,20 @@ describe('login flow', () => {
     assert.equal(JSON.parse(body).code, 'state_mismatch');
   });
 
+  it('surfaces a declined consent screen as access_denied', async () => {
+    const agent = createAgent();
+
+    // What ONEIDP's consent page sends when the user clicks Deny.
+    const { response, body } = await agent.request(
+      `${appUrl}/auth/callback?error=access_denied&error_description=User%20denied%20the%20authorization%20request&state=whatever`,
+    );
+
+    assert.equal(response.status, 400);
+    const payload = JSON.parse(body);
+    assert.equal(payload.code, 'access_denied');
+    assert.equal(payload.message, 'User denied the authorization request');
+  });
+
   it('rejects a callback with no code', async () => {
     const agent = createAgent();
     const { response, body } = await agent.request(`${appUrl}/auth/callback?state=nope`);

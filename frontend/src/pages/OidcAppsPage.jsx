@@ -20,6 +20,7 @@ import { SearchInput } from '@/components/ui/SearchInput';
 import { Skeleton } from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
 import { api, SessionExpiredError } from '@/lib/api';
+import { formatDuration } from '@/lib/format';
 
 const EMPTY_APP = {
   oauthAppName: '',
@@ -238,7 +239,6 @@ function AppCard({ app, onEdit, onDelete }) {
             <Badge tone={app.isPublicClient ? 'cyan' : 'accent'}>
               {app.isPublicClient ? 'Public client' : 'Confidential'}
             </Badge>
-            <Badge tone="neutral">{app.accessTokenValidity}s token</Badge>
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -269,6 +269,15 @@ function AppCard({ app, onEdit, onDelete }) {
           <CopyField label="Client secret" value={app.clientSecret} secret />
         )}
         <CopyField label="Redirect URI" value={app.redirectUri} />
+        <div className="min-w-0">
+          <p className="text-xs font-medium tracking-wide text-ink-faint uppercase">
+            Access token validity
+          </p>
+          <p className="mt-0.5 truncate text-sm text-ink">
+            <span className="font-mono text-[0.8rem]">{app.accessTokenValidity}s</span>
+            <span className="text-ink-faint"> · {formatDuration(app.accessTokenValidity)}</span>
+          </p>
+        </div>
       </div>
     </article>
   );
@@ -405,6 +414,10 @@ function AppFormModal({ open, mode, app, onClose, onSaved }) {
           hint="In seconds."
           value={form.accessTokenValidity}
           onChange={update('accessTokenValidity')}
+          autoComplete="off"
+          // Keeps password managers from treating a numeric field in a form
+          // that has "token" in it as a one-time code to fill.
+          data-form-type="other"
           required
         />
         {mode === 'create' && (
